@@ -1,0 +1,97 @@
+{
+  "experiments": [
+    {
+      "id": "EXP-01",
+      "name": "Multi-Benchmark Grand Evaluation across Ladder",
+      "kind": "main",
+      "tests_claims": ["C0", "C3"],
+      "falsifies_if": "SurvTD fails to beat CoxSig and TCSR by at least 0.03 C-index across continuous benchmarks.",
+      "cost_gpu_hours": 3.0,
+      "cut_order": 1
+    },
+    {
+      "id": "EXP-02",
+      "name": "Continuous-to-Discrete Discretization Ablation",
+      "kind": "ablation",
+      "tests_claims": ["C0", "C1"],
+      "falsifies_if": "Forcing discrete uniform discretization Delta t = 1.0 produces equal or superior C-index and Brier score compared to continuous Cramér projection.",
+      "cost_gpu_hours": 1.5,
+      "cut_order": 2
+    },
+    {
+      "id": "EXP-03",
+      "name": "Projection Non-Expansiveness and Metric Stress Test",
+      "kind": "sensitivity",
+      "tests_claims": ["C1"],
+      "falsifies_if": "Cramér distance loss diverges or fails to decrease monotonically under continuous interval variations.",
+      "cost_gpu_hours": 1.0,
+      "cut_order": 5
+    },
+    {
+      "id": "EXP-04",
+      "name": "Lambda-Spectrum Bias-Variance Tradeoff Sweep",
+      "kind": "ablation",
+      "tests_claims": ["C0", "C2"],
+      "falsifies_if": "Performance does not exhibit an inverted-U curve with optimal lambda between 0.4 and 0.8, or lambda = 1.0 does not degrade concordance.",
+      "cost_gpu_hours": 2.5,
+      "cut_order": 3
+    },
+    {
+      "id": "EXP-05",
+      "name": "Compute-Matched Baseline Ladder Comparison",
+      "kind": "baseline",
+      "tests_claims": ["C3"],
+      "falsifies_if": "Tuned CoxSig or DeepTCSR under 50-trial HPO matches or outperforms SurvTD on non-linear tumor growth and turbofan degradation.",
+      "cost_gpu_hours": 4.0,
+      "cut_order": 4
+    },
+    {
+      "id": "EXP-06",
+      "name": "Right-Censored Clinical Telemetry and Alarm Stability Evaluation",
+      "kind": "main",
+      "tests_claims": ["C4"],
+      "falsifies_if": "SurvTD exhibits higher Integrated Brier Score or higher alarm jitter frequency than Dynamic-DeepHit on MIMIC-IV Sepsis-3 and PBC.",
+      "cost_gpu_hours": 3.5,
+      "cut_order": 6
+    },
+    {
+      "id": "EXP-NC1",
+      "name": "Negative Control: Interval Scrambling Across Patients",
+      "kind": "negative_control",
+      "tests_claims": ["C0"],
+      "falsifies_if": "Randomizing observation intervals across independent trajectories retains more than 50% of SurvTD discrimination gain over baseline.",
+      "cost_gpu_hours": 1.0,
+      "cut_order": 7
+    },
+    {
+      "id": "EXP-NC2",
+      "name": "Negative Control: Target Network Instant Online Update",
+      "kind": "negative_control",
+      "tests_claims": ["C0", "C1"],
+      "falsifies_if": "Setting target network update rate tau to 1.0 maintains stable training and achieves equal concordance without divergence.",
+      "cost_gpu_hours": 1.0,
+      "cut_order": 8
+    }
+  ],
+  "statistics": {
+    "seeds": 5,
+    "variance_reported": "mean ± std over 5 seeds, with paired Wilcoxon signed-rank p-values and 95% bootstrap confidence intervals",
+    "meaningful_delta": ">= 0.03 C-index gain, >= 0.03 dynamic AUC gain, >= 20% relative Integrated Brier Score reduction",
+    "declared_before_results": true
+  },
+  "tuning_parity": "All baselines (CoxSig, TCSR with epsilon-regularization, Dynamic-DeepHit, and SurvTD) receive an identical 50-trial Bayesian hyperparameter optimization budget over matching learning rates (1e-4 to 1e-2), hidden dimensions (32 to 128), and weight decays under strict subject-level 5-fold cross-validation.",
+  "kill_criteria": [
+    {
+      "claim": "C0",
+      "abandon_if": "If negative control EXP-NC1 retains more than 50% of the concordance gain, or continuous projection EXP-02 fails to beat uniform discretization, C0 is falsified and withdrawn."
+    },
+    {
+      "claim": "C2",
+      "abandon_if": "If lambda = 1.0 matches lambda = 0.6 within seed noise, the multi-step variance-reduction claim is falsified and C2 is withdrawn."
+    },
+    {
+      "claim": "C4",
+      "abandon_if": "If Integrated Brier Score on MIMIC-IV Sepsis-3 is worse than Kaplan-Meier baseline, the clinical calibration claim is falsified and C4 is withdrawn."
+    }
+  ]
+}

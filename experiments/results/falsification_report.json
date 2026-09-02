@@ -1,0 +1,12 @@
+[
+  {
+    "test_id": "EXP-04",
+    "claim": "C0",
+    "reason": "Permuted durations retained 95.9% of gain (> 50%)"
+  },
+  {
+    "test_id": "EXP-03",
+    "claim": "C0",
+    "reason": "Arm A1 retained 93.9%, Arm A2 retained 91.8%"
+  }
+]

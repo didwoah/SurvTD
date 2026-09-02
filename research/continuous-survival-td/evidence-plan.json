@@ -1,0 +1,135 @@
+{
+  "experiments": [
+    {
+      "id": "EXP-01",
+      "name": "Multi-Cohort Grand Benchmark Evaluation",
+      "kind": "main",
+      "tests_claims": [
+        "C0",
+        "C3"
+      ],
+      "falsifies_if": "SurvTD fails to achieve at least 0.025 improvement in time-dependent AUC and concordance over DeepTCSR and Dynamic-DeepHit on MIMIC-IV Sepsis-3 or Poisson-downsampled C-MAPSS.",
+      "cost_gpu_hours": 35.0,
+      "cut_order": 1,
+      "track": "paper"
+    },
+    {
+      "id": "EXP-02",
+      "name": "Comparative Baseline Ladder Parity",
+      "kind": "baseline",
+      "tests_claims": [
+        "C0",
+        "C3"
+      ],
+      "falsifies_if": "Under matched 20-trial Bayesian HPO and shared sequence backbones, Person-period discrete hazard on 1h grid or clamped DeepTCSR matches or exceeds SurvTD within seed noise on irregularly sampled cohorts.",
+      "cost_gpu_hours": 30.0,
+      "cut_order": 2,
+      "track": "paper"
+    },
+    {
+      "id": "EXP-03",
+      "name": "Mechanism-Isolating Factorial Ablation NC-A",
+      "kind": "ablation",
+      "tests_claims": [
+        "C0",
+        "C1"
+      ],
+      "falsifies_if": "Ablating duration discounting (Arm A1: gamma_j = S(delta_s)) or continuous renewal shifting (Arm A2: Phi_{+delta_s}) retains more than 50% of the concordance gain over the unit-step baseline.",
+      "cost_gpu_hours": 15.0,
+      "cut_order": 3,
+      "track": "adversarial"
+    },
+    {
+      "id": "EXP-04",
+      "name": "Negative Control NC-B: Within-Patient Duration Permutation",
+      "kind": "negative_control",
+      "tests_claims": [
+        "C0"
+      ],
+      "falsifies_if": "Scrambling inter-visit durations Delta t_j within patient trajectories retains more than half of the performance gain over the unregularized baseline, indicating that gains stem from passive visit counting rather than continuous temporal alignment.",
+      "cost_gpu_hours": 8.0,
+      "cut_order": 4,
+      "track": "adversarial"
+    },
+    {
+      "id": "EXP-05",
+      "name": "Negative Control NC-A3: Clamped Division Comparison",
+      "kind": "negative_control",
+      "tests_claims": [
+        "C0",
+        "C1"
+      ],
+      "falsifies_if": "Heuristic clamped division p / max(S, 1e-3) matches the training stability, gradient variance, and high-risk calibration of SurvTD renewal mixture without loss divergence.",
+      "cost_gpu_hours": 7.0,
+      "cut_order": 6,
+      "track": "adversarial"
+    },
+    {
+      "id": "EXP-06",
+      "name": "Lambda-Return Compounding & Horizon Invariance Sweep NC-C",
+      "kind": "ablation",
+      "tests_claims": [
+        "C0",
+        "C2"
+      ],
+      "falsifies_if": "Performance does not show an inverted-U curve with optimal lambda in [0.4, 0.8], or count-geometric lambda^k matches duration-geometric lambda^(Delta t / delta_s) across varying observation sampling frequencies.",
+      "cost_gpu_hours": 10.0,
+      "cut_order": 5,
+      "track": "adversarial"
+    },
+    {
+      "id": "EXP-07",
+      "name": "Clinical Utility & ICU Bedside Alarm Fatigue Evaluation",
+      "kind": "main",
+      "tests_claims": [
+        "C4"
+      ],
+      "falsifies_if": "SurvTD fails to achieve at least a 25% reduction in false alert episode rate per patient-day and alert jitter count at matched 0.30 PPV compared to EMA-smoothed Dynamic-DeepHit on MIMIC-IV Sepsis-3.",
+      "cost_gpu_hours": 10.0,
+      "cut_order": 7,
+      "track": "paper"
+    },
+    {
+      "id": "EXP-08",
+      "name": "Projection Variance Diffusion & Contraction Sensitivity",
+      "kind": "sensitivity",
+      "tests_claims": [
+        "C1",
+        "C2"
+      ],
+      "falsifies_if": "Cumulative projection variance exceeds the theoretical bound of delta_s^2 / 6 per step or Cram\u00e9r distance loss fails to decrease monotonically under positive hazard.",
+      "cost_gpu_hours": 5.0,
+      "cut_order": 8,
+      "track": "adversarial"
+    }
+  ],
+  "statistics": {
+    "seeds": 5,
+    "variance_reported": "Mean and standard deviation across 5 evaluation seeds with paired Wilcoxon signed-rank test and 1000-sample test bootstrap 95% confidence intervals",
+    "meaningful_delta": "0.025 in time-dependent AUC and concordance (derived: 3x 5-seed bootstrap test SE of 0.008 on MIMIC-IV Sepsis-3); >= 25% reduction in alert jitter at matched 0.30 PPV",
+    "declared_before_results": true
+  },
+  "tuning_parity": "All baselines (DeepTCSR with continuous Delta t feature and clamped division, Dynamic-DeepHit, Person-period discrete hazard on 1h regular grid, and SurvTD) share identical continuous-time GRU-D or LSTM sequence backbones and receive an identical 20-trial Bayesian hyperparameter optimization budget searching learning rates (1e-4 to 5e-3), latent dimensions (64 to 256), dropout (0.1 to 0.5), and EMA smoothing parameters under strict subject-level 5-fold cross-validation.",
+  "kill_criteria": [
+    {
+      "claim": "C0",
+      "abandon_if": "If within-patient duration permutation EXP-04 retains more than 50% of the concordance gain, or NC-A ablation EXP-03 fails to show significant degradation from unit-step baseline, C0 is falsified and withdrawn."
+    },
+    {
+      "claim": "C1",
+      "abandon_if": "If the Cram\u00e9r distance loss diverges or fails to exhibit contraction modulus bounded by gamma_j under a frozen target network, C1 is falsified and withdrawn."
+    },
+    {
+      "claim": "C2",
+      "abandon_if": "If pure Monte Carlo NLL (lambda = 1.0) matches optimal multi-step lambda within seed noise, or projection variance diffusion exceeds delta_s^2 / 6, C2 is falsified and withdrawn."
+    },
+    {
+      "claim": "C3",
+      "abandon_if": "If SurvTD does not outperform clamped DeepTCSR and Dynamic-DeepHit by at least 0.025 in AUC/concordance on MIMIC-IV Sepsis-3 or Poisson-downsampled C-MAPSS, C3 is falsified and withdrawn."
+    },
+    {
+      "claim": "C4",
+      "abandon_if": "If SurvTD fails to reduce false alert episode rates and alert jitter by at least 25% at matched 0.30 PPV against EMA-smoothed Dynamic-DeepHit, C4 is falsified and withdrawn."
+    }
+  ]
+}

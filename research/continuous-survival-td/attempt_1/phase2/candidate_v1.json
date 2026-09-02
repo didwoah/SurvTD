@@ -1,0 +1,61 @@
+{
+  "title": "SurvTD: Continuous-Time Semi-Markov Temporal Difference Learning for Informative Dynamic Survival Analysis",
+  "core_mechanism": "Reformulate continuous-time dynamic survival analysis on irregular trajectories as policy evaluation in an absorbing Semi-Markov Decision Process (SMDP). Between irregular observations t_j and t_{j+1} separated by interval duration \\Delta t_j, the model updates future failure distributions via a contractive Survival Bellman Operator that scales multi-bucket survival evidence across \\Delta t_j and geometrically unifies n-step returns with a parameter lambda.",
+  "core_mechanism_steps": [
+    "Step 1: Encode irregular longitudinal observations H_{t_j} into latent state representation h_j via a recurrent sequential backbone.",
+    "Step 2: Predict discrete conditional hazards h_j(s) over K future discrete buckets, producing survival curve S_j(s) and probability mass function p_j(s).",
+    "Step 3: Compute continuous interval duration \\Delta t_j = t_{j+1} - t_j and evaluate multi-bucket interval survival probability S_j(\\Delta t_j) as state-dependent discount factor.",
+    "Step 4: Shift future target probability distribution leftward by \\Delta t_j steps and construct Survival Bellman target T p_j(s) = I[Event in \\Delta t_j] + S_j(\\Delta t_j) * TargetNet(p_{j+1}(s - \\Delta t_j)).",
+    "Step 5: Synthesize geometric lambda-return G^lambda_j(s) via backward trajectory recursion to smoothly interpolate between 1-step Bellman bootstrapping (lambda=0) and terminal empirical returns (lambda=1).",
+    "Step 6: Minimize Cramér distance loss between predicted cumulative distribution F_pred and target cumulative distribution F_{G^lambda} to ensure contractive fixed-point convergence."
+  ],
+  "gap_closure": [
+    {
+      "gap": "Exogenous stationary unit-step assumption in prior survival consistency models (TCSR, DeepTCSR) fails in clinical settings where observation timing is an informative process reflecting patient risk.",
+      "pattern": "assumption_audit_and_pivot",
+      "how_closed": "Pivots from assuming exogenous uniform unit transitions to an endogenous informative continuous observation process, scaling cumulative non-event survival evidence proportionally across elapsed duration \\Delta t_j rather than collapsing to a 1-bit unit transition."
+    },
+    {
+      "gap": "Numerical division divergence (div S) and catastrophic gradient variance of terminal Monte Carlo NLL under irregular time horizons.",
+      "pattern": "reframe_as_solvable_object",
+      "how_closed": "Reframes irregular dynamic survival prediction into policy evaluation over an absorbing Semi-Markov Decision Process, replacing division explosion with contractive multiplication and proving fixed-point convergence under the Cramér Wasserstein-1 metric."
+    }
+  ],
+  "composition_note": "Composing assumption_audit_and_pivot with reframe_as_solvable_object is necessary because relaxing the exogenous interval assumption generates continuous, variable-length transition intervals that can only be stably resolved by importing contractive SMDP Bellman policy evaluation machinery.",
+  "falsification_prediction": "When temporal discount interval duration \\Delta t_j is scrambled or uncoupled from elapsed time, discrimination performance drops significantly below baseline C-index (measured in Bleistein2024 as 0.8791 on NASA turbofan degradation) and calibration error increases.",
+  "load_bearing_variable": "interval_duration_scaling_factor",
+  "negative_control": "Randomize interval_duration_scaling_factor by shuffling observation intervals \\Delta t_j across independent patient trajectories, which disables temporal contraction and causes time-dependent AUC and C-index to degrade to baseline performance.",
+  "compute_budget": "1x Apple M-series GPU or 1x NVIDIA RTX 3090, training time 20 minutes for 20 epochs on C-MAPSS and simulated ODE benchmarks.",
+  "differentiation_from_lit": [
+    {
+      "paper_id": "Maystre2022",
+      "delta": "TCSR requires discrete uniform steps (Delta=1) and divides by survival probability causing divergence; SurvTD operates over continuous irregular intervals (Delta t) with contractive multiplication and multi-step lambda-returns."
+    },
+    {
+      "paper_id": "Bleistein2024",
+      "delta": "CoxSig relies on linear signature regression under proportional hazards and terminal Monte Carlo NLL; SurvTD introduces recursive Survival Bellman temporal difference learning to capture non-linear degradation and mitigate variance."
+    },
+    {
+      "paper_id": "Lee2019",
+      "delta": "Dynamic-DeepHit uses terminal Monte Carlo NLL with an ad-hoc pairwise ranking penalty, lacking inter-step Bellman consistency across adjacent observations; SurvTD enforces structural temporal consistency directly via contractive operators."
+    },
+    {
+      "paper_id": "Alaa2017",
+      "delta": "Alaa et al. model informative clinical observation using point processes (Hawkes jump processes); SurvTD leverages informative intervals directly as continuous-time discount factors in a deep temporal difference learning framework."
+    }
+  ],
+  "signature_terms": [
+    "Survival Bellman Operator",
+    "Cramér-distance contraction",
+    "Continuous-time lambda-return",
+    "Informative observation scaling",
+    "Multi-bucket survival discount"
+  ],
+  "alias_terms": [
+    "Semi-Markov Decision Process policy evaluation",
+    "Continuous-time TD learning",
+    "Informative sampling survival regression",
+    "Distributional temporal difference learning",
+    "Variable-step Bellman contraction"
+  ]
+}

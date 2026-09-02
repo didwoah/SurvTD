@@ -1,0 +1,49 @@
+{
+  "core_claim": {
+    "id": "C0",
+    "text": "Continuous-time Semi-Markov Bellman contraction recovers dynamic survival risk consistency under irregular longitudinal observation processes where discrete uniform models fail.",
+    "evidence_anchor": "fig:1",
+    "strength": "typical",
+    "status": "supported"
+  },
+  "sub_claims": [
+    {
+      "id": "C1",
+      "text": "Rightward temporal shifting and categorical projection Pi form a probability-conserving non-expansive Survival Bellman Operator under the Cramér metric.",
+      "supports": "C0",
+      "evidence_anchor": "thm:1",
+      "strength": "typical",
+      "status": "supported"
+    },
+    {
+      "id": "C2",
+      "text": "Multi-step geometric lambda-return recursion achieves an inverted-U performance curve, outperforming both 1-step TD (lambda=0) and terminal Monte Carlo NLL (lambda=1).",
+      "supports": "C0",
+      "evidence_anchor": "fig:2",
+      "strength": "typical",
+      "status": "supported"
+    },
+    {
+      "id": "C3",
+      "text": "On continuous ODE tumor growth and industrial degradation benchmarks, SurvTD significantly improves C-index and Dynamic AUC over linear signature and discrete TD baselines.",
+      "supports": "C0",
+      "evidence_anchor": "tab:1",
+      "strength": "observed",
+      "status": "supported"
+    },
+    {
+      "id": "C4",
+      "text": "On real right-censored cohorts, SurvTD reduces Integrated Brier Score and suppresses high-frequency alarm jittering compared to unregularized baselines.",
+      "supports": "C0",
+      "evidence_anchor": "tab:2",
+      "strength": "observed",
+      "status": "supported"
+    }
+  ],
+  "kill_switch": {
+    "falsification_prediction": "When multi-step bootstrapping is ablated by setting lambda to 1.0 (collapsing to terminal Monte Carlo NLL), ranking concordance drops significantly below the intermediate bootstrap baseline (measured in Bleistein2024 as 0.8791 on NASA turbofan degradation) and Integrated Brier Score degrades due to unmitigated trajectory variance.",
+    "load_bearing_variable": "lambda_return_mixture_parameter",
+    "negative_control": "Ablate lambda_return_mixture_parameter by sweeping lambda to 1.0 (pure Monte Carlo NLL) and fixing Delta t to 1.0 (discrete uniform discretization), which disables continuous temporal difference bootstrapping and causes time-dependent AUC and C-index to degrade to baseline performance.",
+    "compute_budget": "1x Apple M-series GPU or 1x NVIDIA RTX 3090, training time 20 minutes for 20 epochs across MIMIC-IV Sepsis-3, PBC, NASA C-MAPSS, and simulated ODE benchmarks."
+  }
+}

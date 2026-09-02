@@ -1,0 +1,72 @@
+{
+  "title": "SurvTD: Duration-Discounted Temporal-Difference Consistency for Dynamic Survival Analysis under Irregular Observation",
+  "core_mechanism": "Dynamic survival models that enforce temporal consistency between consecutive observations inherit a unit-step transition (Delta t = 1): surviving one step is a one-bit event and the backward update renormalises the next-step lifetime distribution by dividing by the interval survival probability, which diverges as risk rises. SurvTD audits that assumption and replaces the offending operator. The elapsed duration Delta t_j between observations enters as a duration discount gamma_j = S_theta-(Delta t_j) computed from an EMA target network, and the next-step lifetime distribution is carried backwards by a rightward shift Phi_{+Delta t_j} (the renewal identity R_j = R_{j+1} + Delta t_j) composed with a categorical projection Pi onto the fixed bin grid, instead of by division. The composed operator Pi Phi is non-expansive in the Cramer metric and conserves unit probability mass exactly, so the Bellman target is a valid distribution at every interval length. Multi-step targets are formed by a lambda-return whose decay is geometric in elapsed duration rather than in observation count, making the effective bootstrapping horizon invariant to sampling rate, and the model is fit by Cramer distance between predicted and target lifetime CDFs.",
+  "core_mechanism_steps": [
+    "Step 1: Encode the irregular observation history H_{t_j} = {(t_i, x_i)} up to t_j into a latent state h_j with a recurrent or continuous-time sequence encoder that receives the elapsed durations as inputs.",
+    "Step 2: Emit conditional hazards h_j(s) over K bins of uniform width delta_s on the remaining-lifetime axis, giving the discrete survival curve S_j(s) and the lifetime pmf p_j(s); K and delta_s are set from the cohort follow-up quantile and held fixed across all methods in a comparison.",
+    "Step 3: Read the elapsed duration Delta t_j = t_{j+1} - t_j and evaluate the duration discount gamma_j = S_theta-(Delta t_j) under a frozen EMA target network theta-, with EMA rate tau. gamma_j is the accumulated probability of surviving the whole interval, replacing the one-bit non-event signal of unit-step methods with evidence that scales with how much time actually elapsed.",
+    "Step 4: Carry the target-network lifetime distribution backwards by the renewal shift Phi_{+Delta t_j} (remaining lifetime at t_j exceeds remaining lifetime at t_{j+1} by the elapsed duration) and project it onto the bin grid with the triangular categorical kernel (Pi Phi_{+Delta t} p)_k = sum_m p_m max(0, 1 - |(s_m + Delta t) - s_k| / delta_s), accumulating mass carried past the horizon s_K into the terminal absorbing bin. This composed operator replaces the division by interval survival used by unit-step consistency methods, and it is what the substitution must preserve: Pi Phi is non-expansive in the Cramer (L2-on-CDF) metric and conserves total mass exactly.",
+    "Step 5: Form the one-step target T p_j = I[event in the interval] * delta_{tau_j - t_j} + (1 - I[event in the interval]) * (Pi Phi_{+Delta t_j} p_theta-)_j, whose mass sums to unity by construction. With theta- held frozen the map is affine in p and its Cramer-metric modulus is bounded by gamma_j, which is strictly below unity whenever the per-bin hazard is bounded away from zero; the claim made is per-iteration contraction under a frozen target, not convergence of the joint two-timescale scheme.",
+    "Step 6: At a terminal observation t_M where the subject is right-censored alive, complete the target tail with the target network prediction reweighted by inverse probability of censoring from a Kaplan-Meier estimate of the censoring distribution, so that censored trajectories contribute an unbiased target rather than a truncated one.",
+    "Step 7: Build the multi-step target by backward recursion G_j = T p_j evaluated with mixing weight lambda_j = lambda^(Delta t_j / delta_s) rather than a per-observation lambda, so that the effective bootstrapping horizon is measured in elapsed time and does not change when a subject is sampled more or less often.",
+    "Step 8: Minimise the Cramer distance between the predicted lifetime CDF F_j and the target CDF F_{G_j} as a semi-gradient step through theta only, and update theta- by EMA at rate tau."
+  ],
+  "gap_closure": [
+    {
+      "gap": "Temporal-consistency survival methods (TCSR, DeepTCSR) assume an exogenous uniform unit step Delta t = 1, so the non-event signal carried by an interval is one bit regardless of how much time elapsed, and the assumption fails outright on irregularly observed clinical and industrial trajectories.",
+      "pattern": "assumption_audit_and_pivot",
+      "how_closed": "The unit-step assumption is relaxed to a continuous elapsed duration, and the interval survival probability S(Delta t) is re-derived as a duration discount that scales accumulated non-event evidence with elapsed time. The assumption is load-bearing rather than cosmetic: with it removed, the update rule of the prior methods is no longer defined, which is why the operator substitution below is forced rather than optional."
+    },
+    {
+      "gap": "The backward update of prior consistency methods renormalises the next-step lifetime distribution by dividing by the interval survival probability, which diverges exactly in the high-risk regime where S approaches zero, collapsing predictions towards an uninformative flat distribution.",
+      "pattern": "architectural_operator_substitution",
+      "how_closed": "The division is replaced by the composition of a renewal rightward shift and a categorical projection onto the bin grid. The substitution is defended by the properties it preserves rather than by a performance claim: the composed operator conserves unit probability mass exactly, is non-expansive in the Cramer metric, and yields an affine target map whose modulus under a frozen target network is bounded by the interval discount."
+    }
+  ],
+  "composition_note": "The two patterns share the inter-observation transition operator as their intermediate object. Auditing the unit-step assumption is what makes a continuous shift necessary; the shift is unusable without a projection back onto the fixed grid. Performing only the audit leaves the division explosion in place, which is precisely the residue DeepTCSR2024 inherited from TCSR.",
+  "falsification_prediction": "If the duration discount is not doing the work, then replacing gamma_j = S(Delta t_j) with the unit-step constant S(delta_s) leaves time-dependent AUC and integrated Brier score unchanged on irregularly sampled cohorts. The prediction is the opposite: discrimination drops back towards the unit-step consistency baseline, and on NASA turbofan degradation towards the concordance level measured in Bleistein2024 as 0.8791, while calibration degrades. A pre-declared meaningful difference of at least 0.03 in concordance is used, derived: the seed-to-seed standard deviation reported for dynamic survival baselines on these cohorts is roughly one third of that gap.",
+  "load_bearing_variable": "interval_duration_discount_factor gamma_j = S(Delta t_j)",
+  "negative_control": "NC-A (primary, placebo-controlled): replace the duration-dependent interval discount factor gamma_j = S(Delta t_j) in the Bellman target with the unit-step constant S(delta_s), holding the encoder, its timestamp inputs, the lambda schedule and every hyperparameter fixed, so that only the operator's duration scaling is ablated and the network still observes Delta t as a feature. Predicted downstream outcome: time-dependent AUC and integrated Brier score return to the unit-step consistency baseline on the irregularly observed cohorts, and are unchanged on a regularly sampled control cohort where the intervention is a no-op by construction. NC-B (orthogonal): scramble the observation durations across independent trajectories while preserving the feature values, which must destroy the gain if it comes from temporal alignment rather than from regularisation. NC-C (orthogonal): ablate the multi-step mixing separately by sweeping lambda to 1.0, which isolates variance reduction from duration discounting rather than confounding the two in one arm.",
+  "compute_budget": "One consumer GPU (RTX 3090 or Apple M-series). Every dataset already exists and none needs new annotation: PBC and NASA C-MAPSS FD001-FD004 are public, MIMIC-IV Sepsis-3 requires only credentialed PhysioNet access and a published cohort definition, and the tumour-growth ODE and Ornstein-Uhlenbeck cohorts are simulated. Full grid across four benchmarks, four methods, five seeds and the three negative controls is budgeted at roughly eighteen GPU-hours including a shared fifty-trial hyperparameter search per method.",
+  "differentiation_from_lit": [
+    {
+      "paper_id": "Maystre2022",
+      "delta": "TCSR enforces consistency across uniform unit steps and renormalises by dividing by the interval survival probability. SurvTD keeps the consistency objective but substitutes the update operator: a renewal shift with categorical projection, defined at any real interval length, mass-conserving, and free of the divergence at small S."
+    },
+    {
+      "paper_id": "DeepTCSR2024",
+      "delta": "DeepTCSR contributes the target network and end-to-end training while inheriting the unit-step transition unchanged. SurvTD adopts the target network for a different purpose, to freeze the endogenous duration discount so the per-iteration target map stays affine, and removes the inherited assumption instead of scaling it up."
+    },
+    {
+      "paper_id": "Bleistein2024",
+      "delta": "CoxSig handles irregular sampling by embedding the path as a signature but keeps a linear proportional-hazards head and a terminal Monte-Carlo likelihood, so nothing constrains consecutive predictions. SurvTD attacks the loss rather than the encoder, and is agnostic to which encoder is used, including a signature encoder."
+    },
+    {
+      "paper_id": "Lee2019",
+      "delta": "Dynamic-DeepHit optimises a terminal likelihood plus a pairwise ranking penalty, with no relation imposed between the prediction at consecutive visits. SurvTD supplies that missing relation as a distributional Bellman target and reports the alarm-stability consequence directly."
+    },
+    {
+      "paper_id": "Bellemare2017",
+      "delta": "C51 introduced the projected categorical Bellman operator for discounted reward distributions in discrete-time MDPs. Here the projected quantity is remaining lifetime, the shift is a renewal identity rather than a reward translation, the discount is an endogenous survival probability that the model itself predicts, and censoring requires an IPCW tail completion that has no analogue in reward distributions."
+    },
+    {
+      "paper_id": "Bradtke1994",
+      "delta": "Continuous-time SMDP methods discount a scalar value by elapsed duration. SurvTD discounts a full lifetime distribution by an endogenous, model-predicted interval survival probability, and must therefore project the shifted distribution rather than scale a scalar."
+    }
+  ],
+  "signature_terms": [
+    "duration-discounted Bellman target",
+    "renewal shift with categorical projection",
+    "interval duration discount",
+    "Cramer-metric survival consistency",
+    "duration-geometric lambda-return"
+  ],
+  "alias_terms": [
+    "irregular-time temporal consistency regularisation",
+    "distributional temporal-difference survival regression",
+    "semi-Markov policy evaluation for time-to-event",
+    "variable-step Bellman consistency",
+    "categorical projection of shifted lifetime distributions",
+    "elapsed-time discounting in continuous-time reinforcement learning"
+  ]
+}

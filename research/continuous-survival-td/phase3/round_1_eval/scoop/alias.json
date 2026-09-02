@@ -1,0 +1,1546 @@
+{
+  "generated_at": "2026-09-02T15:23:39+00:00",
+  "queries": [
+    "semi-Markov policy evaluation time-to-event prediction",
+    "elapsed time discounting continuous-time reinforcement learning",
+    "categorical projection shifted distribution Bellman operator",
+    "variable step temporal difference bootstrapping irregular time series"
+  ],
+  "sources": [
+    "arxiv",
+    "dblp",
+    "crossref",
+    "openreview"
+  ],
+  "window": {
+    "from": "2022-09-03",
+    "to": null
+  },
+  "per_source_hits": {
+    "arxiv": 60,
+    "dblp": 0,
+    "crossref": 0,
+    "openreview": 80
+  },
+  "n_raw": 140,
+  "n_deduped": 134,
+  "n_kept": 47,
+  "min_overlap": 0.34,
+  "dropped_off_topic": [
+    {
+      "title": "Forward-Backward Latent State Inference for Hidden Continuous-Time semi-Markov Chains",
+      "source": "arxiv",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "Surrogacy Validation for Time-to-Event Outcomes with Illness-Death Frailty Models",
+      "source": "arxiv",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "Understanding Container-based Services under Software Aging: Dependability and Performance Views",
+      "source": "arxiv",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Extending the Range of Temporal Specifications of the Run-Time Event Calculus",
+      "source": "openreview",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Prompting LLMs for the Run-Time Event Calculus (Short Paper)",
+      "source": "openreview",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Performance Analysis: Discovering Semi-Markov Models From Event Logs",
+      "source": "openreview",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Time-Aware Robustness of Temporal Graph Neural Networks for Link Prediction (Extended Abstract)",
+      "source": "openreview",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Real-Time Higher-Order Recursion Schemes",
+      "source": "openreview",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "Time Series Anomaly Detection Leveraging MSE Feedback with AutoEncoder and RNN",
+      "source": "openreview",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Temporal Considerations in DJ Mix Information Retrieval and Generation (Short Paper)",
+      "source": "openreview",
+      "query_overlap": 0.2
+    },
+    {
+      "title": "SCP-Diff: Spatial-Categorical Joint Prior for Diffusion Based Semantic Image Synthesis",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "An Integral Projection-based Semantic Autoencoder for Zero-Shot Learning",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Wasserstein projection distance for fairness testing of regression models",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Directional Gradient Projection for Robust Fine-Tuning of Foundation Models",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Exploratory Visual Analysis for Increasing Data Readiness in Artificial Intelligence Projects",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Performance Smells in ML and Non-ML Python Projects: A Comparative Study",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "DebGCD: Debiased Learning with Distribution Guidance for Generalized Category Discovery",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Submodular Multi-Agent Policy Learning for Online Distributed Task Allocation in Open Multi-Agent Systems",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Correcting Projection Effects in CMEs using GCS-based Large Statistics of Multi-viewpoint Observations",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Boosted Distributional Reinforcement Learning: Analysis and Healthcare Applications",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Development of Tools for the Classification of Peer Groups Geographies in the Analysis of Health Care Variation",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "A Universal Framework for Compressing Embeddings in CTR Prediction",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "AudienceView: AI-Assisted Interpretation of Audience Feedback in Journalism",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "The Future is Meta: Metadata, Formats and Perspectives towards Interactive and Personalized AV Content",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Conscious Access as Continuous-to-Discrete Translation",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Gradual Transition from Bellman Optimality Operator to Bellman Operator in Online Reinforcement Learning",
+      "source": "openreview",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Multi-Bellman operator for convergence of Q-learning with linear function approximation",
+      "source": "openreview",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Hybrid Machine Learning techniques in the management of harmful algal blooms impact",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    }
+  ],
+  "records": [
+    {
+      "paper_id": "arxiv:2606.11798v1",
+      "title": "Deterministic Policy Gradient for Learning Equilibrium in Time-Inconsistent Control Problems",
+      "abstract": "In this paper, we develop a continuous-time model-free reinforcement learning algorithm to learn deterministic equilibrium policies in general time-inconsistent control problems. Utilizing the extended Hamilton-Jacobi-Bellman system, we recast the original time-inconsistent problem into an equivalent two-stage problem. In the first stage, for given auxiliary functions, we employ the deterministic policy gradient approach to learn an optimal policy in an auxiliary time-consistent control problem. In the second stage, given the updated policy, we exploit the inner fixed point iterations and some martingale characterizations to learn the auxiliary functions. As a theoretical contribution, we provide some mild model assumptions and establish the convergence of inner fixed point iterations. By repeating this actor-critic style of iterations across two stages, our algorithm aims to learn the equilibrium under different sources of time-inconsistency in a unified manner. The superior effectiveness of the proposed algorithm are illustrated in two classical financial applications with time-inconsistency: mean-variance portfolio management and optimal tracking portfolio under non-exponential discounting.",
+      "year_month": "2026-06",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Xin Guo",
+        "Yijie Huang",
+        "Xiang Yu"
+      ],
+      "url": "https://arxiv.org/abs/2606.11798v1",
+      "doi": "",
+      "arxiv_id": "2606.11798v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.8
+    },
+    {
+      "paper_id": "arxiv:2607.07893v1",
+      "title": "Reachability-Preserving Bellman Operator for the Discounted Reach-Cost Value Function: Uniting Hamilton-Jacobi Reachability and Reinforcement Learning",
+      "abstract": "Hamilton-Jacobi (HJ) reachability provides rigorous safety and reachability guarantees for continuous-time dynamical systems, but its numerical solution suffers from the curse of dimensionality. Deep reinforcement learning (DRL), by contrast, offers scalable sample-based methods. However, RL is typically built around additive cumulative rewards; whereas, reachability objectives are inherently non-additive. This mismatch makes a direct bridge between HJ reachability and RL nontrivial. Recent discounted formulations have either introduced contraction by altering the original reachability semantics, or preserved exact semantics on the HJ side without a corresponding Bellman fixed-point characterization. In this paper, we close this gap by building on a semantics-preserving discounted reach-based value function and deriving a non-additive Bellman operator whose unique fixed point exactly matches the value function in the HJ formulation. We prove that discounting makes this operator contractive, yielding existence, uniqueness, and convergence of value iteration. Furthermore, we establish the equivalence between the HJ and Bellman characterizations, and show that RL can be interpreted as a sample-based approximation scheme for the same fixed-point equation. This yields a principled and semantically exact connection between HJ reachability and RL, enabling learning-based methods to approximate reachability value functions while preserving their safety-critical meaning. As a result, the proposed framework opens the door to scalable, data-driven computation of reachable sets and safety certificates in high-dimensional systems. Numerical experiments demonstrate close agreement with HJ solutions, confirm preservation of reachability semantics via alignment of zero level sets, and ",
+      "year_month": "2026-07",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Isabelle El-Hajj",
+        "Prashant Solanki",
+        "Jasper van Beers",
+        "Coen de Visser",
+        "Erik-Jan van Kampen"
+      ],
+      "url": "https://arxiv.org/abs/2607.07893v1",
+      "doi": "",
+      "arxiv_id": "2607.07893v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.8
+    },
+    {
+      "paper_id": "arxiv:2605.11289v1",
+      "title": "Quotient-Categorical Representations for Bellman-Compatible Average-Reward Distributional Reinforcement Learning",
+      "abstract": "Average-reward reinforcement learning requires estimating the gain and the bias, which is defined only up to an additive constant. This makes direct distributional analogues ill-posed on the real line. We introduce a quotient-space formulation in which state-indexed bias laws are identified up to a common translation, together with a categorical parameterization that respects this symmetry. On this quotient-categorical space, we define a projected average-reward distributional operator and show that it is well-defined, non-expansive in a coordinate Cramér metric, and admits fixed points. We then study sampled recursions whose mean-field maps are asynchronous relaxations of this operator. In an idealized centered-reward setting, a one-state temporal-difference update enjoys almost sure convergence together with finite-iteration residual bounds under both i.i.d. and Markovian sampling. When the gain is unknown, we augment the recursion with an online gain estimator, and prove non-expansiveness and Markovian convergence of the resulting coupled scheme. Finally, we show that synchronous exact updates are gain-independent at the quotient-law level, isolating a structural contrast between ideal quotient distributions and practical fixed-grid categorical representations.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Ege C. Kaya",
+        "Aliasghar Pourghani",
+        "Vijay Gupta",
+        "Abolfazl Hashemi"
+      ],
+      "url": "https://arxiv.org/abs/2605.11289v1",
+      "doi": "",
+      "arxiv_id": "2605.11289v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.667
+    },
+    {
+      "paper_id": "openreview:Ps58JvpLT7",
+      "title": "Path-Coupled Bellman Flows for Distributional Reinforcement Learning",
+      "abstract": "Distributional reinforcement learning (DRL) models the full return distribution, but typically relies on finite-dimensional categorical or quantile approximations, often involving projection or quantile-regression approximations to the Bellman target, together with independently sampled bootstrap targets that obscure transport structure and add variance. We present Path-Coupled Bellman Flows (PCBF), a continuous-time DRL method that encodes Bellman endpoint consistency and pathwise Bellman-coupled geometry within generative flow trajectories. PCBF represents return distributions via flow matching and couples the paths of consecutive states through shared base noise, yielding a geometric Bellman flow relation between velocity fields. This structure enables a $\\lambda$-parameterized control-variate target that reduces training variance while preserving the source and Bellman endpoint geometry. Experiments on analytically tractable MRPs, OGBench, and D4RL show improved distributional fidelity, training stability, and competitive offline RL performance.",
+      "year_month": "2026-01",
+      "venue": "['ICML.cc/2026/Conference/-/Submission', 'ICML.cc/2026/Conference/-/Post_Submission', 'ICML.cc/2026/Conference/Submission26660/-/Full_Submission', 'ICML.cc/2026",
+      "authors": [
+        "Boyang Xu",
+        "Qing Zou",
+        "Siqin Yang",
+        "Hao Yan"
+      ],
+      "url": "https://openreview.net/forum?id=Ps58JvpLT7",
+      "doi": "",
+      "arxiv_id": "",
+      "citation_count": null,
+      "source": "openreview",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.667
+    },
+    {
+      "paper_id": "arxiv:2603.13155v1",
+      "title": "Reinforcement Learning for Discounted and Ergodic Control of Diffusion Processes",
+      "abstract": "This paper develops a quantized Q-learning algorithm for the optimal control of controlled diffusion processes on $\\mathbb{R}^d$ under both discounted and ergodic (average) cost criteria. We first establish near-optimality of finite-state MDP approximations to discrete-time discretizations of the diffusion, then introduce a quantized Q-learning scheme and prove its almost-sure convergence to near-optimal policies for the finite MDP. These policies, when interpolated to continuous time, are shown to be near-optimal for the original diffusion model under discounted costs and -- via a vanishing-discount argument -- also under ergodic costs for sufficiently small discount factors. The analysis applies under mild conditions (Lipschitz dynamics, non-degeneracy, bounded continuous costs, and Lyapunov stability for ergodic case) without requiring prior knowledge of the system dynamics or restrictions on control policies (beyond admissibility). Our results complement recent work on continuous-time reinforcement learning for diffusions by providing explicit near-optimality rates and extending rigorous guarantees both for discounted cost and ergodic cost criteria for diffusions with unbounded state space.",
+      "year_month": "2026-03",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Erhan Bayraktar",
+        "Ali D. Kara",
+        "Somnath Pradhan",
+        "Serdar Yuksel"
+      ],
+      "url": "https://arxiv.org/abs/2603.13155v1",
+      "doi": "",
+      "arxiv_id": "2603.13155v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2506.05208v2",
+      "title": "Optimal-PhiBE: A PDE-based Model-free framework for Continuous-time Reinforcement Learning",
+      "abstract": "This paper addresses continuous-time reinforcement learning (CTRL) where the system dynamics are governed by an unknown stochastic differential equation, and only discrete-time observations are available. Existing approaches face limitations: model-based PDE methods suffer from non-identifiability, while model-free methods based on the discrete-time optimal Bellman equation (Optimal-BE) suffer from large discretization errors that are highly sensitive to both the system dynamics and the reward structure. To overcome these challenges, we introduce Optimal-PhiBE, a formulation that integrates discrete-time information into a continuous-time PDE, combining the strength of both existing frameworks while mitigating their limitations. Optimal-PhiBE exhibits smaller discretization errors when the uncontrolled system evolves slowly, and demonstrates reduced sensitivity to oscillatory reward structures, and enables model-free algorithms that bypass explicit dynamics estimation. In the linear-quadratic regulator (LQR) setting, sharp error bounds are established for both Optimal-PhiBE and Optimal-BE. The results show that Optimal-PhiBE exactly recovers the optimal policy in the undiscounted case and substantially outperforms Optimal-BE when the problem is weakly discounted or control-dominant. Furthermore, we extend Optimal-PhiBE to higher orders, providing increasingly accurate approximations. A model-free policy iteration algorithm is proposed to solve the Optimal-PhiBE directly from trajectory data. Numerical experiments are conducted to verify the theoretical findings.",
+      "year_month": "2025-06",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Yuhua Zhu",
+        "Yuming Zhang",
+        "Haoyu Zhang"
+      ],
+      "url": "https://arxiv.org/abs/2506.05208v2",
+      "doi": "",
+      "arxiv_id": "2506.05208v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2502.05596v1",
+      "title": "Discrete-Time Approximations of Controlled Diffusions with Infinite Horizon Discounted and Average Cost",
+      "abstract": "We present discrete-time approximation of optimal control policies for infinite horizon discounted/ergodic control problems for controlled diffusions in $\\Rd$\\,. In particular, our objective is to show near optimality of optimal policies designed from the approximating discrete-time controlled Markov chain model, for the discounted/ergodic optimal control problems, in the true controlled diffusion model (as the sampling period approaches zero). To this end, we first construct suitable discrete-time controlled Markov chain models for which one can compute optimal policies and optimal values via several methods (such as value iteration, convex analytic method, reinforcement learning etc.). Then using a weak convergence technique, we show that the optimal policy designed for the discrete-time Markov chain model is near-optimal for the controlled diffusion model as the discrete-time model approaches the continuous-time model. This provides a practical approach for finding near-optimal control policies for controlled diffusions. Our conditions complement existing results in the literature, which have been arrived at via either probabilistic or PDE based methods.",
+      "year_month": "2025-02",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Somnath Pradhan",
+        "Serdar Yuksel"
+      ],
+      "url": "https://arxiv.org/abs/2502.05596v1",
+      "doi": "",
+      "arxiv_id": "2502.05596v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2211.09917v1",
+      "title": "Inverse Optimal Control with Discount Factor for Continuous and Discrete-Time Control-Affine Systems and Reinforcement Learning",
+      "abstract": "This paper addresses the inverse optimal control problem of finding the state weighting function that leads to a quadratic value function when the cost on the input is fixed to be quadratic. The paper focuses on a class of infinite horizon discrete-time and continuous-time optimal control problems whose dynamics are control-affine and whose cost is quadratic in the input. The optimal control policy for this problem is the projection of minus the gradient of the value function onto the space formed by all feasible control directions. This projection points along the control direction of steepest decrease of the value function. For discrete-time systems and a quadratic value function the optimal control law can be obtained as the solution of a regularized least squares program, which corresponds to a receding horizon control with a single step ahead. For the single input case and a quadratic value function the solution for small weights in the control energy is interpreted as a control policy that at each step brings the trajectories of the system as close as possible to the origin, as measured by an appropriate norm. Conditions under which the optimal control law is linear are also stated. Additionally, the paper offers a mapping of the optimal control formulation to an equivalent reinforcement learning formulation. Examples show the application of the theoretical results.",
+      "year_month": "2022-11",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Luis Rodrigues"
+      ],
+      "url": "https://arxiv.org/abs/2211.09917v1",
+      "doi": "",
+      "arxiv_id": "2211.09917v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2606.04275v1",
+      "title": "From Ticks to Flows: Dynamics of Neural Reinforcement Learning in Continuous Environments",
+      "abstract": "We present a novel theoretical framework for deep reinforcement learning (RL) in continuous environments by modeling the problem as a continuous-time stochastic process, drawing on insights from stochastic control. Building on previous work, we introduce a viable model of actor-critic algorithm that incorporates both exploration and stochastic transitions. For single-hidden-layer neural networks, we show that the state of the environment can be formulated as a two time scale process: the environment time and the gradient time. Within this formulation, we characterize how the time-dependent random variables that represent the environment's state and estimate of the cumulative discounted return evolve over gradient steps in the infinite width limit of two-layer networks. Using the theory of stochastic differential equations, we derive, for the first time in continuous RL, an equation describing the infinitesimal change in the state distribution at each gradient step, under a vanishingly small learning rate. Overall, our work provides a novel nonparametric formulation for studying overparametrized neural actor-critic algorithms. We empirically corroborate our theoretical result using a toy continuous control task.",
+      "year_month": "2026-06",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Saket Tiwari",
+        "Tejas Kotwal",
+        "George Konidaris"
+      ],
+      "url": "https://arxiv.org/abs/2606.04275v1",
+      "doi": "",
+      "arxiv_id": "2606.04275v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2401.12882v1",
+      "title": "Model-Free $δ$-Policy Iteration Based on Damped Newton Method for Nonlinear Continuous-Time H$\\infty$ Tracking Control",
+      "abstract": "This paper presents a δ-PI algorithm which is based on damped Newton method for the H{\\infty} tracking control problem of unknown continuous-time nonlinear system. A discounted performance function and an augmented system are used to get the tracking Hamilton-Jacobi-Isaac (HJI) equation. Tracking HJI equation is a nonlinear partial differential equation, traditional reinforcement learning methods for solving the tracking HJI equation are mostly based on the Newton method, which usually only satisfies local convergence and needs a good initial guess. Based upon the damped Newton iteration operator equation, a generalized tracking Bellman equation is derived firstly. The δ-PI algorithm can seek the optimal solution of the tracking HJI equation by iteratively solving the generalized tracking Bellman equation. On-policy learning and off-policy learning δ-PI reinforcement learning methods are provided, respectively. Off-policy version δ-PI algorithm is a model-free algorithm which can be performed without making use of a priori knowledge of the system dynamics. NN-based implementation scheme for the off-policy δ-PI algorithms is shown. The suitability of the model-free δ-PI algorithm is illustrated with a nonlinear system simulation.",
+      "year_month": "2024-01",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Qi Wang"
+      ],
+      "url": "https://arxiv.org/abs/2401.12882v1",
+      "doi": "",
+      "arxiv_id": "2401.12882v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2602.13940v3",
+      "title": "You Can Learn Tokenization End-to-End with Reinforcement Learning",
+      "abstract": "Tokenization is a hardcoded compression step which remains in the training pipeline of Large Language Models (LLMs), despite a general trend towards architectures becoming increasingly end-to-end. Prior work has shown promising results at scale in bringing this compression step inside the LLMs' architecture with heuristics to draw token boundaries, and also attempts to learn these token boundaries with straight-through estimates, which treat the problem of drawing discrete token boundaries as a continuous one. We show that these token boundaries can instead be learned using score function estimates, which have tighter theoretical guarantees due to directly optimizing the problem of drawing discrete token boundaries to minimize loss. We observe that techniques from reinforcement learning, such as time discounting, are necessary to reduce the variance of this score function sufficiently to make it practicable. We demonstrate that the resultant method outperforms prior proposed straight-through estimates, both qualitatively and quantitatively at the $100$ million parameter scale.",
+      "year_month": "2026-02",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Sam Dauncey",
+        "Roger Wattenhofer"
+      ],
+      "url": "https://arxiv.org/abs/2602.13940v3",
+      "doi": "",
+      "arxiv_id": "2602.13940v3",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2604.11914v1",
+      "title": "Self-Monitoring Benefits from Structural Integration: Lessons from Metacognition in Continuous-Time Multi-Timescale Agents",
+      "abstract": "Self-monitoring capabilities -- metacognition, self-prediction, and subjective duration -- are often proposed as useful additions to reinforcement learning agents. But do they actually help? We investigate this question in a continuous-time multi-timescale agent operating in predator-prey survival environments of varying complexity, including a 2D partially observable variant. We first show that three self-monitoring modules, implemented as auxiliary-loss add-ons to a multi-timescale cortical hierarchy, provide no statistically significant benefit across 20 random seeds, 1D and 2D predator-prey environments with standard and non-stationary variants, and training horizons up to 50,000 steps. Diagnosing the failure, we find the modules collapse to near-constant outputs (confidence std < 0.006, attention allocation std < 0.011) and the subjective duration mechanism shifts the discount factor by less than 0.03%. Policy sensitivity analysis confirms the agent's decisions are unaffected by module outputs in this design. We then show that structurally integrating the module outputs -- using confidence to gate exploration, surprise to trigger workspace broadcasts, and self-model predictions as policy input -- produces a medium-large improvement over the add-on approach (Cohen's d = 0.62, p = 0.06, paired) in a non-stationary environment. Component-wise ablations reveal that the TSM-to-policy pathway contributes most of this gain. However, structural integration does not significantly outperform a baseline with no self-monitoring (d = 0.15, p = 0.67), and a parameter-matched control without modules performs comparably, so the benefit may lie in recovering from the trend-level harm of ignored modules rather than in self-monitoring content. The architectural implication is that se",
+      "year_month": "2026-04",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Ying Xie"
+      ],
+      "url": "https://arxiv.org/abs/2604.11914v1",
+      "doi": "",
+      "arxiv_id": "2604.11914v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2603.16842v2",
+      "title": "Stochastic Resetting Accelerates Reinforcement Learning Beyond Random Search",
+      "abstract": "Stochastic resetting -- intermittently returning a process to a fixed reference state -- has emerged as an effective mechanism for optimizing first-passage properties. Existing theory largely treats processes that search but do not learn: the searcher follows fixed dynamics, accumulating no knowledge between resets. Here we ask how stochastic resetting interacts with reinforcement learning, where the underlying dynamics adapt through experience. In tabular grid environments, we find that resetting can accelerate learning even when it does not reduce the search time of a diffusive agent. Our results reveal a distinct additional mechanism through which resetting speeds the propagation of reward information. We show that deterministic, sharp resetting accelerates learning more than the stochastic protocol but over a narrower range of reset rates. In a continuous-state task with neural-network-based value approximation, we demonstrate that resetting speeds up learning when exploration is hard and rewards are sparse. We argue further that, in the tabular tasks, resetting accelerates learning without altering the solution the agent ultimately reaches, unlike other techniques such as temporal discounting, which biases the optimal behavior. Our results establish stochastic resetting as a simple, tunable mechanism for accelerating learning by shaping how experience accumulates, extending a canonical phenomenon of statistical mechanics to adaptive systems.",
+      "year_month": "2026-03",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Jello Zhou",
+        "David J. Schwab",
+        "Vudtiwat Ngampruetikorn"
+      ],
+      "url": "https://arxiv.org/abs/2603.16842v2",
+      "doi": "",
+      "arxiv_id": "2603.16842v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2601.20387v1",
+      "title": "Reinforcement Learning for Dividend Optimization in Partially Observed Regime-Switching Diffusion Model",
+      "abstract": "This paper studies the optimal dividend problem with a bounded payout rate in a partially observed regime-switching diffusion model, where, in practice, the market regime is unobserved and key model parameters are unknown. To address this partial-information setting, we propose a continuous-time reinforcement learning (RL) approach within an exploratory (entropy-regularized) stochastic control framework for discounted dividends under regime switching. The associated exploratory Hamilton-Jacobi-Bellman (HJB) system admits semi-analytical characterizations of the value function and the optimal exploratory dividend policy, determined by two unknown functions solving two ordinary differential equations (ODEs) together with positive real roots of the induced quadratic equations. Exploiting this structure, we introduce parametric families for both the value function and the policy, using low-degree polynomial approximations to the ODE solutions. We then develop an actor-critic RL algorithm to learn the optimal exploratory policy through interactions with the market environment: it performs belief-state filtering from observed data and iterates policy evaluation and policy improvement online to refine the policy. Numerical experiments demonstrate strong out-of-sample performance of the learned dividend policies.",
+      "year_month": "2026-01",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Zhongqin Gao",
+        "Yan Lv",
+        "Jingmin He"
+      ],
+      "url": "https://arxiv.org/abs/2601.20387v1",
+      "doi": "",
+      "arxiv_id": "2601.20387v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2311.14318v2",
+      "title": "On optimal tracking portfolio in incomplete markets: The reinforcement learning approach",
+      "abstract": "This paper studies an infinite horizon optimal tracking portfolio problem using capital injection in incomplete market models. The benchmark process is modelled by a geometric Brownian motion with zero drift driven by some unhedgeable risk. The relaxed tracking formulation is adopted where the fund account compensated by the injected capital needs to outperform the benchmark process at any time, and the goal is to minimize the cost of the discounted total capital injection. When model parameters are known, we formulate the equivalent auxiliary control problem with reflected state dynamics, for which the classical solution of the HJB equation with Neumann boundary condition is obtained explicitly. When model parameters are unknown, we introduce the exploratory formulation for the auxiliary control problem with entropy regularization and develop the continuous-time q-learning algorithm in models of reflected diffusion processes. In some illustrative numerical example, we show the satisfactory performance of the q-learning algorithm.",
+      "year_month": "2023-11",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Lijun Bo",
+        "Yijie Huang",
+        "Xiang Yu"
+      ],
+      "url": "https://arxiv.org/abs/2311.14318v2",
+      "doi": "",
+      "arxiv_id": "2311.14318v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2507.00011v1",
+      "title": "Novel RL approach for efficient Elevator Group Control Systems",
+      "abstract": "Efficient elevator traffic management in large buildings is critical for minimizing passenger travel times and energy consumption. Because heuristic- or pattern-detection-based controllers struggle with the stochastic and combinatorial nature of dispatching, we model the six-elevator, fifteen-floor system at Vrije Universiteit Amsterdam as a Markov Decision Process and train an end-to-end Reinforcement Learning (RL) Elevator Group Control System (EGCS). Key innovations include a novel action space encoding to handle the combinatorial complexity of elevator dispatching, the introduction of infra-steps to model continuous passenger arrivals, and a tailored reward signal to improve learning efficiency. In addition, we explore various ways to adapt the discounting factor to the infra-step formulation. We investigate RL architectures based on Dueling Double Deep Q-learning, showing that the proposed RL-based EGCS adapts to fluctuating traffic patterns, learns from a highly stochastic environment, and thereby outperforms a traditional rule-based algorithm.",
+      "year_month": "2025-06",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Nathan Vaartjes",
+        "Vincent Francois-Lavet"
+      ],
+      "url": "https://arxiv.org/abs/2507.00011v1",
+      "doi": "",
+      "arxiv_id": "2507.00011v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2502.19993v2",
+      "title": "Data-Driven Mean Field Equilibrium Computation in Large-Population LQG Games",
+      "abstract": "This paper presents a novel data-driven approach for approximating the $\\varepsilon$-Nash equilibrium in continuous-time linear quadratic Gaussian (LQG) games, where multiple agents interact with each other through their dynamics and infinite horizon discounted costs. The core of our method involves solving two algebraic Riccati equations (AREs) and an ordinary differential equation (ODE) using state and input samples collected from agents, eliminating the need for a priori knowledge of their dynamical models. The standard ARE is addressed through an integral reinforcement learning (IRL) technique, while the nonsymmetric ARE and the ODE are resolved by identifying the drift coefficients of the agents' dynamics under general conditions. Moreover, by imposing specific conditions on models, we extend the IRL-based approach to approximately solve the nonsymmetric ARE. Numerical examples are given to demonstrate the effectiveness of the proposed algorithms.",
+      "year_month": "2025-02",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Zhenhui Xu",
+        "Jiayu Chen",
+        "Bing-Chang Wang",
+        "Tielong Shen"
+      ],
+      "url": "https://arxiv.org/abs/2502.19993v2",
+      "doi": "10.1109/TCNS.2025.3590417",
+      "arxiv_id": "2502.19993v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.6
+    },
+    {
+      "paper_id": "arxiv:2404.16044v4",
+      "title": "The Categorical Data Map: A Multidimensional Scaling-Based Approach",
+      "abstract": "Categorical data does not have an intrinsic definition of distance or order, and therefore, established visualization techniques for categorical data only allow for a set-based or frequency-based analysis, e.g., through Euler diagrams or Parallel Sets, and do not support a similarity-based analysis. We present a novel dimensionality reduction-based visualization for categorical data, which is based on defining the distance of two data items as the number of varying attributes. Our technique enables users to pre-attentively detect groups of similar data items and observe the properties of the projection, such as attributes strongly influencing the embedding. Our prototype visually encodes data properties in an enhanced scatterplot-like visualization, encoding attributes in the background to show the distribution of categories. In addition, we propose two graph-based measures to quantify the plot's visual quality, which rank attributes according to their contribution to cluster cohesion. To demonstrate the capabilities of our similarity-based approach, we compare it to Euler diagrams and Parallel Sets regarding visual scalability and show its benefits through an expert study with five data scientists analyzing the Titanic and Mushroom datasets with up to 23 attributes and 8124 category combinations. Our results indicate that the Categorical Data Map offers an effective analysis method, especially for large datasets with a high number of category combinations.",
+      "year_month": "2024-04",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Frederik L. Dennig",
+        "Lucas Joos",
+        "Patrick Paetzold",
+        "Daniela Blumberg",
+        "Oliver Deussen",
+        "Daniel A. Keim",
+        "Maximilian T. Fischer"
+      ],
+      "url": "https://arxiv.org/abs/2404.16044v4",
+      "doi": "10.1109/VDS63897.2024.00008",
+      "arxiv_id": "2404.16044v4",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2511.22179v1",
+      "title": "An Equality Set Projection Approach for TSO-DSO Coordination Dispatch",
+      "abstract": "Coordinated optimization dispatch (COD) of transmission system operator (TSO) and distribution system operator (DSO) can effectively ensure system security and efficiency under high-penetration distributed energy resource (DER) integration. Researches of large-scale COD problem can be categorized into iterative approaches that allow DSO to dispatch independently, and non-iterative methods based on projections of feasible regions (FR). However, the iterative methods suffer from low computational convergence and efficiency, while non-iterative methods struggle to solve equivalent projections with high-dimensional FR. To address these issues, this paper proposes a TSO-DSO coordinated dispatch approach based on an accelerated non-iterative Equality Set Projection (ESP) algorithm. First, ESP algorithm is employed to overcome the bottleneck of high-dimensional FR construction. Second, an regularization-based accelerated method is proposed to reduce computational burden when degeneracy occurs. Accelerated ESP algorithm constructs projection of FR via adjacent facet searching. Therefore, it is less sensitive to the increase of vertices and could efficiently construct the projection of high-dimensional FR. Case studies on a polyhedron dataset, IEEE 33-Bus System and T118D10 TSO-DSO system demonstrate the effectiveness and computational efficiency of the proposed COD approach.",
+      "year_month": "2025-11",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Bo Li",
+        "Xicong Pang",
+        "Guangrui Wei",
+        "Haiwang Zhong",
+        "Grant Ruan",
+        "Zhengmao Li",
+        "Edris Pouresmaeil"
+      ],
+      "url": "https://arxiv.org/abs/2511.22179v1",
+      "doi": "",
+      "arxiv_id": "2511.22179v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2409.00328v1",
+      "title": "Foundations of Multivariate Distributional Reinforcement Learning",
+      "abstract": "In reinforcement learning (RL), the consideration of multivariate reward signals has led to fundamental advancements in multi-objective decision-making, transfer learning, and representation learning. This work introduces the first oracle-free and computationally-tractable algorithms for provably convergent multivariate distributional dynamic programming and temporal difference learning. Our convergence rates match the familiar rates in the scalar reward setting, and additionally provide new insights into the fidelity of approximate return distribution representations as a function of the reward dimension. Surprisingly, when the reward dimension is larger than $1$, we show that standard analysis of categorical TD learning fails, which we resolve with a novel projection onto the space of mass-$1$ signed measures. Finally, with the aid of our technical results and simulations, we identify tradeoffs between distribution representations that influence the performance of multivariate distributional RL in practice.",
+      "year_month": "2024-08",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Harley Wiltzer",
+        "Jesse Farebrother",
+        "Arthur Gretton",
+        "Mark Rowland"
+      ],
+      "url": "https://arxiv.org/abs/2409.00328v1",
+      "doi": "",
+      "arxiv_id": "2409.00328v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2411.17618v1",
+      "title": "Valid Bayesian Inference based on Variance Weighted Projection for High-Dimensional Logistic Regression with Binary Covariates",
+      "abstract": "We address the challenge of conducting inference for a categorical treatment effect related to a binary outcome variable while taking into account high-dimensional baseline covariates. The conventional technique used to establish orthogonality for the treatment effect from nuisance variables in continuous cases is inapplicable in the context of binary treatment. To overcome this obstacle, an orthogonal score tailored specifically to this scenario is formulated which is based on a variance-weighted projection. Additionally, a novel Bayesian framework is proposed to facilitate valid inference for the desired low-dimensional parameter within the complex framework of high-dimensional logistic regression. We provide uniform convergence results, affirming the validity of credible intervals derived from the posterior distribution. The effectiveness of the proposed method is demonstrated through comprehensive simulation studies and real data analysis.",
+      "year_month": "2024-11",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Abhishek Ojha",
+        "Naveen N. Narisetty"
+      ],
+      "url": "https://arxiv.org/abs/2411.17618v1",
+      "doi": "",
+      "arxiv_id": "2411.17618v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2405.02576v3",
+      "title": "CTD4 -- A Deep Continuous Distributional Actor-Critic Agent with a Kalman Fusion of Multiple Critics",
+      "abstract": "Categorical Distributional Reinforcement Learning (CDRL) has demonstrated superior sample efficiency in learning complex tasks compared to conventional Reinforcement Learning (RL) approaches. However, the practical application of CDRL is encumbered by challenging projection steps, detailed parameter tuning, and domain knowledge. This paper addresses these challenges by introducing a pioneering Continuous Distributional Model-Free RL algorithm tailored for continuous action spaces. The proposed algorithm simplifies the implementation of distributional RL, adopting an actor-critic architecture wherein the critic outputs a continuous probability distribution. Additionally, we propose an ensemble of multiple critics fused through a Kalman fusion mechanism to mitigate overestimation bias. Through a series of experiments, we validate that our proposed method provides a sample-efficient solution for executing complex continuous-control tasks.",
+      "year_month": "2024-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "David Valencia",
+        "Henry Williams",
+        "Yuning Xing",
+        "Trevor Gee",
+        "Bruce A MacDonald",
+        "Minas Liarokapis"
+      ],
+      "url": "https://arxiv.org/abs/2405.02576v3",
+      "doi": "",
+      "arxiv_id": "2405.02576v3",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2508.14620v2",
+      "title": "Continuous sentiment scores for literary and multilingual contexts",
+      "abstract": "Sentiment Analysis is widely used to quantify sentiment in text, but its application to literary texts poses unique challenges due to figurative language, stylistic ambiguity, as well as sentiment evocation strategies. Traditional dictionary-based tools often underperform, especially for low-resource languages, and transformer models, while promising, typically output coarse categorical labels that limit fine-grained analysis. We introduce a novel continuous sentiment scoring method based on concept vector projection, trained on multilingual literary data, which more effectively captures nuanced sentiment expressions across genres, languages, and historical periods. Our approach outperforms existing tools on English and Danish texts, producing sentiment scores whose distribution closely matches human ratings, enabling more accurate analysis and sentiment arc modeling in literature.",
+      "year_month": "2025-08",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Laurits Lyngbaek",
+        "Pascale Feldkamp",
+        "Yuri Bizzoni",
+        "Kristoffer Nielbo",
+        "Kenneth Enevoldsen"
+      ],
+      "url": "https://arxiv.org/abs/2508.14620v2",
+      "doi": "",
+      "arxiv_id": "2508.14620v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2509.12919v2",
+      "title": "A geometric model of synthetic filtrations via context-dependent time",
+      "abstract": "Classical filtrations in probability theory formalize the accumulation of information along a linear time axis: the past is unique and the present evolves into an uncertain future. In reality, however, this linearity may itself be an illusion - an artifact of human perception that collapses multiple possible histories into a single apparent path. In this paper, we propose a geometric and homological model of synthetic filtrations, where the present arises as a synthesis of many potential pasts. To achieve this, we introduce a new category $Σ$, extending the simplex category $Δ$ so that each moment of time carries contextual structure. Synthetic filtrations are realized as contravariant functors $Σ^{op} \\to Prob$, where $Prob$ is the category of probability spaces with null-preserving maps. We then develop a homological analysis of $Σ$-filtrations, constructing chain complexes whose boundaries are given by conditional expectations. Their homology groups measure informational \"holes\" - probabilistic obstructions arising from the incompatibility of contextual expectations. As a concrete realization, we define Dirichlet filtrations, in which measures on simplices arise from Dirichlet distributions, reflecting both parameter and contextual uncertainty. Bayesian updating is then interpreted as a categorical transformation of a Dirichlet functor, revealing learning as a reconstruction of coherence across contexts. This framework suggests that what appears as a linear temporal order is merely a projection of a higher contextual geometry. It unifies categorical probability, homological algebra, and Bayesian reasoning, offering a new language for uncertainty in mathematics, finance, and cognition.",
+      "year_month": "2025-09",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Takanori Adachi"
+      ],
+      "url": "https://arxiv.org/abs/2509.12919v2",
+      "doi": "",
+      "arxiv_id": "2509.12919v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2412.01246v3",
+      "title": "Class Distance Weighted Cross Entropy Loss for Classification of Disease Severity",
+      "abstract": "Assessing disease severity with ordinal classes, where each class reflects increasing severity levels, benefits from loss functions designed for this ordinal structure. Traditional categorical loss functions, like Cross-Entropy (CE), often perform suboptimally in these scenarios. To address this, we propose a novel loss function, Class Distance Weighted Cross-Entropy (CDW-CE), which penalizes misclassifications more severely when the predicted and actual classes are farther apart. We evaluated CDW-CE using various deep architectures, comparing its performance against several categorical and ordinal loss functions. To assess the quality of latent representations, we used t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) visualizations, quantified the clustering quality using the Silhouette Score, and compared Class Activation Maps (CAM) generated by models trained with CDW-CE and CE loss. Feedback from domain experts was incorporated to evaluate how well model attention aligns with expert opinion. Our results show that CDW-CE consistently improves performance in ordinal image classification tasks. It achieves higher Silhouette Scores, indicating better class discrimination capability, and its CAM visualizations show a stronger focus on clinically significant regions, as validated by domain experts. Receiver operator characteristics (ROC) curves and the area under the curve (AUC) scores highlight that CDW-CE outperforms other loss functions, including prominent ordinal loss functions from the literature.",
+      "year_month": "2024-12",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Gorkem Polat",
+        "Ümit Mert Çağlar",
+        "Alptekin Temizel"
+      ],
+      "url": "https://arxiv.org/abs/2412.01246v3",
+      "doi": "10.1016/j.eswa.2024.126372",
+      "arxiv_id": "2412.01246v3",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2312.02116v4",
+      "title": "GIVT: Generative Infinite-Vocabulary Transformers",
+      "abstract": "We introduce Generative Infinite-Vocabulary Transformers (GIVT) which generate vector sequences with real-valued entries, instead of discrete tokens from a finite vocabulary. To this end, we propose two surprisingly simple modifications to decoder-only transformers: 1) at the input, we replace the finite-vocabulary lookup table with a linear projection of the input vectors; and 2) at the output, we replace the logits prediction (usually mapped to a categorical distribution) with the parameters of a multivariate Gaussian mixture model. Inspired by the image-generation paradigm of VQ-GAN and MaskGIT, where transformers are used to model the discrete latent sequences of a VQ-VAE, we use GIVT to model the unquantized real-valued latent sequences of a $β$-VAE. In class-conditional image generation GIVT outperforms VQ-GAN (and improved variants thereof) as well as MaskGIT, and achieves performance competitive with recent latent diffusion models. Finally, we obtain strong results outside of image generation when applying GIVT to panoptic segmentation and depth estimation with a VAE variant of the UViM framework.",
+      "year_month": "2023-12",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Michael Tschannen",
+        "Cian Eastwood",
+        "Fabian Mentzer"
+      ],
+      "url": "https://arxiv.org/abs/2312.02116v4",
+      "doi": "",
+      "arxiv_id": "2312.02116v4",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "openreview:4Ub4NZnygK",
+      "title": "Parameterized Projected Bellman Operator",
+      "abstract": "Approximate value iteration (AVI) is a family of algorithms for reinforcement learning (RL) that aims to obtain an approximation of the optimal value function. Generally, AVI algorithms implement an iterated procedure where each step consists of (i) an application of the Bellman operator and (ii) a projection step into a considered function space. Notoriously, the Bellman operator leverages transition samples, which strongly determine its behavior, as uninformative samples can result in negligible updates or long detours, whose detrimental effects are further exacerbated by the computationally intensive projection step. To address these issues, we propose a novel alternative approach based on learning an approximate version of the Bellman operator rather than estimating it through samples as in AVI approaches. This way, we are able to (i) generalize across transition samples and (ii) avoid the computationally intensive projection step. For this reason, we call our novel operator projected Bellman operator (PBO). We formulate an optimization problem to learn PBO for generic sequential decision-making problems, and we theoretically analyze its properties in two representative classes of RL problems. Furthermore, we theoretically study our approach under the lens of AVI and devise algorithmic implementations to learn PBO in offline and online settings by leveraging neural network parameterizations. Finally, we empirically showcase the benefits of PBO w.r.t. the regular Bellman operator on several RL problems.",
+      "year_month": "2023-01",
+      "venue": "['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']",
+      "authors": [
+        "Théo Vincent",
+        "Alberto Maria Metelli",
+        "Boris Belousov",
+        "Jan Peters",
+        "Marcello Restelli",
+        "Carlo D'Eramo"
+      ],
+      "url": "https://openreview.net/forum?id=4Ub4NZnygK",
+      "doi": "",
+      "arxiv_id": "",
+      "citation_count": null,
+      "source": "openreview",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "openreview:vKxpeaVrsD",
+      "title": "Iterated Q-Network: Beyond the One-Step Bellman Operator",
+      "abstract": "Value-based Reinforcement Learning (RL) methods rely on the application of the Bellman operator, which needs to be approximated from samples. Most approaches consist of an iterative scheme alternating the application of the Bellman operator and a subsequent projection step onto a considered function space. However, we observe that these algorithms can be improved by considering multiple iterations of the Bellman operator at once. Thus, we introduce iterated $Q$-Networks (iQN), a novel approach that learns a sequence of $Q$-function approximations where each $Q$-function serves as the target for the next one in a chain of consecutive Bellman iterations. We demonstrate that iQN is theoretically sound and show how it can be seamlessly used in value-based and actor-critic methods. We empirically demonstrate its advantages on Atari $2600$ games and in continuous-control MuJoCo environments.",
+      "year_month": "2024-01",
+      "venue": "['DBLP.org/-/Record', 'DBLP.org/-/Edit', 'DBLP.org/-/Author_Coreference']",
+      "authors": [
+        "Théo Vincent",
+        "Daniel Palenicek",
+        "Boris Belousov",
+        "Jan Peters",
+        "Carlo D'Eramo"
+      ],
+      "url": "https://openreview.net/forum?id=vKxpeaVrsD",
+      "doi": "",
+      "arxiv_id": "",
+      "citation_count": null,
+      "source": "openreview",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "openreview:yys48bjt2c",
+      "title": "MICRO: Model-Based Offline Reinforcement Learning with a Conservative Bellman Operator",
+      "abstract": "Offline reinforcement learning (RL) faces a significant challenge of distribution shift. Model-free offline RL penalizes the Q value for out-of-distribution (OOD) data or constrains the policy closed to the behavior policy to tackle this problem, but this inhibits the exploration of the OOD region. Model-based offline RL, which uses the trained environment model to generate more OOD data and performs conservative policy optimization within that model, has become an effective method for this problem. However, the current model-based algorithms rarely consider agent robustness when incorporating conservatism into policy. Therefore, the new model-based offline algorithm with a conservative Bellman operator (MICRO) is proposed. This method trades off performance and robustness via introducing the robust Bellman operator into the algorithm. Compared with previous model-based algorithms with robust adversarial models, MICRO can significantly reduce the computation cost by only choosing the minimal Q value in the state uncertainty set. Extensive experiments demonstrate that MICRO outperforms prior RL algorithms in offline RL benchmark and is considerably robust to adversarial perturbations.",
+      "year_month": "2024-01",
+      "venue": "['DBLP.org/-/Record', 'DBLP.org/-/Edit']",
+      "authors": [
+        "Xiao-Yin Liu",
+        "Xiao-Hu Zhou",
+        "Guotao Li",
+        "Hao Li",
+        "Mei-Jiang Gui",
+        "Tian-Yu Xiang",
+        "De-Xing Huang",
+        "Zeng-Guang Hou"
+      ],
+      "url": "https://openreview.net/forum?id=yys48bjt2c",
+      "doi": "",
+      "arxiv_id": "",
+      "citation_count": null,
+      "source": "openreview",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "openreview:kIqA447T5c",
+      "title": "Bellman Diffusion: Generative Modeling as Learning a Linear Operator in the Distribution Space",
+      "abstract": "Deep Generative Models (DGMs), including Score-based Generative Models, have made significant progress in approximating complex continuous distributions. However, their application to Markov Decision Processes (MDPs), particularly in distributional Reinforcement Learning (RL), is underexplored. The field remains dominated by classical histogram-based methods, which suffer from discretization errors, leading to instability and slower convergence. This work highlights that this gap stems from the nonlinear operators used in modern DGM's modelings, which map neural network functions to the target distribution. These nonlinearities conflict with the linearity required by the Bellman equation, which relates the return distribution of a state to a linear combination of future states' return distributions. To address this, we introduce Bellman Diffusion, a new DGM that preserves the necessary linearity by modeling both the gradient and scalar fields. We propose a novel divergence-based training technique to optimize neural network proxies and introduce a new stochastic differential equation for sampling. With these innovations, Bellman Diffusion is guaranteed to converge to the target distribution. Our experiments show that Bellman Diffusion not only achieves accurate field estimations and serves as an effective image generator, but also converges $1.5\\times$ faster than traditional histogram-based baselines in distributional RL tasks. This work paves the way for the effective integration of DGMs into MDP applications, enabling more advanced decision-making frameworks.",
+      "year_month": "2024-09",
+      "venue": "['ICLR.cc/2025/Conference/-/Submission', 'ICLR.cc/2025/Conference/-/Post_Submission', 'ICLR.cc/2025/Conference/Submission6909/-/Full_Submission', 'ICLR.cc/2025/",
+      "authors": [
+        "Yangming Li",
+        "Chieh-Hsin Lai",
+        "Carola-Bibiane Schönlieb",
+        "Yuki Mitsufuji",
+        "Stefano Ermon"
+      ],
+      "url": "https://openreview.net/forum?id=kIqA447T5c",
+      "doi": "",
+      "arxiv_id": "",
+      "citation_count": null,
+      "source": "openreview",
+      "from_query": [
+        "categorical projection shifted distribution Bellman operator"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2405.06112v1",
+      "title": "Bayesian Optimization of Sample Entropy Hyperparameters for Short Time Series",
+      "abstract": "Quantifying the complexity and irregularity of time series data is a primary pursuit across various data-scientific disciplines. Sample entropy (SampEn) is a widely adopted metric for this purpose, but its reliability is sensitive to the choice of its hyperparameters, the embedding dimension $(m)$ and the similarity radius $(r)$, especially for short-duration signals. This paper presents a novel methodology that addresses this challenge. We introduce a Bayesian optimization framework, integrated with a bootstrap-based variance estimator tailored for short signals, to simultaneously and optimally select the values of $m$ and $r$ for reliable SampEn estimation. Through validation on synthetic signal experiments, our approach outperformed existing benchmarks. It achieved a 60 to 90% reduction in relative error for estimating SampEn variance and a 22 to 45% decrease in relative mean squared error for SampEn estimation itself ($p \\leq 0.043$). Applying our method to publicly available short-signal benchmarks yielded promising results. Unlike existing competitors, our approach was the only one to successfully identify known entropy differences across all signal sets ($p \\leq 0.042$). Additionally, we introduce \"EristroPy,\" an open-source Python package that implements our proposed optimization framework for SampEn hyperparameter selection. This work holds potential for applications where accurate estimation of entropy from short-duration signals is paramount.",
+      "year_month": "2024-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Zachary Blanks",
+        "Donald E. Brown"
+      ],
+      "url": "https://arxiv.org/abs/2405.06112v1",
+      "doi": "",
+      "arxiv_id": "2405.06112v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "variable step temporal difference bootstrapping irregular time series"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2604.06672v1",
+      "title": "Rhythm-consistent semi-Markov simulation of tourist mobility rhythms with probabilistic event-to-POI assignment: Hakone, Japan",
+      "abstract": "Understanding the timing and sequencing of activity participation in tourist mobility is central to travel behavior research, yet GPS trajectories are noisy, irregularly sampled, and only weakly linked to activity locations, which limits interpretation and scenario analysis. We address this by mapping each stay event to candidate points of interest (POIs) probabilistically, using explicit prior-likelihood weighting that yields a normalized compatibility distribution rather than hard matching. Using one month of high-density tourist trajectories in Hakone, Japan (November 2021), we construct semantic stay-event sequences based on observed place-category labels (MID10) and describe mobility rhythms through hour-by-category profiles, category transitions, and expected dwell patterns. Building on these rhythm signatures, we develop a rhythm-consistent semi-Markov simulator that generates synthetic stay-event sequences with time-conditioned transitions and category-dependent dwell behavior. In the observed data, hour-by-category summaries are computed by probability-weighted aggregation over soft labels; in simulation, each event is generated with a discrete category and a sampled dwell duration, enabling like-for-like comparison after aggregation. We further conduct counterfactual POI-inventory scenarios to quantify how hypothetical POI configuration changes shift stay intensity across time, categories, and space, particularly around hubs and main corridors. Observed-simulated comparisons show close agreement in temporal profiles and category distributions, indicating that probabilistic labeling and rhythm-consistent simulation preserve key mobility structure while providing an interpretable basis for transport-geography scenario evaluation.",
+      "year_month": "2026-04",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Jianhao Shi",
+        "Tomio Miwa",
+        "Wanglin Yan"
+      ],
+      "url": "https://arxiv.org/abs/2604.06672v1",
+      "doi": "",
+      "arxiv_id": "2604.06672v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "semi-Markov policy evaluation time-to-event prediction"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2607.22900v1",
+      "title": "Rapid evaluation and calibration of Bayesian group sequential designs via conjugate-mixture semi-simulation",
+      "abstract": "Bayesian group sequential designs (GSDs) extend frequentist GSDs with interpretable decision-making and external evidence borrowing, but their use is limited by the computational burden of design-stage operating-characteristic evaluation. Conventional methods simulate virtual trials with Markov chain Monte Carlo or approximate analytical posterior updates at each interim look, making joint calibration of decision thresholds and design skeletons impractical on commodity hardware. Here we introduce a semi-simulation framework with two innovations. First, finite conjugate-mixture priors replace the posterior computation for each look (``per-look'') with closed-form conjugate updates and low-dimensional numerical integration for decision-rule tail probabilities. Second, a precomputation strategy caches per-look posterior tail probabilities from a single Monte Carlo pass at the union of all candidate analysis times, and each design in the calibration grid is evaluated against the same cache by a sub-second sweep, with no further simulation cost. The framework supports posterior-probability decision rules with multiple efficacy and futility criteria under either binding or non-binding futility, and derives closed-form per-look updates for binary, continuous, count and time-to-event endpoints, with benchmarking here focused on the binary endpoint. When applied to re-design the ADRENAL trial, with up to nine analyses, the framework reproduces the operating characteristics of BATSS and adaptr within Monte Carlo error while running, per GSD, approximately $7\\times$ to $16\\times$ faster than adaptr at a matched budget (several hundredfold at the million-trial calibration budget) and $3{,}700\\times$ to $6{,}600\\times$ faster than BATSS. This brings routine Bayesian GSD calibration ",
+      "year_month": "2026-07",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Zhangyi He",
+        "Feng Yu",
+        "Suzie Cro",
+        "Laurent Billot"
+      ],
+      "url": "https://arxiv.org/abs/2607.22900v1",
+      "doi": "",
+      "arxiv_id": "2607.22900v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "semi-Markov policy evaluation time-to-event prediction"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2608.01068v1",
+      "title": "adabay: an R package for rapid evaluation and calibration of Bayesian group sequential designs across common endpoint types",
+      "abstract": "Bayesian group sequential designs (GSDs) combine the efficiency of frequentist GSDs with clinically interpretable probability statements and principled external evidence incorporation. However, their uptake in confirmatory trials has been held back by the cost of evaluating frequentist operating characteristics at the design stage, which often nests Markov chain Monte Carlo or another approximate posterior inference within a Monte Carlo trial-simulation loop. We introduce adabay, an open-source R package implementing a semi-simulation framework for the rapid evaluation and calibration of Bayesian GSDs. Trial data paths are simulated by Monte Carlo, while per-look posteriors and posterior tail probabilities are computed analytically or by low-dimensional deterministic quadrature. Flexible prior specification is achieved by approximating any user-specified prior with a finite mixture of conjugate components, with tail-probability diagnostics that flag inadequate approximations at the decision thresholds. The package offers a unified application programming interface for continuous, binary, count and time-to-event endpoints, supports posterior-probability decision rules with one or more efficacy and futility criteria under binding or non-binding regimes, and includes a precomputation strategy that decouples threshold calibration and look-time selection from the simulation pass. adabay reproduces the operating characteristics of BATSS and adaptr in the continuous and binary case studies, the analytic gsbDesign values in the continuous case, and the BATSS results in the count case, all within Monte Carlo error, while running approximately four to five orders of magnitude faster than BATSS and one to over two orders of magnitude faster than adaptr per virtual trial on eight c",
+      "year_month": "2026-08",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Zhangyi He",
+        "Feng Yu"
+      ],
+      "url": "https://arxiv.org/abs/2608.01068v1",
+      "doi": "",
+      "arxiv_id": "2608.01068v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "semi-Markov policy evaluation time-to-event prediction"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2609.01082v1",
+      "title": "Update for Decisions, Not Freshness: Goal-Oriented Status Updating and Selective Offloading at the Network Edge",
+      "abstract": "In an edge--cloud collaborative edge-computing environment, an edge node (EN) must decide whether each user task should be executed locally, forwarded to a remote service (or cloud) node (SN), or rejected. The EN observes its local state directly but receives the SN state only through an intermittently refreshed cache. Status updating and task control therefore form an asynchronous closed loop under partial observability. Freshness-driven schemes, including those based on Age of Information (AoI), do not directly value an update by its effect on subsequent task decisions. We propose CoSMO (Co-design of Semantic-state Management and Offloading), a cooperative event-driven reinforcement learning (RL) framework that coordinates semantic status management and selective offloading through realized task utility. CoSMO learns a compact representation of the heterogeneous SN service state. At the SN, a recurrent semi-Markov double deep Q-network (Double DQN) agent jointly selects send/no-send and the next decision interval. At the EN, a task-terminal off-policy value-learning agent makes hierarchical gate--route decisions from local observations and stale remote semantics. The agents maintain separate observations and value targets but share the same realized task-utility stream, without centralized execution. Across the evaluated workload families, CoSMO's reported relative improvement in on-time completion rate over the best-performing competing method averages 18.6%--21.2%. For capacity-aware decision accuracy across the three strict-overload points, the corresponding reported gains average 17.6%--$17.9%.",
+      "year_month": "2026-09",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Jianpeng Qi",
+        "Qiyang Zhang",
+        "Chao Liu",
+        "Jing Sun",
+        "Yimei Liu",
+        "Yanwei Yu",
+        "Yingjie Wang",
+        "Wei Ni"
+      ],
+      "url": "https://arxiv.org/abs/2609.01082v1",
+      "doi": "",
+      "arxiv_id": "2609.01082v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "semi-Markov policy evaluation time-to-event prediction"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2305.18901v4",
+      "title": "Policy Optimization for Continuous Reinforcement Learning",
+      "abstract": "We study reinforcement learning (RL) in the setting of continuous time and space, for an infinite horizon with a discounted objective and the underlying dynamics driven by a stochastic differential equation. Built upon recent advances in the continuous approach to RL, we develop a notion of occupation time (specifically for a discounted objective), and show how it can be effectively used to derive performance-difference and local-approximation formulas. We further extend these results to illustrate their applications in the PG (policy gradient) and TRPO/PPO (trust region policy optimization/ proximal policy optimization) methods, which have been familiar and powerful tools in the discrete RL setting but under-developed in continuous RL. Through numerical experiments, we demonstrate the effectiveness and advantages of our approach.",
+      "year_month": "2023-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Hanyang Zhao",
+        "Wenpin Tang",
+        "David D. Yao"
+      ],
+      "url": "https://arxiv.org/abs/2305.18901v4",
+      "doi": "",
+      "arxiv_id": "2305.18901v4",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2211.15931v4",
+      "title": "Posterior Sampling for Continuing Environments",
+      "abstract": "We develop an extension of posterior sampling for reinforcement learning (PSRL) that is suited for a continuing agent-environment interface and integrates naturally into agent designs that scale to complex environments. The approach, continuing PSRL, maintains a statistically plausible model of the environment and follows a policy that maximizes expected $γ$-discounted return in that model. At each time, with probability $1-γ$, the model is replaced by a sample from the posterior distribution over environments. For a choice of discount factor that suitably depends on the horizon $T$, we establish an $\\tilde{O}(τS \\sqrt{A T})$ bound on the Bayesian regret, where $S$ is the number of environment states, $A$ is the number of actions, and $τ$ denotes the reward averaging time, which is a bound on the duration required to accurately estimate the average reward of any policy. Our work is the first to formalize and rigorously analyze the resampling approach with randomized exploration.",
+      "year_month": "2022-11",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Wanqiao Xu",
+        "Shi Dong",
+        "Benjamin Van Roy"
+      ],
+      "url": "https://arxiv.org/abs/2211.15931v4",
+      "doi": "",
+      "arxiv_id": "2211.15931v4",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2301.08442v2",
+      "title": "Revisiting Estimation Bias in Policy Gradients for Deep Reinforcement Learning",
+      "abstract": "We revisit the estimation bias in policy gradients for the discounted episodic Markov decision process (MDP) from Deep Reinforcement Learning (DRL) perspective. The objective is formulated theoretically as the expected returns discounted over the time horizon. One of the major policy gradient biases is the state distribution shift: the state distribution used to estimate the gradients differs from the theoretical formulation in that it does not take into account the discount factor. Existing discussion of the influence of this bias was limited to the tabular and softmax cases in the literature. Therefore, in this paper, we extend it to the DRL setting where the policy is parameterized and demonstrate how this bias can lead to suboptimal policies theoretically. We then discuss why the empirically inaccurate implementations with shifted state distribution can still be effective. We show that, despite such state distribution shift, the policy gradient estimation bias can be reduced in the following three ways: 1) a small learning rate; 2) an adaptive-learning-rate-based optimizer; and 3) KL regularization. Specifically, we show that a smaller learning rate, or, an adaptive learning rate, such as that used by Adam and RSMProp optimizers, makes the policy optimization robust to the bias. We further draw connections between optimizers and the optimization regularization to show that both the KL and the reverse KL regularization can significantly rectify this bias. Moreover, we provide extensive experiments on continuous control tasks to support our analysis. Our paper sheds light on how successful PG algorithms optimize policies in the DRL setting, and contributes insights into the practical issues in DRL.",
+      "year_month": "2023-01",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Haoxuan Pan",
+        "Deheng Ye",
+        "Xiaoming Duan",
+        "Qiang Fu",
+        "Wei Yang",
+        "Jianping He",
+        "Mingfei Sun"
+      ],
+      "url": "https://arxiv.org/abs/2301.08442v2",
+      "doi": "",
+      "arxiv_id": "2301.08442v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2401.13497v1",
+      "title": "Emergence of anti-coordinated patterns in snowdrift game by reinforcement learning",
+      "abstract": "Patterns by self-organization in nature have garnered significant interest in a range of disciplines due to their intriguing structures. In the context of the snowdrift game (SDG), which is considered as an anti-coordination game, but the anti-coordination patterns are counterintuitively rare. In the work, we introduce a model called the Two-Agents, Two-Action Reinforcement Learning Evolutionary Game ($2\\times 2$ RLEG), and apply it to the SDG on regular lattices. We uncover intriguing phenomena in the form of Anti-Coordinated domains (AC-domains), where different frustration regions are observed and continuous phase transitions at the boundaries are identified. To understand the underlying mechanism, we develop a perturbation theory to analyze the stability of different AC-domains. Our theory accurately partitions the parameter space into non-anti-coordinated, anti-coordinated, and mixed areas, and captures their dependence on the learning parameters. Lastly, abnormal scenarios with a large learning rate and a large discount factor that deviate from the theory are investigated by examining the growth and nucleation of AC-domains. Our work provides insights into the emergence of spatial patterns in nature, and contributes to the development of theory for analysing their structural complexities.",
+      "year_month": "2024-01",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Zhen-Wei Ding",
+        "Ji-Qiang Zhang",
+        "Guo-Zhong Zheng",
+        "Wei-Ran Cai",
+        "Chao-Ran Cai",
+        "Li Chen",
+        "Xu-Ming Wang"
+      ],
+      "url": "https://arxiv.org/abs/2401.13497v1",
+      "doi": "10.1016/j.chaos.2024.114971",
+      "arxiv_id": "2401.13497v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2405.15509v1",
+      "title": "Randomized algorithms and PAC bounds for inverse reinforcement learning in continuous spaces",
+      "abstract": "This work studies discrete-time discounted Markov decision processes with continuous state and action spaces and addresses the inverse problem of inferring a cost function from observed optimal behavior. We first consider the case in which we have access to the entire expert policy and characterize the set of solutions to the inverse problem by using occupation measures, linear duality, and complementary slackness conditions. To avoid trivial solutions and ill-posedness, we introduce a natural linear normalization constraint. This results in an infinite-dimensional linear feasibility problem, prompting a thorough analysis of its properties. Next, we use linear function approximators and adopt a randomized approach, namely the scenario approach and related probabilistic feasibility guarantees, to derive epsilon-optimal solutions for the inverse problem. We further discuss the sample complexity for a desired approximation accuracy. Finally, we deal with the more realistic case where we only have access to a finite set of expert demonstrations and a generative model and provide bounds on the error made when working with samples.",
+      "year_month": "2024-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Angeliki Kamoutsi",
+        "Peter Schmitt-Förster",
+        "Tobias Sutter",
+        "Volkan Cevher",
+        "John Lygeros"
+      ],
+      "url": "https://arxiv.org/abs/2405.15509v1",
+      "doi": "",
+      "arxiv_id": "2405.15509v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2510.01721v3",
+      "title": "Finite-Time Convergence of Distributionally Robust Q-Learning with Linear Function Approximation",
+      "abstract": "Distributionally robust reinforcement learning (DRRL) seeks policies that perform well when the deployment transition model differs from the nominal model generating the data. Most finite-sample guarantees for DRRL are tabular, model-based, rely on generative access, or obtain function-approximation guarantees only under additional structure, such as linear-transition models or restrictive discount-factor conditions. We study discounted model-free robust Q-learning under an $(s,a)$-rectangular chi-square uncertainty set, with linear approximation of the robust Q-function, using only a single Markovian trajectory from an unknown nominal model. Our algorithm combines a target-network outer loop with a dual function-approximation scheme for the chi-square robust Bellman update. The dual procedure uses moment-tracking critics, suffix averaging, a fresh-evaluation stage for the variance-like moment, and a tunable smoothing parameter to have a Lipschitz-continuous chi-square dual gradient. We prove a finite-time convergence bound to the optimal robust Q-function up to approximation error, without imposing a small-discount-factor assumption. Our results help close a gap between the empirical use of robust RL algorithms and the non-asymptotic guarantees available for their non-robust counterparts.",
+      "year_month": "2025-10",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Saptarshi Mandal",
+        "Yashaswini Murthy",
+        "R. Srikant"
+      ],
+      "url": "https://arxiv.org/abs/2510.01721v3",
+      "doi": "",
+      "arxiv_id": "2510.01721v3",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2605.16030v2",
+      "title": "Mind Dreamer: Untethering Imagination via Active Causal Intervention on Latent Manifolds",
+      "abstract": "Model-Based Reinforcement Learning yields sample efficiency via latent imagination, yet remains constrained by Historical Tethering: imagination is typically initialized from observed states. This creates a learning asymmetry, where the world model's manifold discovery outpaces the policy's sparse-reward optimization. We propose Mind Dreamer (MD), a framework that instantiates Active Causal Intervention to transcend Markovian continuity. MD reformulates discovery as the minimization of a global Relay Expected Free Energy. Instead of initializing from historical data, it draws initial states from an adversarial generator $s_0 \\sim p_{gen}(\\cdot)$, creating non-continuous latent jumps to epistemic blind spots that are physically plausible yet cognitively challenging. We derive Relay Value Function and Relay Uncertainty Function to resolve the credit assignment paradox across these spatial ruptures. Treating synthesized anchors as interventional intermediary states, these potentials propagate pragmatic and epistemic value through Bellman-style backups. Notably, we prove that uncertainty propagation across discontinuities necessitates a quadratic discount $γ^2$, establishing a formal epistemic horizon. Theoretically, MD approximates a variance-minimizing importance sampler that expands the manifold's spectral gap, reducing the hitting time to critical bottleneck states. Empirically, MD achieves a 1.67$\\times$ average speedup over DreamerV3 on DeepMind Control Suite, reaching 8.8$\\times$ in sparse-reward tasks.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Shaojun Xu",
+        "Xiaoling Zhou",
+        "Yihan Lin",
+        "Yapeng Meng",
+        "Xinglong Ji",
+        "Luping Shi",
+        "Rong Zhao"
+      ],
+      "url": "https://arxiv.org/abs/2605.16030v2",
+      "doi": "",
+      "arxiv_id": "2605.16030v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2408.03034v2",
+      "title": "A Course in Dynamic Optimization",
+      "abstract": "These lecture notes are derived from a graduate-level course in dynamic optimization, offering an introduction to techniques and models extensively used in management science, economics, operations research, engineering, and computer science. The course emphasizes the theoretical underpinnings of discrete-time dynamic programming models and advanced algorithmic strategies for solving these models. Unlike typical treatments, it provides a proof for the principle of optimality for upper semi-continuous dynamic programming, a middle ground between the simpler countable state space case \\cite{bertsekas2012dynamic}, and the involved universally measurable case \\cite{bertsekas1996stochastic}. This approach is sufficiently rigorous to include important examples such as dynamic pricing, consumption-savings, and inventory management models. The course also delves into the properties of value and policy functions, leveraging classical results \\cite{topkis1998supermodularity} and recent developments. Additionally, it offers an introduction to reinforcement learning, including a formal proof of the convergence of Q-learning algorithms. Furthermore, the notes delve into policy gradient methods for the average reward case, presenting a convergence result for the tabular case in this context. This result is simple and similar to the discounted case but appears to be new.",
+      "year_month": "2024-08",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Bar Light"
+      ],
+      "url": "https://arxiv.org/abs/2408.03034v2",
+      "doi": "",
+      "arxiv_id": "2408.03034v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2501.01044v1",
+      "title": "Enhancing Neural Adaptive Wireless Video Streaming via Lower-Layer Information Exposure and Online Tuning",
+      "abstract": "Deep reinforcement learning (DRL) demonstrates its promising potential in the realm of adaptive video streaming and has recently received increasing attention. However, existing DRL-based methods for adaptive video streaming use only application (APP) layer information, adopt heuristic training methods, and train generalized neural networks with pre-collected data. This paper aims to boost the quality of experience (QoE) of adaptive wireless video streaming by using lower-layer information, deriving a rigorous training method, and adopting online tuning with real-time data. First, we formulate a more comprehensive and accurate adaptive wireless video streaming problem as an infinite stage discounted Markov decision process (MDP) problem by additionally incorporating past and lower-layer information, allowing a flexible tradeoff between QoE and costs for obtaining system information and solving the problem. In the offline scenario (only with pre-collected data), we propose an enhanced asynchronous advantage actor-critic (eA3C) method by jointly optimizing the parameters of parameterized policy and value function. Specifically, we build an eA3C network consisting of a policy network and a value network that can utilize cross-layer, past, and current information and jointly train the eA3C network using pre-collected samples. In the online scenario (with additional real-time data), we propose two continual learning-based online tuning methods for designing better policies for a specific user with different QoE and training time tradeoffs. Finally, experimental results show that the proposed offline policy can improve the QoE by 6.8~14.4% compared to the state-of-arts in the offline scenario, and the proposed online policies can further achieve 6~28% gains in QoE over the pr",
+      "year_month": "2025-01",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Lingzhi Zhao",
+        "Ying Cui",
+        "Yuhang Jia",
+        "Yunfei Zhang",
+        "Klara Nahrstedt"
+      ],
+      "url": "https://arxiv.org/abs/2501.01044v1",
+      "doi": "",
+      "arxiv_id": "2501.01044v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2606.25451v1",
+      "title": "Learning with a Single Rollout via Monte Carlo Pass@k Critic",
+      "abstract": "Estimating token-level advantages in reinforcement learning (RL) for language models remains challenging because scaling up episodic experience collection is expensive. The difficulty intensifies for baseline advantage estimation methods, where repeated sampling causes trajectories to diverge into substantially different reasoning prefixes. In this context, RL algorithms such as GRPO prove limited: an outcome reward is too sparse to be attributed to specific actions like intermediate steps, and comparisons across sampled traces are non-trivial because they are heterogeneous. To mitigate both the computational cost of repeated sampling and the difficulty of credit assignment, we study single-rollout proximal policy optimization (SR-PPO) featuring token-level credit assignment in RL for language models. Instead of estimating advantages by normalizing episodic returns within the candidate group, we train a calibrated token-level credit critic using Monte Carlo outcomes from one rollout per prompt. Specifically, we use the critic to predict the Pass@k success probability at the prompt prefix, which is derived from a Pass@1 attempt. This choice yields a more selective learning signal than Pass@1: it discounts easily solved prefixes while prioritizing hard ones whose success probability remains marginal. We show that as $k$ increases, Pass@k converges to a reachability indicator, reflecting whether a prefix can lead to at least one successful continuation. In an explicit state graph, the limit ($k \\rightarrow \\infty$) can be computed in $O(|V|+|E|)$ time, offering a promising surrogate for direct credit assignment without the need to sample contrastive traces. As an initial validation, SR-PPO exhibits stable learning dynamics, along with consistent gains in Pass@128 success r",
+      "year_month": "2026-06",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Fengdi Che",
+        "Yang Liu",
+        "Lei Yu",
+        "Meng Cao",
+        "Tong Che",
+        "Rupam Mahmood",
+        "Dale Schuurmans"
+      ],
+      "url": "https://arxiv.org/abs/2606.25451v1",
+      "doi": "",
+      "arxiv_id": "2606.25451v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "openreview:mMchGoDfjX",
+      "title": "Privacy-Aware Machine Unlearning with SISA for Reinforcement Learning–Based Ransomware Detection",
+      "abstract": "Ransomware detection systems increasingly rely on behavior-based machine learning to address evolving attack strategies. However, emerging privacy compliance, data governance, and responsible AI deployment demand not only accurate detection but also the ability to efficiently remove the influence of specific training samples without retraining the models from scratch. In this paper, we present a privacy-aware machine unlearning evaluation framework for RL-based ransomware detection built on Sharded, Isolated, Sliced, and Aggregated (SISA) training. The framework enables efficient data deletion by retraining only the affected model shards rather than the entire detector, substantially reducing the retraining cost while preserving the detection performance. We conducted a controlled comparative study using value-based RL agents such as Deep Q-Network (DQN) and Double Deep Q-Network (DDQN), under identical experimental settings, including a cost-sensitive reward design and 5-fold stratified cross-validation on Windows 11 behavioral ransomware telemetry. The detection confidence was evaluated using a continuous Q-score margin, enabling ROC–AUC analysis beyond binary predictions. For unlearning, the dataset was partitioned into five shards with majority-vote aggregation, and a fast-unlearning path was evaluated by deleting 5% of the samples from a single shard and retraining only that shard. The experimental results show that SISA-based unlearning incurs negligible utility degradation (≤0.2% absolute F1) while achieving substantial retraining time reduction compared with full SISA retraining. The DDQN exhibits slightly improved stability and lower utility loss relative to the DQN, although both agents maintain near-identical in-distribution performance after unlearning. Thes",
+      "year_month": "2025-12",
+      "venue": "['ACM.org/TheWebConf/2026/Workshop/TIME/-/Submission', 'ACM.org/TheWebConf/2026/Workshop/TIME/-/Post_Submission', 'ACM.org/TheWebConf/2026/Workshop/TIME/Submiss",
+      "authors": [
+        "JANNATUL FERDOUS",
+        "Rafiqul Islam",
+        "Zahid Islam"
+      ],
+      "url": "https://openreview.net/forum?id=mMchGoDfjX",
+      "doi": "",
+      "arxiv_id": "",
+      "citation_count": null,
+      "source": "openreview",
+      "from_query": [
+        "elapsed time discounting continuous-time reinforcement learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.4
+    },
+    {
+      "paper_id": "arxiv:2607.16793v1",
+      "title": "Decoupling risk and masking in mammographic density under irregular follow up using a latent Markov progression detection framework",
+      "abstract": "Background: Mammographic density is a strong marker of breast cancer risk, yet it also reduces mammographic sensitivity through masking. Screening densities are observed at irregular times, requiring methods that accommodate irregular follow-up. Methods: We propose a two-phase framework for irregular mammographic screening data. After regularizing the irregular density histories, the first phase fits a latent Markov model within each BMI group, under the assumption that density does not itself drive risk but the underlying latent disease process does. Extracting the latent-state information leaves density to act only as a detectability factor, and the second phase links the latent process and the final density to cancer diagnosis through a detection--risk model. Detection probabilities are treated as sensitivity parameters to quantify how the estimated risk changes under different masking assumptions. Uncertainty in the inferred latent states is quantified via posterior path sampling and bootstrapping. Results: In 616 patients, higher parity was associated with faster movement toward lower-risk, while a family history of breast cancer was associated with longer persistence in higher-risk. Moving from ignoring masking to accounting for masking with empirically supported detectability scenarios raised the estimated breast cancer risk by 70\\% for post-menopausal overweight patients and about 40\\% for obese patients regardless of menopausal status. Conclusions: By attributing risk to latent progression while letting observed density operate through detectability, the framework decouples risk from detectability, quantifies how much masking can distort breast cancer risk, and provides interpretable risk characterization under irregular screening follow-up.",
+      "year_month": "2026-07",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Furkan Danisman",
+        "Zarina Oflaz",
+        "Zeynep Kalaylioglu",
+        "Mahmut Onur Kulturoglu",
+        "Lutfi Dogan"
+      ],
+      "url": "https://arxiv.org/abs/2607.16793v1",
+      "doi": "",
+      "arxiv_id": "2607.16793v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "variable step temporal difference bootstrapping irregular time series"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    }
+  ]
+}

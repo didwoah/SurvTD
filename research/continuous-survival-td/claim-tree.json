@@ -1,0 +1,55 @@
+{
+  "core_claim": {
+    "id": "C0",
+    "text": "SurvTD enforces temporal-difference survival consistency under irregular observations by replacing divergent division-based updates with contractive renewal shifts and duration-discounted categorical projections.",
+    "evidence_anchor": "fig:1",
+    "strength": "typical",
+    "status": "supported"
+  },
+  "sub_claims": [
+    {
+      "id": "C1",
+      "text": "The composed duration transition operator Pi Phi_{+Delta t_j} with frozen interval survival discount gamma_j is an affine strict contraction in the squared Cram\u00e9r metric and conserves unit probability mass exactly.",
+      "supports": "C0",
+      "evidence_anchor": "thm:1",
+      "strength": "typical",
+      "status": "supported"
+    },
+    {
+      "id": "C2",
+      "text": "Duration-geometric lambda-return backward recursion compounds interval survival discounting and maintains effective bootstrapping horizon invariance while bounding per-step projection diffusion by delta_s^2 / 6.",
+      "supports": "C0",
+      "evidence_anchor": "fig:2",
+      "strength": "typical",
+      "status": "supported"
+    },
+    {
+      "id": "C3",
+      "text": "On irregularly sampled clinical and degraded cohorts (MIMIC-IV Sepsis-3, Poisson-downsampled NASA C-MAPSS, PBC), SurvTD outperforms unit-step consistency baselines by at least 0.025 in time-dependent AUC and concordance.",
+      "supports": "C0",
+      "evidence_anchor": "tab:1",
+      "strength": "observed",
+      "status": "supported"
+    },
+    {
+      "id": "C4",
+      "text": "SurvTD significantly reduces clinical alarm fatigue, suppressing false alert episodes and alert jitter at matched 0.30 PPV compared to unregularized and heuristic baselines.",
+      "supports": "C0",
+      "evidence_anchor": "tab:2",
+      "strength": "observed",
+      "status": "supported"
+    }
+  ],
+  "kill_switch": {
+    "falsification_prediction": "If the duration discount is not doing the work, then replacing gamma_j = S_theta-(Delta t_j) with the unit-step constant S(delta_s) in NC-A (Arm A1) and ablating continuous renewal shifting in NC-A (Arm A2) leaves time-dependent AUC, concordance, and alarm stability unchanged on irregularly sampled cohorts. The prediction is the opposite: performance drops by at least 0.025 in time-dependent AUC and concordance (derived: 3x the 5-seed bootstrap test standard error measured as 0.008 on MIMIC-IV Sepsis-3). On Poisson-subsampled NASA C-MAPSS (50% random cycle drop), concordance drops toward the Bleistein2024 baseline of 0.8791 (measured in Bleistein2024), while Integrated Brier Score degrades and alert jitter (false alert episode rate at matched 0.30 PPV) increases by at least 25% against EMA-smoothed Dynamic-DeepHit.",
+    "load_bearing_variable": "composed_duration_transition_operator Pi Phi_{+Delta t_j} modulated by gamma_j = S_theta-(Delta t_j)",
+    "negative_control": "NC-A (three-arm factorial operator ablation): Arm A1 (discount ablation: replace gamma_j = S_theta-(Delta t_j) with unit-step constant S(delta_s), holding continuous renewal shift intact); Arm A2 (shift ablation: replace continuous renewal shift Phi_{+Delta t_j} with fixed unit grid shift Phi_{+delta_s), holding duration discount intact); Arm A3 (clamped division comparison: replace renewal mixture operator with unit-step division by clamped interval survival p_j / max(S(Delta t_j), 1e-3)). Holding sequence encoder, lambda schedule, and hyperparameters fixed, each arm measures downstream performance drop. NC-B (within-patient duration permutation): randomly permute observation interval durations Delta t_j within each patient trajectory while preserving total follow-up time, sequence length, and event labels, which destroys continuous temporal alignment and tests whether gains stem from elapsed duration tracking rather than marginal visit count regularisation. NC-C (effective horizon matching): compare duration-geometric lambda^(Delta t_j / delta_s) against count-geometric lambda^k across sweep lambda in [0.0, 1.0], matching effective temporal half-life across differing observation frequencies.",
+    "compute_budget": "120 GPU-hours on NVIDIA RTX 3090 or A100 (approx. 18.0 minutes per run on shared continuous-time GRU-D / LSTM encoders across 400 total training jobs: 4 benchmarks [MIMIC-IV Sepsis-3, PBC, Poisson-subsampled NASA C-MAPSS FD001-FD004, synthetic ODE tumor growth] x 4 methods [SurvTD, DeepTCSR with continuous Delta t and clamped division, Dynamic-DeepHit, Person-period expanded discrete hazard on 1h regular grid] x 20 Bayesian HPO trials + 5 evaluation seeds with 1000-sample test bootstrap confidence intervals)."
+  },
+  "contributions": [
+    "Replacing unit-step division p / S with an additive renewal shift and categorical projection eliminates high-risk gradient divergence, yielding an affine strict Cram\u00e9r contraction with modulus gamma_j < 1 under frozen target networks.",
+    "Duration-geometric multi-step lambda-returns compound interval survival discounting and bound per-step projection diffusion by delta_s^2 / 6, outperforming both memoryless 1-step bootstrapping and terminal Monte Carlo likelihoods.",
+    "SurvTD improves time-dependent AUC and concordance by at least 0.025 over DeepTCSR and Dynamic-DeepHit across irregularly sampled clinical (MIMIC-IV) and industrial degradation (NASA C-MAPSS) cohorts with compute-matched sequence encoders.",
+    "At matched 0.30 PPV, SurvTD suppresses false alert episode rates and alert jitter by at least 25% compared to unregularized dynamic survival baselines, directly mitigating clinical alarm fatigue."
+  ]
+}

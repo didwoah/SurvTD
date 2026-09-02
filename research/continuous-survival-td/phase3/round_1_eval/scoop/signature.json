@@ -1,0 +1,542 @@
+{
+  "generated_at": "2026-09-02T15:22:19+00:00",
+  "queries": [
+    "temporal consistency regularization for survival analysis with irregular observation times",
+    "dynamic survival analysis longitudinal deep learning",
+    "distributional temporal difference learning categorical projection survival"
+  ],
+  "sources": [
+    "arxiv",
+    "openalex",
+    "s2",
+    "openreview"
+  ],
+  "window": {
+    "from": "2025-11-03",
+    "to": null
+  },
+  "per_source_hits": {
+    "arxiv": 51,
+    "openalex": 0,
+    "s2": 0,
+    "openreview": 3
+  },
+  "n_raw": 54,
+  "n_deduped": 54,
+  "n_kept": 14,
+  "min_overlap": 0.34,
+  "dropped_off_topic": [
+    {
+      "title": "A Proxy Consistency Loss for Grounded Fusion of Earth Observation and Location Encoders",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Stable and Steerable Sparse Autoencoders with Weight Regularization",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Thermodynamically Constrained Information Geometric Regularization for Compressible Flows",
+      "source": "arxiv",
+      "query_overlap": 0.125
+    },
+    {
+      "title": "Spectral Regularization for Diffusion Models",
+      "source": "arxiv",
+      "query_overlap": 0.125
+    },
+    {
+      "title": "LaWM: Least Action World Models for Long-Horizon Physical Consistency from Visual Observations",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Constraining the High-Density Equation of State with Present and Future NICER Observations Using Physics-Informed Regularized Machine Learning",
+      "source": "arxiv",
+      "query_overlap": 0.125
+    },
+    {
+      "title": "Effective dynamics of the Sinkhorn algorithm in the regime of low entropy regularization",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Regular diagonal subfactors",
+      "source": "arxiv",
+      "query_overlap": 0.125
+    },
+    {
+      "title": "Soft Equivariance Regularization for Invariant Self-Supervised Learning",
+      "source": "arxiv",
+      "query_overlap": 0.125
+    },
+    {
+      "title": "SPIKE: Sparse Koopman Regularization for Physics-Informed Neural Networks",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "DenOiS: Dual-Domain Denoising of Observation and Solution in Ultrasound Image Reconstruction",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Diverse via bounded Agreement: Geometric Regularization for Multimodal Fusion",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Statistical analysis of Inverse Entropy-regularized Reinforcement Learning",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "DART-VLN: Test-Time Memory Decay and Anti-Loop Regularization for Discrete Vision-Language Navigation",
+      "source": "arxiv",
+      "query_overlap": 0.125
+    },
+    {
+      "title": "LARGE: A Locally Adaptive Regularization Approach for Estimating Gaussian Graphical Models",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Adaptive Confidence Regularization for Multimodal Failure Detection",
+      "source": "arxiv",
+      "query_overlap": 0.25
+    },
+    {
+      "title": "Radiomics and Clinical Biomarkers",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "",
+      "source": "openreview",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Robust Categorical Data Clustering Guided by Multi-Granular Competitive Learning",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Comparing Two Categorical Gini Correlations with Applications to Classification Problems",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "An Empirical Comparison of Methods for Quantifying the Similarity of Categorical Datasets",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Graphical model-based clustering of categorical data",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Categorical distance correlation under general encodings and its application to high-dimensional feature screening",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "A categorical proof of the nonexistence of (120, 35, 10)-difference sets",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Bayesian Networks, Markov Networks, Moralisation, Triangulation: a Categorical Perspective",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Causal Inference with Categorical Unobserved Confounder via Mixture Learning",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Beyond Averages: Evaluating LLMs on Human Survey Replication at the Distributional Level",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Natural Language Processing Models for Robust Document Categorization",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Submodular Multi-Agent Policy Learning for Online Distributed Task Allocation in Open Multi-Agent Systems",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "A Fresh Look at Bivariate Binomial Distributions",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Impacts of Economic Policies on Wealth Distribution in Token Economies",
+      "source": "arxiv",
+      "query_overlap": 0.0
+    },
+    {
+      "title": "Robust Single-message Shuffle Differential Privacy Protocol for Accurate Distribution Estimation",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Investigating Performance and Practices with Univariate Distribution Charts",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "IntegralGP: Volumetric estimation of subterranean geochemical properties in mineral deposits by fusing assay data with different spatial supports",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "ERRORQUAKE: Heavy-Tailed Error Severity Distributions in Open-Weight Large Language Models",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "Development and performance of npd for the evaluation of models with ordinal data",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "The Audit Gap in Blockchain Security: A Four-Year Empirical Study of Public Audit Findings and Real-World Exploit Incidents",
+      "source": "arxiv",
+      "query_overlap": 0.333
+    },
+    {
+      "title": "On equitable scoring functions and optimal forecasting behaviour",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Spherical Flows for Sampling Categorical Data",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    },
+    {
+      "title": "Markov Random Fields: Structural Properties, Phase Transition, and Response Function Analysis",
+      "source": "arxiv",
+      "query_overlap": 0.167
+    }
+  ],
+  "records": [
+    {
+      "paper_id": "arxiv:2606.14608v1",
+      "title": "Expert-Driven Survival Machines: Improving Stratification and Interpretability in Multiple Clinical Cohorts",
+      "abstract": "Survival prediction plays a central role for healthcare providers and clinical researchers. Accurate risk stratification enables early intervention and improved patient management. Most existing deep survival models learn one common feature representation for all patients, which may hide important differences between patient subgroups. In contrast, a Mixture-of-Experts (MoE) framework allows different parts of the model to focus on different patient patterns, leading to more individualized representations. Therefore, in this work, we propose a mixture-of-experts enhanced adaptive deep clustering survival framework (AdaCSM) for modeling such heterogeneous survival patterns. We introduce a routing-based expert mechanism that enables conditional specialization within a parametric survival modeling framework. The proposed architecture allocates patients to specialized risk predictors dynamically while preserving the patient survival and subtype clustering objectives. We compare our method with state-of-the-art survival and deep clustering models on multiple real-world longitudinal clinical cohorts spanning diverse disease domains. The proposed method demonstrates improved predictive performance and leads to interpretable results in survival analysis.",
+      "year_month": "2026-06",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Farica Zhuang",
+        "Zixuan Wen",
+        "Christos Davatzikos",
+        "Li Shen"
+      ],
+      "url": "https://arxiv.org/abs/2606.14608v1",
+      "doi": "10.1145/3807503.3819574",
+      "arxiv_id": "2606.14608v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "dynamic survival analysis longitudinal deep learning"
+      ],
+      "is_preprint": true,
+      "query_overlap": 1.0
+    },
+    {
+      "paper_id": "arxiv:2605.06866v2",
+      "title": "A Finite-Iteration Theory for Asynchronous Categorical Distributional Temporal-Difference Learning",
+      "abstract": "We study finite-iteration behavior of the exact asynchronous recursions used by categorical distributional temporal-difference methods. The analysis covers scalar categorical TD in the Cramér geometry and multivariate signed-categorical TD in the maximum mean discrepancy geometry. Existing statewise isometric embeddings turn both methods into single-state stochastic-approximation recursions that contract in a block-supremum norm, but the categorical operators are contractive only on invariant representation domains. We establish the required restricted-domain theory and obtain discounted bounds under i.i.d. sampling and under a Markovian trajectory. A Poisson-equation decomposition handles trajectory dependence without an explicit mixing-time window. For undiscounted fixed-horizon policy evaluation, we establish analogous finite-iteration guarantees for horizon-stacked categorical methods under episodic sampling. Together, these results provide a unified non-asymptotic analysis of asynchronous categorical distributional TD across scalar, multivariate, discounted, and fixed-horizon settings.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Ege C. Kaya",
+        "Abolfazl Hashemi"
+      ],
+      "url": "https://arxiv.org/abs/2605.06866v2",
+      "doi": "",
+      "arxiv_id": "2605.06866v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "distributional temporal difference learning categorical projection survival"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.667
+    },
+    {
+      "paper_id": "arxiv:2605.11289v1",
+      "title": "Quotient-Categorical Representations for Bellman-Compatible Average-Reward Distributional Reinforcement Learning",
+      "abstract": "Average-reward reinforcement learning requires estimating the gain and the bias, which is defined only up to an additive constant. This makes direct distributional analogues ill-posed on the real line. We introduce a quotient-space formulation in which state-indexed bias laws are identified up to a common translation, together with a categorical parameterization that respects this symmetry. On this quotient-categorical space, we define a projected average-reward distributional operator and show that it is well-defined, non-expansive in a coordinate Cramér metric, and admits fixed points. We then study sampled recursions whose mean-field maps are asynchronous relaxations of this operator. In an idealized centered-reward setting, a one-state temporal-difference update enjoys almost sure convergence together with finite-iteration residual bounds under both i.i.d. and Markovian sampling. When the gain is unknown, we augment the recursion with an online gain estimator, and prove non-expansiveness and Markovian convergence of the resulting coupled scheme. Finally, we show that synchronous exact updates are gain-independent at the quotient-law level, isolating a structural contrast between ideal quotient distributions and practical fixed-grid categorical representations.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Ege C. Kaya",
+        "Aliasghar Pourghani",
+        "Vijay Gupta",
+        "Abolfazl Hashemi"
+      ],
+      "url": "https://arxiv.org/abs/2605.11289v1",
+      "doi": "",
+      "arxiv_id": "2605.11289v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "distributional temporal difference learning categorical projection survival"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.667
+    },
+    {
+      "paper_id": "openreview:qIOcJSCGn2",
+      "title": "SVL: Goal-Conditioned Reinforcement Learning as Survival Learning",
+      "abstract": "Standard approaches to goal-conditioned reinforcement learning (GCRL) that rely on temporal-difference learning can be unstable and sample-inefficient due to bootstrapping. While recent work has explored contrastive and supervised formulations to improve stability, we present a probabilistic alternative, called survival value learning (SVL), that reframes GCRL as a survival learning problem by modeling the distribution of time-to-goal from each state. This structured distributional Monte Carlo perspective yields a closed-form identity that expresses the goal-conditioned value function as a discounted sum of survival probabilities, enabling value estimation via a hazard model trained via maximum likelihood on both event and right-censored trajectories. We introduce three practical value estimators, including finite-horizon truncation and two binned infinite-horizon approximations to capture long-horizon objectives. Experiments on offline GCRL benchmarks show that SVL combined with hierarchical actors matches or surpasses strong hierarchical TD and Monte Carlo baselines, excelling on complex, long-horizon tasks.",
+      "year_month": "2026-01",
+      "venue": "['ICML.cc/2026/Conference/-/Submission', 'ICML.cc/2026/Conference/-/Post_Submission', 'ICML.cc/2026/Conference/Submission17125/-/Full_Submission', 'ICML.cc/2026",
+      "authors": [
+        "Franki NGUIMATSIA TIOFACK",
+        "Fabian Schramm",
+        "Théotime Le Hellard",
+        "Justin Carpentier"
+      ],
+      "url": "https://openreview.net/forum?id=qIOcJSCGn2",
+      "doi": "",
+      "arxiv_id": "",
+      "citation_count": null,
+      "source": "openreview",
+      "from_query": [
+        "distributional temporal difference learning categorical projection survival"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.667
+    },
+    {
+      "paper_id": "arxiv:2607.22162v1",
+      "title": "Elliptical Regularized Hotelling Tests for High-Dimensional Change-Point Detection",
+      "abstract": "We propose an elliptical regularized Hotelling (ERHT) procedure for detecting location changes in high-dimensional sequences with heavy-tailed, cross-sectionally dependent observations. ERHT contrasts spatial medians on adjacent segments using a ridge-regularized inverse of the pooled centered spatial-sign covariance matrix, thereby combining robustness to radial variation with dependence-aware weighting. We establish Gaussian-process limits for the single- and multiple-change scans and joint convergence over a finite set of regularization parameters. These results provide asymptotically exact calibration of a Cauchy-aggregated adaptive test through the joint Gaussian limit, together with guarantees for local power and single-change localization. We further embed the ERHT score in wild binary segmentation and prove consistency for estimating the number and locations of multiple changes. Simulations show that ERHT is generally well calibrated and delivers competitive power under heavy-tailed distributions, particularly when cross-sectional dependence is substantial. An analysis of the Fama--French 49 industry portfolios reveals persistent evidence of location instability and identifies four structural breaks.",
+      "year_month": "2026-07",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Fengyi Song",
+        "Mengtao Wen",
+        "Long Feng"
+      ],
+      "url": "https://arxiv.org/abs/2607.22162v1",
+      "doi": "",
+      "arxiv_id": "2607.22162v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2605.06654v1",
+      "title": "Optimizer-Model Consistency: Full Finetuning with the Same Optimizer as Pretraining Forgets Less",
+      "abstract": "Optimizers play an important role in both pretraining and finetuning stages when training large language models (LLMs). In this paper, we present an observation that full finetuning with the same optimizer as in pretraining achieves a better learning-forgetting tradeoff, i.e., forgetting less while achieving the same or better performance on the new task, than other optimizers and, possibly surprisingly, LoRA, during the supervised finetuning (SFT) stage. We term this phenomenon optimizer-model consistency. To better understand it, through controlled experiments and theoretical analysis, we show that: 1) optimizers can shape the models by having regularization effects on the activations, leading to different landscapes around the pretrained checkpoints; 2) in response to this regularization effect, the weight update in SFT should follow some specific structures to lower forgetting of the knowledge learned in pretraining, which can be obtained by using the same optimizer. Moreover, we specifically compare Muon and AdamW when they are employed throughout the pretraining and SFT stages and find that Muon performs worse when finetuned for reasoning tasks. With a synthetic language modeling experiment, we demonstrate that this can come from Muon's strong tendency towards rote memorization, which may hurt pattern acquisition with a small amount of data, as for SFT.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Yuxing Liu",
+        "Jianyu Wang",
+        "Tong Zhang"
+      ],
+      "url": "https://arxiv.org/abs/2605.06654v1",
+      "doi": "",
+      "arxiv_id": "2605.06654v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2603.15182v2",
+      "title": "Sequential Transport for Causal Mediation Analysis",
+      "abstract": "We propose sequential transport (ST), a distributional framework for mediation analysis that combines optimal transport (OT) with a mediator directed acyclic graph (DAG). Instead of relying on cross-world counterfactual assumptions, ST constructs unit-level mediator counterfactuals by minimally transporting each mediator, either marginally or conditionally, toward its distribution under an alternative treatment while preserving the causal dependencies encoded by the DAG. For numerical mediators, ST uses monotone (conditional) OT maps based on conditional CDF/quantile estimators; for categorical mediators, it extends naturally via simplex-based transport. We establish consistency of the estimated transport maps and of the induced unit-level decompositions into mutatis mutandis direct and indirect effects under standard regularity and support conditions. When the treatment is randomized or ignorable (possibly conditional on covariates), these decompositions admit a causal interpretation; otherwise, they provide a principled distributional attribution of differences between groups aligned with the mediator structure. Gaussian examples show that ST recovers classical mediation formulas, while additional simulations confirm good performance in nonlinear and mixed-type settings. An application to the COMPAS dataset illustrates how ST yields deterministic, DAG-consistent counterfactual mediators and a fine-grained mediator-level attribution of disparities.",
+      "year_month": "2026-03",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Agathe Fernandes Machado",
+        "Iryna Voitsitska",
+        "Arthur Charpentier",
+        "Ewen Gallic"
+      ],
+      "url": "https://arxiv.org/abs/2603.15182v2",
+      "doi": "",
+      "arxiv_id": "2603.15182v2",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "distributional temporal difference learning categorical projection survival"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.5
+    },
+    {
+      "paper_id": "arxiv:2602.01437v1",
+      "title": "Theoretical Analysis of Measure Consistency Regularization for Partially Observed Data",
+      "abstract": "The problem of corrupted data, missing features, or missing modalities continues to plague the modern machine learning landscape. To address this issue, a class of regularization methods that enforce consistency between imputed and fully observed data has emerged as a promising approach for improving model generalization, particularly in partially observed settings. We refer to this class of methods as Measure Consistency Regularization (MCR). Despite its empirical success in various applications, such as image inpainting, data imputation and semi-supervised learning, a fundamental understanding of the theoretical underpinnings of MCR remains limited. This paper bridges this gap by offering theoretical insights into why, when, and how MCR enhances imputation quality under partial observability, viewed through the lens of neural network distance. Our theoretical analysis identifies the term responsible for MCR's generalization advantage and extends to the imperfect training regime, demonstrating that this advantage is not always guaranteed. Guided by these insights, we propose a novel training protocol that monitors the duality gap to determine an early stopping point that preserves the generalization benefit. We then provide detailed empirical evidence to support our theoretical claims and to show the effectiveness and accuracy of our proposed stopping condition. We further provide a set of real-world data simulations to show the versatility of MCR under different model architectures designed for different data sources.",
+      "year_month": "2026-02",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Yinsong Wang",
+        "Shahin Shahrampour"
+      ],
+      "url": "https://arxiv.org/abs/2602.01437v1",
+      "doi": "",
+      "arxiv_id": "2602.01437v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    },
+    {
+      "paper_id": "arxiv:2606.19065v1",
+      "title": "Regularized covariance estimation from partially observed interferometric data",
+      "abstract": "The Small BAseline Subset technique provides remote measurements of ground displacement with high spatial resolution, making it a key tool for monitoring geophysical processes in hazard-prone areas. An effective analysis of this type of data requires reliable estimation of their second-order structure, which is difficult to achieve because the measurements are systematically missing over relatively large portions of the investigated areas. We tackle the problem from a functional data analysis perspective and treat the observations as partially observed functional data with two-dimensional domain. To properly characterize the data, we introduce the fragmented regime of partial observation, where parts of the curves are systematically missing across replicates. For this regime, we propose a novel method for covariance estimation, formulating the task as a matrix completion problem with Laplacian regularization. The estimator is nonparametric and free from stationarity or isotropy assumptions. Extensive simulations show that our method achieves consistently low estimation error across a range of covariance structures. Application to ground displacement data relative to the Phlegraean Fields demonstrates its ability to recover meaningful spatial dependence patterns, highlighting its potential for environmental risk assessment and monitoring.",
+      "year_month": "2026-06",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Teresa Bortolotti",
+        "Roberta Troilo",
+        "Francesco Casu",
+        "Simone Vantini",
+        "Alessandra Menafoglio"
+      ],
+      "url": "https://arxiv.org/abs/2606.19065v1",
+      "doi": "",
+      "arxiv_id": "2606.19065v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    },
+    {
+      "paper_id": "arxiv:2605.08454v1",
+      "title": "Recovering Physical Dynamics from Discrete Observations via Intrinsic Differential Consistency",
+      "abstract": "Recovering continuous-time dynamics from discrete observations is difficult because local supervision (e.g., pointwise regression targets, derivative approximations, or equation residuals) loses fidelity as the observation interval grows. We replace local supervision with a global structural constraint: any flow representing autonomous dynamics must satisfy the semi-group property under time translation. We train a time-conditioned secant velocity field whose deviation from this property, which we call Symmetry Rupture, serves two purposes. As a training regularizer, it confines the hypothesis space to flows that compose consistently across temporal scales. As an inference oracle, it lets the solver select the largest step size that preserves internal consistency, replacing the local truncation error that conventional adaptive solvers depend on. On the diffusion-reaction benchmark under time-informed inference, our method reduces rollout RMSE by 87\\% while using 5x fewer function evaluations than a Neural ODE baseline. In the more demanding direct auto-regressive setting, where the model must predict distant future frames without intermediate temporal cues, our adaptive solver allocates compute based on local geometric complexity -- maintaining the lowest rollout RMSE on two of three PDE benchmarks while baselines either diverge or require up to an order of magnitude more function evaluations to remain stable.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Yuxiang Luo",
+        "Andrew Perrault"
+      ],
+      "url": "https://arxiv.org/abs/2605.08454v1",
+      "doi": "",
+      "arxiv_id": "2605.08454v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    },
+    {
+      "paper_id": "arxiv:2607.16976v1",
+      "title": "Adaptive Ridge-Regularized Hotelling Change-Point Tests for Functional Data",
+      "abstract": "We propose a unified ridge-regularized Hotelling framework for detecting and locating mean changes in functional time series. A growing basis expansion converts the functional observations into high-dimensional score vectors. Their long-run covariance is estimated by an edge-corrected difference-based procedure. Ridge regularization stabilizes inference under spectral decay. An explicit local-power formula shows that the power-maximizing ridge depends on the unknown spectral orientation of the change. We therefore combine a family of ridge CUSUM statistics by a Cauchy transform and calibrate the aggregate directly from their joint weighted-bridge limit. For multiple changes, we embed local maximum-ridge statistics in a wild binary segmentation procedure, followed by local refinement. Under mild conditions, we establish the validity, local power, consistency, and localization properties of the proposed tests. In the multiple-change setting, the procedure consistently recovers the number of changes and uniformly estimates their locations. The framework accommodates weak dependence and non-Gaussian functional errors. Simulations and two empirical applications demonstrate the favorable finite-sample performance of the proposed methods.",
+      "year_month": "2026-07",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Ping Zhao",
+        "Long Feng"
+      ],
+      "url": "https://arxiv.org/abs/2607.16976v1",
+      "doi": "",
+      "arxiv_id": "2607.16976v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    },
+    {
+      "paper_id": "arxiv:2605.19189v1",
+      "title": "Inference Functionals and Observation Operators for Distributional Statistical Models",
+      "abstract": "This paper generalises inference functions (Godambe, 1960) to distributional statistical models, in which each probability measure is represented by a distribution--kernel pair $(T_θ, \\varphi) \\in \\mathcal S'(\\mathbb R) \\times \\mathcal S(\\mathbb R)$. The generalisation is strategically motivated: the key properties of maximum likelihood estimation-consistency and asymptotic normality -derive not from maximising the likelihood but from the MLE being the root of a regular inference function. Extending inference functions to the distributional setting provides an optimality theory for models lacking classical densities or finite moments. The extension requires enlarging the notion of observation. We introduce observation operators $\\mathcal O : \\mathcal S'(\\mathbb R) \\to \\mathcal Y$ mapping distributional models to an observation space, and define inference functionals as estimating equations composed with these operators. The framework encompasses classical point observations, interval-censored data, convolutional measurements, and transform-based statistics. We establish asymptotic theory (consistency, asymptotic normality, Godambe optimality) under mild conditions and derive a hierarchy of information bounds -- classical Fisher information dominates the information available through the observation operator, which in turn dominates the information captured by any inference functional -- via the Hájek--Le~Cam convolution theorem. The two gaps quantify distinct sources of information loss: the observation mechanism and the choice of inference functional. Examples include sinusoidal inference functions for heavy-tailed distributions, interval-censored location inference, elliptically contoured models, and nuisance parameters via the Bhapkar--Godambe projection.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "R. Labouriau"
+      ],
+      "url": "https://arxiv.org/abs/2605.19189v1",
+      "doi": "",
+      "arxiv_id": "2605.19189v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    },
+    {
+      "paper_id": "arxiv:2604.06739v1",
+      "title": "DOC-GS: Dual-Domain Observation and Calibration for Reliable Sparse-View Gaussian Splatting",
+      "abstract": "Sparse-view reconstruction with 3D Gaussian Splatting (3DGS) is fundamentally ill-posed due to insufficient geometric supervision, often leading to severe overfitting and the emergence of structural distortions and translucent haze-like artifacts. While existing approaches attempt to alleviate this issue via dropout-based regularization, they are largely heuristic and lack a unified understanding of artifact formation. In this paper, we revisit sparse-view 3DGS reconstruction from a new perspective and identify the core challenge as the unobservability of Gaussian primitive reliability. Unreliable Gaussians are insufficiently constrained during optimization and accumulate as haze-like degradations in rendered images. Motivated by this observation, we propose a unified Dual-domain Observation and Calibration (DOC-GS) framework that models and corrects Gaussian reliability through the synergy of optimization-domain inductive bias and observation-domain evidence. Specifically, in the optimization domain, we characterize Gaussian reliability by the degree to which each primitive is constrained during training, and instantiate this signal via a Continuous Depth-Guided Dropout (CDGD) strategy, where the dropout probability serves as an explicit proxy for primitive reliability. This imposes a smooth depth-aware inductive bias to suppress weakly constrained Gaussians and improve optimization stability. In the observation domain, we establish a connection between floater artifacts and atmospheric scattering, and leverage the Dark Channel Prior (DCP) as a structural consistency cue to identify and accumulate anomalous regions. Based on cross-view aggregated evidence, we further design a reliability-driven geometric pruning strategy to remove low-confidence Gaussians.",
+      "year_month": "2026-04",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Hantang Li",
+        "Qiang Zhu",
+        "Xiandong Meng",
+        "Debin Zhao",
+        "Xiaopeng Fan"
+      ],
+      "url": "https://arxiv.org/abs/2604.06739v1",
+      "doi": "",
+      "arxiv_id": "2604.06739v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    },
+    {
+      "paper_id": "arxiv:2605.11282v1",
+      "title": "A Data-Consistent Approach to Ensemble Filtering",
+      "abstract": "Ensemble filtering of chaotic, partially observed systems is often performed with ensembles far smaller than the state dimension resulting in empirical covariances that are low rank. Subsequently, stochastic observation perturbations can degrade both accuracy and probabilistic calibration. We develop a data-consistent perspective on ensemble filtering and introduce the Quantity-of-Interest Principal Component Analysis Ensemble Data Consistent Filter (QPCA-EnDCF), which is a deterministic method that replaces perturbed observations with a spectrally regularized update in observation space. The method whitens forecast--observation residuals, computes an empirical eigendecomposition of the residual covariance, and restricts the correction to a rank-$κ$ subspace before mapping the increment back to state space through an empirical gain. We establish a theoretical framework that separates population and finite-ensemble objects and yields a bias--variance decomposition for the analysis mean. The analysis shows that stochastic EnKF variants incur an irreducible $\\mathcal{O}(1/N)$ variance contribution from observation perturbations, whereas QPCA-EnDCF replaces this term with projector-estimation variability that is also $\\mathcal{O}(1/N)$ but depends on the retained rank and the cutoff gap through eigenspace stability. Numerical experiments on the Lorenz--96 system in strongly undersampled regimes demonstrate that QPCA-EnDCF substantially improves spread--skill behavior, temporal tracking between spread and error, and rank-histogram reliability relative to sequential and four-dimensional stochastic EnKF. Under the baseline configuration, these calibration gains are accompanied by lower RMSE.",
+      "year_month": "2026-05",
+      "venue": "arXiv preprint",
+      "authors": [
+        "Rylan Spence",
+        "Troy Butler",
+        "Clint Dawson"
+      ],
+      "url": "https://arxiv.org/abs/2605.11282v1",
+      "doi": "",
+      "arxiv_id": "2605.11282v1",
+      "citation_count": null,
+      "source": "arxiv",
+      "from_query": [
+        "temporal consistency regularization for survival analysis with irregular observation times"
+      ],
+      "is_preprint": true,
+      "query_overlap": 0.375
+    }
+  ]
+}
