@@ -1,0 +1,182 @@
+{
+  "floor": 0.05,
+  "n_sigma": 2.0,
+  "inits": 8,
+  "report": {
+    "synthetic_icu": {
+      "km_marginal": {
+        "12.0": {
+          "c_td": 0.5,
+          "ibs": 0.15730772297195042
+        },
+        "24.0": {
+          "c_td": 0.5,
+          "ibs": 0.05409729705530122
+        },
+        "36.0": {
+          "c_td": 0.5,
+          "ibs": 0.1386828334898486
+        }
+      },
+      "null_model": {
+        "12.0_24.0": {
+          "auc_mean": 0.5084,
+          "auc_sem": 0.0388,
+          "auc_band": 0.0776,
+          "c_td_mean": 0.5522,
+          "ibs_mean": 0.6896,
+          "n_at_risk": 83,
+          "n_events": 30,
+          "n_inits": 8,
+          "pass": true
+        },
+        "24.0_24.0": {
+          "auc_mean": 0.5101,
+          "auc_sem": 0.0594,
+          "auc_band": 0.1188,
+          "c_td_mean": 0.4901,
+          "ibs_mean": 0.8561,
+          "n_at_risk": 50,
+          "n_events": 12,
+          "n_inits": 8,
+          "pass": true
+        },
+        "36.0_24.0": {
+          "auc_mean": 0.4834,
+          "auc_sem": 0.0331,
+          "auc_band": 0.0662,
+          "c_td_mean": 0.5391,
+          "ibs_mean": 0.779,
+          "n_at_risk": 36,
+          "n_events": 11,
+          "n_inits": 8,
+          "pass": true
+        }
+      }
+    },
+    "cmapss": {
+      "km_marginal": {
+        "125.0": {
+          "c_td": 0.5,
+          "ibs": 0.09431032989281743
+        },
+        "150.0": {
+          "c_td": 0.5,
+          "ibs": 0.18016270385593422
+        },
+        "175.0": {
+          "c_td": 0.5,
+          "ibs": 0.18671115136373678
+        }
+      },
+      "null_model": {
+        "125.0_50.0": {
+          "auc_mean": 0.4598,
+          "auc_sem": 0.0313,
+          "auc_band": 0.0625,
+          "c_td_mean": 0.4704,
+          "ibs_mean": 0.7607,
+          "n_at_risk": 52,
+          "n_events": 42,
+          "n_inits": 8,
+          "pass": true
+        },
+        "150.0_50.0": {
+          "auc_mean": 0.4931,
+          "auc_sem": 0.0385,
+          "auc_band": 0.077,
+          "c_td_mean": 0.4854,
+          "ibs_mean": 0.5997,
+          "n_at_risk": 49,
+          "n_events": 44,
+          "n_inits": 8,
+          "pass": true
+        },
+        "175.0_50.0": {
+          "auc_mean": 0.4866,
+          "auc_sem": 0.0365,
+          "auc_band": 0.073,
+          "c_td_mean": 0.4895,
+          "ibs_mean": 0.5135,
+          "n_at_risk": 37,
+          "n_events": 34,
+          "n_inits": 8,
+          "pass": true
+        }
+      }
+    },
+    "pbc": {
+      "km_marginal": {
+        "0.0": {
+          "c_td": 0.5,
+          "ibs": 0.16882327481109877
+        },
+        "180.0": {
+          "c_td": 0.5,
+          "ibs": 0.17668635536562108
+        }
+      },
+      "null_model": {
+        "0.0_365.0": {
+          "auc_mean": 0.539,
+          "auc_sem": 0.0469,
+          "auc_band": 0.0937,
+          "c_td_mean": 0.5061,
+          "ibs_mean": 0.6546,
+          "n_at_risk": 63,
+          "n_events": 32,
+          "n_inits": 8,
+          "pass": true
+        },
+        "180.0_365.0": {
+          "auc_mean": 0.5151,
+          "auc_sem": 0.0693,
+          "auc_band": 0.1386,
+          "c_td_mean": 0.5098,
+          "ibs_mean": 0.7533,
+          "n_at_risk": 47,
+          "n_events": 18,
+          "n_inits": 8,
+          "pass": true
+        }
+      }
+    },
+    "tumor": {
+      "km_marginal": {
+        "1.5": {
+          "c_td": 0.5,
+          "ibs": 0.04762817574646429
+        },
+        "2.0": {
+          "c_td": 0.5,
+          "ibs": 0.12188090552698957
+        }
+      },
+      "null_model": {
+        "1.5_2.0": {
+          "auc_mean": 0.5476,
+          "auc_sem": 0.0369,
+          "auc_band": 0.0737,
+          "c_td_mean": 0.5002,
+          "ibs_mean": 0.5544,
+          "n_at_risk": 74,
+          "n_events": 54,
+          "n_inits": 8,
+          "pass": true
+        },
+        "2.0_2.0": {
+          "auc_mean": 0.5046,
+          "auc_sem": 0.0777,
+          "auc_band": 0.1554,
+          "c_td_mean": 0.5283,
+          "ibs_mean": 0.4732,
+          "n_at_risk": 71,
+          "n_events": 54,
+          "n_inits": 8,
+          "pass": true
+        }
+      }
+    }
+  },
+  "failures": []
+}
