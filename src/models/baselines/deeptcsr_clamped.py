@@ -86,7 +86,8 @@ class DeepTCSRClampedModel(nn.Module):
             p_target.data.mul_(self.tau_ema).add_(p_online.data, alpha=1.0 - self.tau_ema)
 
     def compute_loss_trajectory(self, x, dts, events, tte, tau_event, mask=None,
-                                alpha_anchor: float = None, return_parts: bool = False):
+                                alpha_anchor: float = None, return_parts: bool = False,
+                                ipcw_weight: float = 1.0):
         """
         Computes 1-step backward consistency loss via clamped division.
         """
@@ -147,9 +148,11 @@ class DeepTCSRClampedModel(nn.Module):
             G_cdf = torch.cumsum(G_tensor[..., :self.K], dim=-1)
 
         alpha = self.alpha_anchor if alpha_anchor is None else float(alpha_anchor)
+        assert 0.0 <= alpha <= 1.0, f"alpha_anchor must be in [0, 1], got {alpha}"
         loss_td = squared_cramer_distance_loss(cdf_on, G_cdf, delta_s=self.delta_s)
         loss_anchor = censored_crps_anchor(
-            cdf_on, residual_times(dts, tte), has_event, self.delta_s, self.K
+            cdf_on, residual_times(dts, tte), has_event, self.delta_s, self.K,
+            ipcw_weight=ipcw_weight
         ).mean()
         loss = (1.0 - alpha) * loss_td + alpha * loss_anchor
         if return_parts:

@@ -124,3 +124,8 @@ def fit_censoring_from_dataset(dataset, floor: float = 0.05) -> KaplanMeierCenso
     times = np.array([float(p["tte"]) for p in dataset], dtype=float)
     events = np.array([float(p["event"]) for p in dataset], dtype=float)
     return KaplanMeierCensoring(floor=floor).fit(times, events)
+
+
+# Backward-compatible alias
+fit_censoring_estimator = fit_censoring_from_dataset
+

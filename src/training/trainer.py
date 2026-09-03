@@ -82,7 +82,8 @@ def evaluate_val_score(
             elif model_type == "dynamic_deephit":
                 l = model.compute_loss([p])
             elif model_type == "person_period":
-                l = model.compute_loss(x, dts, events, tte, mask=mask)
+                has_event = bool(p['event'] > 0.5) or bool(torch.any(events > 0.5).item())
+                l = model.compute_loss(x, dts, has_event, tte, mask=mask)
             else:
                 l = torch.tensor(0.0, device=device)
 
@@ -194,7 +195,8 @@ def train_model(
                     events = p['events'].to(device)
                     tte = float(p['tte'])
                     mask = p['mask'].to(device) if 'mask' in p and p['mask'] is not None else None
-                    l = model.compute_loss(x, dts, events, tte, mask=mask)
+                    has_event = bool(p['event'] > 0.5) or bool(torch.any(events > 0.5).item())
+                    l = model.compute_loss(x, dts, has_event, tte, mask=mask)
                     batch_loss = batch_loss + l
                 batch_loss = batch_loss / max(1, len(batch_patients))
 

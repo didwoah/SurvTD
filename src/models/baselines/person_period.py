@@ -142,7 +142,12 @@ class PersonPeriodModel(nn.Module):
         )
         hazard = hazard.squeeze(0)                                   # (L, K)
 
-        has_event = bool(torch.any(events > 0.5).item())
+        if isinstance(events, (int, float, bool)):
+            has_event = bool(events > 0.5)
+        elif torch.is_tensor(events) and events.numel() == 1:
+            has_event = bool((events > 0.5).item())
+        else:
+            has_event = bool(torch.any(events > 0.5).item())
         r = residual_times(dts, tte)
         risk_mask, labels = person_period_targets(r, has_event, self.delta_s, self.K)
 
