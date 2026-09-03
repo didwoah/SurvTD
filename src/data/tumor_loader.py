@@ -1,92 +1,157 @@
 """
-Synthetic Biophysical ODE Tumor Growth Generator:
-- Non-linear Gompertzian tumor proliferation with stochastic perturbations.
-- Irregular observation timestamps and threshold-crossing survival events.
+Synthetic Gompertzian tumour-growth cohort with threshold-crossing survival.
+
+Defects repaired here
+---------------------
+* **The latent ODE path was coupled to the observation schedule (X-06).** The old
+  generator integrated `dy = r*y*log(K/y)*dt` using the VISIT GAPS as the Euler step
+  and accumulated `N(0, 0.05*sqrt(dt))` noise per visit. A subject with 11 visits
+  therefore had a *different latent trajectory* from one with 4 -- not a
+  differently-sampled version of the same path. That is the schedule confound in its
+  purest form, upstream of the event-time quantization. The path is now integrated on
+  a fine grid shared by every subject, and visits merely SAMPLE it.
+* **The event time was quantized to visit times.** It is now obtained by linear
+  interpolation of the threshold crossing on the fine grid, so it is continuous and
+  independent of when the subject happened to be observed.
+* **There was no censoring at all (X-06).** Measured test-split event rate was
+  1.00, so it was not a survival problem. An independent uniform loss-to-follow-up
+  is now drawn, plus administrative censoring at `end_time`.
+* Features were never standardized, although `dy` is heavy-tailed. Now standardized
+  with train-split statistics.
+* `mask` was None; it is now explicit.
 """
 
+from __future__ import annotations
+
 import math
+
 import numpy as np
 import torch
 
 from src.data.dataset import LongitudinalSurvivalDataset
+from src.data.preprocessing import (
+    apply_feature_stats,
+    empirical_feature_mean,
+    fit_feature_stats,
+    subject_level_split,
+)
+
+FEATURE_NAMES = ["y", "dy_dt", "sin_t", "cos_t"]
+
+
+def _simulate_path(rng, end_time: float, fine_dt: float, k_cap: float):
+    """
+    Gompertzian growth on a fine grid shared by all subjects, so the latent path
+    does not depend on the observation schedule.
+
+    Returns (grid, y_path, r).
+    """
+    n = int(round(end_time / fine_dt)) + 1
+    grid = np.arange(n, dtype=np.float64) * fine_dt
+
+    r = rng.normal(0.5, 0.1)
+    y = rng.uniform(0.3, 0.8)
+    path = np.empty(n, dtype=np.float64)
+    path[0] = y
+
+    sqrt_dt = math.sqrt(fine_dt)
+    for i in range(1, n):
+        growth = r * y * max(0.01, math.log(max(1.01, k_cap / max(0.01, y)))) * fine_dt
+        y = max(0.05, y + growth + rng.normal(0.0, 0.05 * sqrt_dt))
+        path[i] = y
+
+    return grid, path, float(r)
+
+
+def _crossing_time(grid: np.ndarray, path: np.ndarray, threshold: float):
+    """First time the path reaches `threshold`, by linear interpolation. None if never."""
+    above = np.nonzero(path >= threshold)[0]
+    if above.size == 0:
+        return None
+    i = int(above[0])
+    if i == 0:
+        return float(grid[0])
+    y0, y1 = path[i - 1], path[i]
+    if y1 == y0:
+        return float(grid[i])
+    frac = (threshold - y0) / (y1 - y0)
+    return float(grid[i - 1] + frac * (grid[i] - grid[i - 1]))
 
 
 def generate_tumor_growth_cohort(
     n_samples: int = 400,
     end_time: float = 10.0,
-    lethal_threshold: float = 2.0,
-    seed: int = 42
+    lethal_threshold: float = 2.6,
+    fine_dt: float = 0.01,
+    visit_rate: float = 3.5,
+    censor_min: float = 1.0,
+    k_cap: float = 3.5,
+    seed: int = 42,
+    fracs: tuple = (0.6, 0.2, 0.2),
 ):
+    """Returns (train, val, test, input_dim, max_horizon, x_mean)."""
     rng = np.random.default_rng(seed)
     patients = []
 
     for i in range(n_samples):
-        # Sample irregular observation visit count and times
-        n_visits = rng.integers(4, 12)
-        visit_times = np.sort(rng.uniform(0.1, end_time, size=n_visits))
-        visit_times = np.unique(np.round(visit_times, 2))
-        n_visits = len(visit_times)
+        grid, path, r = _simulate_path(rng, end_time, fine_dt, k_cap)
 
-        # Gompertzian dynamics: dy/dt = r * y * log(K_cap / y) + noise
-        r = rng.normal(0.5, 0.1)
-        K_cap = 3.5
-        y = rng.uniform(0.3, 0.8)
+        t_cross = _crossing_time(grid, path, lethal_threshold)
+        t_censor = float(rng.uniform(censor_min, end_time))   # independent of the path
 
-        y_trajectory = []
-        dts = []
-        prev_t = 0.0
-        event_time = None
+        if t_cross is None:
+            tte, event = float(end_time), 0.0                 # administrative
+        elif t_cross <= t_censor:
+            tte, event = float(t_cross), 1.0
+        else:
+            tte, event = float(t_censor), 0.0
 
-        for t in visit_times:
-            dt = max(0.1, t - prev_t)
-            dts.append(dt)
-            # ODE integration step
-            growth = r * y * max(0.01, math.log(max(1.01, K_cap / max(0.01, y)))) * dt
-            noise = rng.normal(0, 0.05 * math.sqrt(dt))
-            y = max(0.05, y + growth + noise)
-            y_trajectory.append(y)
+        # Visits from a Poisson process on (0, tte), independent of the path.
+        times = []
+        t = float(rng.exponential(1.0 / visit_rate))
+        while t < tte:
+            times.append(t)
+            t += float(rng.exponential(1.0 / visit_rate))
+        if len(times) < 2:
+            times = list(np.linspace(0.15 * tte, 0.85 * tte, 2))
+        times = np.asarray(times, dtype=np.float64)
 
-            if y >= lethal_threshold and event_time is None:
-                event_time = float(t)
-            prev_t = t
+        # Sample the fine path at the visit times.
+        idx = np.clip(np.searchsorted(grid, times, side="right") - 1, 0, len(grid) - 1)
+        y_obs = path[idx]
+        # Local derivative from the fine grid, not from the visit gaps.
+        dy_obs = np.gradient(path, fine_dt)[idx]
 
-        y_arr = np.array(y_trajectory, dtype=np.float32)
-        dts_arr = np.array(dts, dtype=np.float32)
-
-        # Feature matrix: [y, dy/dt_approx, sin(t), cos(t)]
-        dy = np.diff(y_arr, prepend=y_arr[0]) / np.maximum(dts_arr, 0.05)
-        feats = np.stack([y_arr, dy, np.sin(visit_times), np.cos(visit_times)], axis=1)
-
-        has_event = 1.0 if event_time is not None else 0.0
-        tte = event_time if event_time is not None else float(end_time)
-
-        # Interval event indicator
-        events = np.zeros(n_visits, dtype=np.float32)
-        if has_event > 0.5:
-            # Mark the interval where lethal threshold was reached
-            for k_idx, t_k in enumerate(visit_times):
-                if t_k >= tte:
-                    events[k_idx] = 1.0
-                    break
+        feats = np.stack([y_obs, dy_obs, np.sin(times), np.cos(times)], axis=1).astype(np.float32)
+        dts = np.diff(times, prepend=0.0).astype(np.float32)
+        dts[0] = max(float(times[0]), 1e-3)
 
         patients.append({
-            'id': i,
-            'features': torch.tensor(feats, dtype=torch.float32),
-            'dts': torch.tensor(dts_arr, dtype=torch.float32),
-            'times': torch.tensor(visit_times, dtype=torch.float32),
-            'events': torch.tensor(events, dtype=torch.float32),
-            'tte': float(tte),
-            'event': has_event,
-            'mask': None
+            "id": i,
+            "features": torch.tensor(feats, dtype=torch.float32),
+            "dts": torch.tensor(dts, dtype=torch.float32),
+            "times": torch.tensor(times.astype(np.float32), dtype=torch.float32),
+            "events": torch.zeros(len(times), dtype=torch.float32),
+            "mask": torch.ones((len(times), len(FEATURE_NAMES)), dtype=torch.float32),
+            "tte": tte,
+            "event": event,
+            "growth_rate": r,          # diagnostics only, never a feature
         })
 
-    n_train = int(0.8 * n_samples)
-    train_patients = patients[:n_train]
-    test_patients = patients[n_train:]
+    tr_idx, va_idx, te_idx = subject_level_split(len(patients), seed=seed, fracs=fracs)
+    train = [patients[i] for i in tr_idx]
+    val = [patients[i] for i in va_idx]
+    test = [patients[i] for i in te_idx]
+
+    stats = fit_feature_stats(train)
+    train, val, test = (apply_feature_stats(s, stats) for s in (train, val, test))
+    x_mean = empirical_feature_mean(train)
 
     return (
-        LongitudinalSurvivalDataset(train_patients),
-        LongitudinalSurvivalDataset(test_patients),
-        4,
-        float(end_time)
+        LongitudinalSurvivalDataset(train),
+        LongitudinalSurvivalDataset(val),
+        LongitudinalSurvivalDataset(test),
+        len(FEATURE_NAMES),
+        float(end_time),
+        x_mean,
     )
