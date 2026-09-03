@@ -305,3 +305,12 @@ were shifted, the preregistered IPCW never ran, and the reference baseline score
 below chance could not have falsified anything — which is why the original
 "ALL ADVERSARIAL STRESS TESTS PASSED" verdict carried no information in either
 direction.
+
+---
+
+### 9. Follow-up Research Directions (Weight Initialization)
+- Detailed proposal documented in [`research/continuous-survival-td/notes/weight_initialization_strategies.md`](research/continuous-survival-td/notes/weight_initialization_strategies.md):
+  1. **Marginal Kaplan-Meier Prior Bias Initialization**: Initialize final hazard head bias $b_k = \text{logit}(\hat{h}_{\text{KM}}(k))$ so the network starts exactly at the population survival curve ($C^{td} = 0.500$), eliminating early death explosion and preventing division collapse in DeepTCSR.
+  2. **Anchor-Supervised Warm-Start**: Curriculum annealing $\alpha: 1.0 \to 0.0$ over early epochs to prevent bootstrap instability.
+  3. **Optimistic Survival Bias**: Constant negative bias $b_k = -3.5$ ensuring high initial survival discount $\gamma_j \in [0.90, 0.99]$.
+
