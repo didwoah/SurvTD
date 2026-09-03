@@ -3,6 +3,8 @@ Unified Time-Series Survival Dataset and Collate Functions:
 Supports irregular observation intervals, variable sequence lengths, and censoring indicators.
 """
 
+import math
+
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -73,3 +75,70 @@ def collate_patient_batch(batch):
         'mask': mask,
         'raw_batch': batch
     }
+
+
+def expand_to_regular_grid(dataset, grid_step: float, max_steps: int = 512):
+    """
+    Forward-fill each irregular trajectory onto a uniform grid of width `grid_step`.
+
+    This is the Rung 1 definition in preregistration section 3 -- "person-period
+    expanded discrete hazard model evaluated on a 1-hour regular grid (forward-fill
+    interpolation)" -- which the shipped code described in its docstring but never
+    performed. Implementing it rather than dropping the claim is the conservative
+    choice: it makes the naive baseline stronger, not weaker.
+
+    Semantics:
+      * grid points are t = grid_step, 2*grid_step, ... up to the last observation
+      * each grid point carries the most recent observation at or before it
+        (forward fill); grid points before the first observation carry it too
+      * `mask` is 1 only where a real observation lands on that grid point, so a
+        missingness-aware backbone can tell carried-forward values from fresh ones
+      * `tte`, `event` and the subject id are untouched
+
+    Args:
+        dataset: iterable of patient dicts (see LongitudinalSurvivalDataset)
+        grid_step: grid width, in the cohort's time unit
+        max_steps: safety cap, so a long follow-up with a small step cannot explode
+    Returns:
+        LongitudinalSurvivalDataset of expanded trajectories
+    """
+    if grid_step <= 0:
+        raise ValueError(f"grid_step must be positive, got {grid_step}")
+
+    out = []
+    for p in dataset:
+        times = p['times'].detach().cpu().numpy()
+        feats = p['features'].detach().cpu().numpy()
+        if times.size == 0:
+            out.append(p)
+            continue
+
+        n = int(min(max(1, math.ceil(float(times[-1]) / grid_step)), max_steps))
+        grid = np.arange(1, n + 1, dtype=np.float32) * grid_step
+
+        # Index of the most recent observation at or before each grid point.
+        src = np.searchsorted(times, grid, side='right') - 1
+        src = np.clip(src, 0, len(times) - 1)
+
+        grid_feats = feats[src]
+        # A grid point is a fresh observation when some real time falls in
+        # (t - grid_step, t].
+        fresh = np.zeros(n, dtype=np.float32)
+        hit = np.clip(np.ceil(times / grid_step).astype(int) - 1, 0, n - 1)
+        fresh[hit] = 1.0
+
+        dts = np.full(n, grid_step, dtype=np.float32)
+
+        expanded = dict(p)
+        expanded['features'] = torch.tensor(grid_feats, dtype=torch.float32)
+        expanded['times'] = torch.tensor(grid, dtype=torch.float32)
+        expanded['dts'] = torch.tensor(dts, dtype=torch.float32)
+        # Interval event flags are derived from residual times downstream, so a
+        # zero vector here is correct and avoids re-encoding the event location.
+        expanded['events'] = torch.zeros(n, dtype=torch.float32)
+        expanded['mask'] = torch.tensor(
+            np.repeat(fresh[:, None], feats.shape[1], axis=1), dtype=torch.float32
+        )
+        out.append(expanded)
+
+    return LongitudinalSurvivalDataset(out)
