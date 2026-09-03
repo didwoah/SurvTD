@@ -3,7 +3,8 @@ Track A: Paper Experiments Pipeline (EXP-01, EXP-02, EXP-07)
 - EXP-01: Multi-Cohort Grand Benchmark Evaluation (Synthetic ICU, NASA C-MAPSS, PBC, Tumor Growth)
 - EXP-02: Baseline Ladder Parity (KM Reference, Person-Period, Dynamic-DeepHit, DeepTCSR Clamped, SurvTD)
 - EXP-07: Clinical Bedside Alarm Fatigue & Utility Evaluation (Synthetic ICU)
-- Generates Table 1 and Table 2 in Markdown and CSV/JSON formats.
+- Pre-Registered Kill Criteria: Kill Criterion 3 (Baseline Margin >= 0.025) & Kill Criterion 4 (Alarm Reduction >= 25%)
+- Generates Table 1, Table 2, and falsification reports.
 """
 
 import os
@@ -20,6 +21,7 @@ import numpy as np
 import torch
 
 from src.data.cohorts import COHORTS
+from src.data.dataset import expand_to_regular_grid
 from src.models.survtd import SurvTDModel
 from src.models.baselines.person_period import PersonPeriodModel
 from src.models.baselines.dynamic_deephit import DynamicDeepHitModel
@@ -41,11 +43,6 @@ from src.evaluation.alarm_fatigue import (
     calibrate_threshold_for_ppv,
     evaluate_alarm_fatigue,
     compute_decision_curve_analysis,
-)
-from src.evaluation.stats import (
-    compute_bootstrap_ci,
-    compute_paired_bootstrap_ci,
-    paired_wilcoxon_test,
 )
 from src.training.trainer import train_model, get_device
 
@@ -108,6 +105,11 @@ def train_and_evaluate_model(
         return None, metrics
 
     if method_name == "person_period":
+        grid_step = getattr(spec, "person_period_grid_step", 1.0)
+        train_data = expand_to_regular_grid(train_data, grid_step=grid_step)
+        val_data = expand_to_regular_grid(val_data, grid_step=grid_step)
+        test_data = expand_to_regular_grid(test_data, grid_step=grid_step)
+
         model = PersonPeriodModel(
             input_dim=dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s,
             include_overflow=True
@@ -274,7 +276,7 @@ def run_track_a(
     with open(json_path, "w") as f:
         json.dump(serializable_raw, f, indent=2)
 
-    # Format Table 1 Markdown
+    # Format Table 1 Markdown (with sample std ddof=1)
     md_lines = [
         "# Table 1: Multi-Cohort Dynamic Survival Performance (EXP-01 & EXP-02)",
         "",
@@ -293,9 +295,12 @@ def run_track_a(
             i_vals = [v["ibs"] for v in seeds_dict.values() if not np.isnan(v["ibs"])]
 
             if c_vals and a_vals and i_vals:
-                c_str = f"{np.mean(c_vals):.3f}±{np.std(c_vals):.3f}" if len(c_vals) > 1 else f"{np.mean(c_vals):.3f}"
-                a_str = f"{np.mean(a_vals):.3f}±{np.std(a_vals):.3f}" if len(a_vals) > 1 else f"{np.mean(a_vals):.3f}"
-                i_str = f"{np.mean(i_vals):.3f}±{np.std(i_vals):.3f}" if len(i_vals) > 1 else f"{np.mean(i_vals):.3f}"
+                c_std = np.std(c_vals, ddof=1) if len(c_vals) > 1 else 0.0
+                a_std = np.std(a_vals, ddof=1) if len(a_vals) > 1 else 0.0
+                i_std = np.std(i_vals, ddof=1) if len(i_vals) > 1 else 0.0
+                c_str = f"{np.mean(c_vals):.3f}±{c_std:.3f}" if len(c_vals) > 1 else f"{np.mean(c_vals):.3f}"
+                a_str = f"{np.mean(a_vals):.3f}±{a_std:.3f}" if len(a_vals) > 1 else f"{np.mean(a_vals):.3f}"
+                i_str = f"{np.mean(i_vals):.3f}±{i_std:.3f}" if len(i_vals) > 1 else f"{np.mean(i_vals):.3f}"
                 cell = f"{c_str} / {a_str} / {i_str}"
             else:
                 cell = "n/a"
@@ -322,10 +327,15 @@ def run_track_a(
             jits = [v["unstable_window_rate_per_day"] for v in s_dict.values()]
             j_fracs = [v["jitter_patient_fraction"] for v in s_dict.values()]
 
-            th_str = f"{np.mean(ths):.3f}±{np.std(ths):.3f}" if len(ths) > 1 else f"{np.mean(ths):.3f}"
-            fa_str = f"{np.mean(fas):.3f}±{np.std(fas):.3f}" if len(fas) > 1 else f"{np.mean(fas):.3f}"
-            jit_str = f"{np.mean(jits):.3f}±{np.std(jits):.3f}" if len(jits) > 1 else f"{np.mean(jits):.3f}"
-            jf_str = f"{np.mean(j_fracs):.3f}±{np.std(j_fracs):.3f}" if len(j_fracs) > 1 else f"{np.mean(j_fracs):.3f}"
+            th_std = np.std(ths, ddof=1) if len(ths) > 1 else 0.0
+            fa_std = np.std(fas, ddof=1) if len(fas) > 1 else 0.0
+            jit_std = np.std(jits, ddof=1) if len(jits) > 1 else 0.0
+            jf_std = np.std(j_fracs, ddof=1) if len(j_fracs) > 1 else 0.0
+
+            th_str = f"{np.mean(ths):.3f}±{th_std:.3f}" if len(ths) > 1 else f"{np.mean(ths):.3f}"
+            fa_str = f"{np.mean(fas):.3f}±{fa_std:.3f}" if len(fas) > 1 else f"{np.mean(fas):.3f}"
+            jit_str = f"{np.mean(jits):.3f}±{jit_std:.3f}" if len(jits) > 1 else f"{np.mean(jits):.3f}"
+            jf_str = f"{np.mean(j_fracs):.3f}±{jf_std:.3f}" if len(j_fracs) > 1 else f"{np.mean(j_fracs):.3f}"
 
             t2_lines.append(f"| **{method}** | {th_str} | {fa_str} | {jit_str} | {jf_str} |")
 
@@ -334,7 +344,64 @@ def run_track_a(
             f.write(table2_md + "\n")
         print(f"Saved Table 2 -> {output_path / 'table2_alarm_fatigue.md'}")
 
-    return table1_raw, table2_raw
+    # Adjudicate Track A Pre-Registered Kill Criteria (Kill Criterion 3 & 4)
+    falsification_report_a = []
+
+    # Kill Criterion 3: SurvTD must beat DeepTCSR and Dynamic-DeepHit by >= 0.025 in C_td / AUC
+    for cohort in cohorts:
+        survtd_c = [v["c_td"] for v in table1_raw.get((cohort, "survtd"), {}).values() if not np.isnan(v["c_td"])]
+        deeptcsr_c = [v["c_td"] for v in table1_raw.get((cohort, "deeptcsr"), {}).values() if not np.isnan(v["c_td"])]
+        deephit_c = [v["c_td"] for v in table1_raw.get((cohort, "dynamic_deephit"), {}).values() if not np.isnan(v["c_td"])]
+
+        if survtd_c and deeptcsr_c and deephit_c:
+            m_survtd = float(np.mean(survtd_c))
+            m_deeptcsr = float(np.mean(deeptcsr_c))
+            m_deephit = float(np.mean(deephit_c))
+
+            delta_tcsr = m_survtd - m_deeptcsr
+            delta_hit = m_survtd - m_deephit
+
+            if delta_tcsr < 0.025:
+                falsification_report_a.append({
+                    "test_id": "Kill Criterion 3 (DeepTCSR Clamped)",
+                    "cohort": cohort,
+                    "claim": "C3",
+                    "reason": f"SurvTD ({m_survtd:.4f}) failed to achieve >= 0.025 margin over DeepTCSR ({m_deeptcsr:.4f}) on {cohort} (delta: {delta_tcsr:.4f})",
+                    "verdict": "FALSIFIED",
+                })
+            if delta_hit < 0.025:
+                falsification_report_a.append({
+                    "test_id": "Kill Criterion 3 (Dynamic-DeepHit)",
+                    "cohort": cohort,
+                    "claim": "C3",
+                    "reason": f"SurvTD ({m_survtd:.4f}) failed to achieve >= 0.025 margin over Dynamic-DeepHit ({m_deephit:.4f}) on {cohort} (delta: {delta_hit:.4f})",
+                    "verdict": "FALSIFIED",
+                })
+
+    # Kill Criterion 4: Bedside alarm fatigue reduction >= 25%
+    if "survtd" in table2_raw and "dynamic_deephit" in table2_raw:
+        survtd_fa = float(np.mean([v["false_alert_rate_per_day"] for v in table2_raw["survtd"].values()]))
+        hit_fa = float(np.mean([v["false_alert_rate_per_day"] for v in table2_raw["dynamic_deephit"].values()]))
+        survtd_jit = float(np.mean([v["unstable_window_rate_per_day"] for v in table2_raw["survtd"].values()]))
+        hit_jit = float(np.mean([v["unstable_window_rate_per_day"] for v in table2_raw["dynamic_deephit"].values()]))
+
+        fa_reduction = (hit_fa - survtd_fa) / max(1e-4, hit_fa)
+        jit_reduction = (hit_jit - survtd_jit) / max(1e-4, hit_jit)
+
+        if fa_reduction < 0.25 or jit_reduction < 0.25:
+            falsification_report_a.append({
+                "test_id": "Kill Criterion 4",
+                "cohort": "synthetic_icu",
+                "claim": "C4",
+                "reason": f"SurvTD failed to reduce false alert rate (reduction: {fa_reduction*100:.1f}%) or jitter (reduction: {jit_reduction*100:.1f}%) by >= 25% over Dynamic-DeepHit",
+                "verdict": "FALSIFIED",
+            })
+
+    with open(output_path / "falsification_report_track_a.json", "w") as f:
+        json.dump(falsification_report_a, f, indent=2)
+    print(f"Saved Track A Falsification Report ({len(falsification_report_a)} violations) -> {output_path / 'falsification_report_track_a.json'}")
+
+    return table1_raw, table2_raw, falsification_report_a
 
 
 def main():

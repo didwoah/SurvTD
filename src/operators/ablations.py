@@ -126,6 +126,7 @@ def permute_patient_durations(patient_dict: dict, rng: random.Random) -> dict:
     if len(dts) > 1:
         rng.shuffle(dts)
         new_patient['dts'] = torch.tensor(dts, dtype=torch.float32)
+        new_patient['times'] = torch.cumsum(new_patient['dts'], dim=0)
     return new_patient
 
 

@@ -125,6 +125,7 @@ class SurvTDModel(nn.Module):
         if lam is None:
             lam = self.lam
         alpha = self.alpha_anchor if alpha_anchor is None else float(alpha_anchor)
+        assert 0.0 <= alpha <= 1.0, f"alpha_anchor must be in [0, 1], got {alpha}"
 
         # 1. Online Forward Pass
         hazard_on, surv_on, pmf_on, cdf_on = self.forward(x.unsqueeze(0), dts.unsqueeze(0), mask.unsqueeze(0) if mask is not None else None)

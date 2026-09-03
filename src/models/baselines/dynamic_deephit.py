@@ -92,9 +92,11 @@ class DynamicDeepHitModel(nn.Module):
                 total_steps += 1
 
             # Save last visit cdf and event for pairwise ranking loss
+            last_time = float(times[-1].item())
             patient_evals.append({
                 'cdf_last': cdf[-1],
                 'tte': tte,
+                'last_time': last_time,
                 'event': event
             })
 
@@ -109,7 +111,7 @@ class DynamicDeepHitModel(nn.Module):
             for j in range(N):
                 if i != j:
                     if patient_evals[i]['event'] > 0.5 and patient_evals[i]['tte'] < patient_evals[j]['tte']:
-                        rem_i = patient_evals[i]['tte']
+                        rem_i = max(0.0, patient_evals[i]['tte'] - patient_evals[i]['last_time'])
                         k_eval = min(int(math.floor(rem_i / self.delta_s)), self.K - 1)
                         # Patient i should have higher risk F_i(rem_i) than patient j
                         f_i = patient_evals[i]['cdf_last'][k_eval]

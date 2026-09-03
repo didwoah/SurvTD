@@ -30,35 +30,31 @@ def get_device() -> torch.device:
 
 
 def evaluate_val_score(
-    model: nn.Module,
-    train_dataset,
+    model,
     val_dataset,
-    val_spec: LandmarkSpec | None,
+    val_spec,
     delta_s: float,
+    model_type: str,
+    ablation_mode: str,
+    alpha_anchor: float,
     device: torch.device,
-    model_type: str = "survtd",
-    ablation_mode: str = "full",
-    alpha_anchor: float | None = None
+    censoring_est=None,
 ) -> float:
     """
-    Computes validation score for checkpoint selection.
-    Prioritizes landmarked Antolini C^td when val_spec is available.
-    Falls back to average validation loss if val_spec is None or evaluation fails.
+    Evaluates validation score using landmarked Antolini C^td if spec available,
+    or negative validation loss as fallback. Higher is always better.
     """
     model.eval()
-
-    if val_spec is not None:
+    if val_spec is not None and len(val_dataset) > 0:
         try:
-            results = evaluate_landmarked(
-                model, train_dataset, val_dataset, val_spec, delta_s, device, strict=False
-            )
-            c_td_vals = [m["c_td"] for m in results.values() if not np.isnan(m["c_td"])]
-            if len(c_td_vals) > 0:
-                return float(np.mean(c_td_vals))
+            metrics = evaluate_landmarked(model, val_dataset, val_dataset, val_spec, delta_s, device, strict=False)
+            valid_c = [m["c_td"] for m in metrics.values() if not np.isnan(m["c_td"])]
+            if valid_c:
+                return float(np.mean(valid_c))
         except Exception:
             pass
 
-    # Fallback: compute validation loss (negative score so higher is always better)
+    # Fallback to validation loss (negative, so higher is better)
     total_val_loss = 0.0
     n_val = 0
     with torch.no_grad():
@@ -69,16 +65,19 @@ def evaluate_val_score(
             tte = float(p['tte'])
             tau_event = float(p['tte']) if p['event'] > 0.5 else float(p['tte']) + 100.0
             mask = p['mask'].to(device) if 'mask' in p and p['mask'] is not None else None
+            ipcw_w = float(censoring_est.ipcw(tte, left_limit=True)) if censoring_est is not None else 1.0
 
             if model_type == "survtd":
                 l = model.compute_loss_trajectory(
                     x, dts, events, tte, tau_event, mask=mask,
-                    ablation_mode=ablation_mode, alpha_anchor=alpha_anchor
+                    ablation_mode=ablation_mode, alpha_anchor=alpha_anchor,
+                    ipcw_weight=ipcw_w
                 )
             elif model_type == "deeptcsr":
                 l = model.compute_loss_trajectory(
                     x, dts, events, tte, tau_event, mask=mask,
-                    alpha_anchor=alpha_anchor
+                    alpha_anchor=alpha_anchor,
+                    ipcw_weight=ipcw_w
                 )
             elif model_type == "dynamic_deephit":
                 l = model.compute_loss([p])
@@ -127,6 +126,14 @@ def train_model(
         "val_score": [],
     }
 
+    # Fit train-split censoring estimator for IPCW scalar loss weighting (A-04, D11)
+    censoring_est = None
+    try:
+        from src.evaluation.censoring import fit_censoring_estimator
+        censoring_est = fit_censoring_estimator(train_dataset)
+    except Exception:
+        censoring_est = None
+
     for epoch in range(1, epochs + 1):
         model.train()
         total_loss = 0.0
@@ -149,10 +156,12 @@ def train_model(
                     tte = float(p['tte'])
                     tau_event = float(p['tte']) if p['event'] > 0.5 else float(p['tte']) + 100.0
                     mask = p['mask'].to(device) if 'mask' in p and p['mask'] is not None else None
+                    ipcw_w = float(censoring_est.ipcw(tte, left_limit=True)) if censoring_est is not None else 1.0
 
                     l = model.compute_loss_trajectory(
                         x, dts, events, tte, tau_event, mask=mask,
-                        ablation_mode=ablation_mode, alpha_anchor=alpha_anchor
+                        ablation_mode=ablation_mode, alpha_anchor=alpha_anchor,
+                        ipcw_weight=ipcw_w
                     )
                     batch_loss = batch_loss + l
                 batch_loss = batch_loss / max(1, len(batch_patients))
@@ -165,10 +174,12 @@ def train_model(
                     tte = float(p['tte'])
                     tau_event = float(p['tte']) if p['event'] > 0.5 else float(p['tte']) + 100.0
                     mask = p['mask'].to(device) if 'mask' in p and p['mask'] is not None else None
+                    ipcw_w = float(censoring_est.ipcw(tte, left_limit=True)) if censoring_est is not None else 1.0
 
                     l = model.compute_loss_trajectory(
                         x, dts, events, tte, tau_event, mask=mask,
-                        alpha_anchor=alpha_anchor
+                        alpha_anchor=alpha_anchor,
+                        ipcw_weight=ipcw_w
                     )
                     batch_loss = batch_loss + l
                 batch_loss = batch_loss / max(1, len(batch_patients))
@@ -205,8 +216,15 @@ def train_model(
         # Validation-based checkpointing
         if val_dataset is not None:
             val_score = evaluate_val_score(
-                model, train_dataset, val_dataset, val_spec, delta_s, device,
-                model_type=model_type, ablation_mode=ablation_mode, alpha_anchor=alpha_anchor
+                model=model,
+                val_dataset=val_dataset,
+                val_spec=val_spec,
+                delta_s=delta_s,
+                model_type=model_type,
+                ablation_mode=ablation_mode,
+                alpha_anchor=alpha_anchor,
+                device=device,
+                censoring_est=censoring_est,
             )
             history["val_score"].append(val_score)
 

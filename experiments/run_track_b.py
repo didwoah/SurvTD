@@ -236,14 +236,14 @@ def run_track_b(
             "verdict": "FALSIFIED",
         })
 
-    mean_full = np.mean(scores["full"])
-    mean_within = np.mean(scores["nc_b_within_perm"])
-    mean_floor = np.mean(scores["nc_b_across_perm"])
+    mean_full = float(np.mean(scores["full"]))
+    mean_within = float(np.mean(scores["nc_b_within_perm"]))
+    mean_floor = float(np.mean(scores["nc_b_across_perm"]))
     total_signal = max(1e-4, mean_full - mean_floor)
     retained_signal = max(0.0, mean_within - mean_floor)
     retention_ratio = retained_signal / total_signal
 
-    if retention_ratio > 0.50 and total_signal > 0.01:
+    if retention_ratio > 0.50:
         falsification_report.append({
             "test_id": "EXP-04 / Kill Criterion 0",
             "claim": "C0",
@@ -254,6 +254,10 @@ def run_track_b(
     delta_a1, ci_low_a1, _, _ = compute_paired_bootstrap_ci(scores["full"], scores["arm_a1_discount"])
     delta_a2, ci_low_a2, _, _ = compute_paired_bootstrap_ci(scores["full"], scores["arm_a2_shift"])
 
+    def _fmt(arr):
+        s = np.std(arr, ddof=1) if len(arr) > 1 else 0.0
+        return f"{np.mean(arr):.4f}±{s:.4f}"
+
     t3_lines = [
         "# Table 3: Adversarial Stress Tests & Ablations (Track B)",
         "",
@@ -261,12 +265,12 @@ def run_track_b(
         "",
         "| Test Condition | Mean C^td | Paired Delta vs Full | 95% Bootstrap CI | Pre-Registered Falsification Rule | Status |",
         "| :--- | :---: | :---: | :---: | :---: | :---: |",
-        f"| **Full SurvTD** | {np.mean(scores['full']):.4f}±{np.std(scores['full']):.4f} | — | — | Target Proposal | — |",
-        f"| **Arm A1 (Discount Ablation)** | {np.mean(scores['arm_a1_discount']):.4f}±{np.std(scores['arm_a1_discount']):.4f} | {delta_a1:.4f} | [{ci_low_a1:.4f}, —] | Lose >= 0.025 | {'PASS' if delta_a1 >= 0.025 else 'UNDERPOWERED/NULL'} |",
-        f"| **Arm A2 (Shift Ablation)** | {np.mean(scores['arm_a2_shift']):.4f}±{np.std(scores['arm_a2_shift']):.4f} | {delta_a2:.4f} | [{ci_low_a2:.4f}, —] | Lose >= 0.025 | {'PASS' if delta_a2 >= 0.025 else 'UNDERPOWERED/NULL'} |",
-        f"| **NC-B (Within-Patient Perm)** | {np.mean(scores['nc_b_within_perm']):.4f}±{np.std(scores['nc_b_within_perm']):.4f} | {np.mean(scores['full']) - mean_within:.4f} | — | Retain <= 50% of floor gain | {'FAIL' if retention_ratio > 0.50 else 'PASS'} |",
-        f"| **NC-B Noise Floor (Across Perm)** | {mean_floor:.4f}±{np.std(scores['nc_b_across_perm']):.4f} | {total_signal:.4f} | — | Empirical noise floor | Baseline Floor |",
-        f"| **Anchor-Only (alpha=1.0)** | {np.mean(scores['alpha_1_anchor_only']):.4f}±{np.std(scores['alpha_1_anchor_only']):.4f} | {delta_a10:.4f} | [{ci_low_a10:.4f}, {ci_high_a10:.4f}] | Delta >= 0.015 (Kill Criterion 5) | {'PASS' if delta_a10 >= 0.015 and ci_low_a10 > 0 else 'FALSIFIED'} |",
+        f"| **Full SurvTD** | {_fmt(scores['full'])} | — | — | Target Proposal | — |",
+        f"| **Arm A1 (Discount Ablation)** | {_fmt(scores['arm_a1_discount'])} | {delta_a1:.4f} | [{ci_low_a1:.4f}, —] | Lose >= 0.025 | {'PASS' if delta_a1 >= 0.025 else 'UNDERPOWERED/NULL'} |",
+        f"| **Arm A2 (Shift Ablation)** | {_fmt(scores['arm_a2_shift'])} | {delta_a2:.4f} | [{ci_low_a2:.4f}, —] | Lose >= 0.025 | {'PASS' if delta_a2 >= 0.025 else 'UNDERPOWERED/NULL'} |",
+        f"| **NC-B (Within-Patient Perm)** | {_fmt(scores['nc_b_within_perm'])} | {np.mean(scores['full']) - mean_within:.4f} | — | Retain <= 50% of floor gain | {'FAIL' if retention_ratio > 0.50 else 'PASS'} |",
+        f"| **NC-B Noise Floor (Across Perm)** | {_fmt(scores['nc_b_across_perm'])} | {total_signal:.4f} | — | Empirical noise floor | Baseline Floor |",
+        f"| **Anchor-Only (alpha=1.0)** | {_fmt(scores['alpha_1_anchor_only'])} | {delta_a10:.4f} | [{ci_low_a10:.4f}, {ci_high_a10:.4f}] | Delta >= 0.015 (Kill Criterion 5) | {'PASS' if delta_a10 >= 0.015 and ci_low_a10 > 0 else 'FALSIFIED'} |",
     ]
 
     table3_md = "\n".join(t3_lines)
