@@ -24,6 +24,9 @@ def main():
     parser.add_argument("--track", choices=["all", "a", "b"], default="all", help="Which track to run")
     parser.add_argument("--epochs", type=int, default=20, help="Training epochs")
     parser.add_argument("--alpha_anchor", type=float, default=0.5, help="Alpha anchor weight")
+    parser.add_argument("--init", type=str, default="default",
+                        choices=["default", "optimistic", "km_prior"],
+                        help="Hazard-head initialization, applied identically to every neural arm")
     parser.add_argument("--dry_run", action="store_true", help="Run fast 1-2 epoch smoke test in isolated dir")
     parser.add_argument("--output_dir", type=str, default="experiments/results")
     args = parser.parse_args()
@@ -47,6 +50,7 @@ def main():
         _, _, fals_a = run_track_a(
             epochs=args.epochs,
             alpha_anchor=args.alpha_anchor,
+            init_mode=args.init,
             dry_run=args.dry_run,
             output_dir=actual_output_dir
         )

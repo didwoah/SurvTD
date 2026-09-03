@@ -89,3 +89,49 @@ The proposal will be declared **falsified and withdrawn** if any of the followin
 4. **Kill Criterion 3 (Empirical Inferiority)**: If SurvTD fails to achieve at least 0.025 improvement in time-dependent AUC / concordance over compute-matched clamped DeepTCSR and Dynamic-DeepHit, $C_3$ is falsified.
 5. **Kill Criterion 4 (Alarm Stability Failure)**: If SurvTD fails to reduce false alert episode rates and alert jitter by at least 25% at validation-matched 0.30 PPV, $C_4$ is falsified.
 6. **Kill Criterion 5 (Anchor-Equivalence Kill)**: If full SurvTD fails to outperform the anchor-only arm ($\alpha=1$, identical backbone without TD consistency) by at least 0.015 in C-index, the temporal-difference consistency mechanism carries no empirical value, and claims $C_0$ and $C_3$ are falsified.
+
+---
+
+## 7. Post-Result Amendments — NOT Pre-Registered
+
+Everything in §1–§6 was locked before any reportable execution. This section is
+different in kind and is quarantined from the ledger in §2 deliberately.
+
+### A-16 (`decided-after-results`, 2026-09-04)
+
+**Trigger.** Kill Criterion 3 fired on Cohort 1 (Synthetic ICU, 5 seeds,
+$\alpha = 0.0$, default initialization): SurvTD $C^{td} = 0.5536 \pm 0.0573$
+against Dynamic-DeepHit $0.6461 \pm 0.0605$ ($\Delta = -0.0925$) and
+Person-Period $0.6367 \pm 0.0759$ ($\Delta = -0.0831$). **$C_3$ is falsified on
+this cohort and that verdict stands as the primary outcome.**
+
+**Correction to the §6 KC3 adjudication.** The margin over DeepTCSR-Clamped
+($\Delta = +0.0421$) was initially read as a PASS. It is not: §5 requires the
+paired 95% CI lower bound to exceed 0, and the seed-level CI is
+$[-0.013, +0.097]$. The correct verdict is **undetermined, not PASS**. Separately,
+DeepTCSR was run at SurvTD's selected $\alpha = 0.0$ and collapsed
+(IBS $0.506 \pm 0.156$, versus $0.115 \pm 0.021$ for Dynamic-DeepHit), so that arm
+is not a valid baseline in this run regardless of the statistic. KC3's text also
+omits Person-Period, which $C_3$ explicitly names; $C_3$ is falsified against
+**2 of 3** named baselines.
+
+**Deviations in the primary run, recorded rather than corrected retroactively.**
+(i) A-05's 12-trial HPO was **not executed** — every method ran at fixed
+`lr=1e-3, hidden=64, batch=16`; uniform across arms, but declared and not
+performed. (ii) The arms were **not compute-matched**: SurvTD received 335–952 s
+per seed against DeepTCSR's 119–189 s and Dynamic-DeepHit's 188–286 s, i.e. 3–6×.
+The falsification is therefore conservative — SurvTD lost with more compute.
+
+**Amendment.** A measured initialization defect (default init gives per-bin hazard
+0.4999 against a cohort truth of 0.010–0.039, collapsing the duration discount
+$\gamma_j = S(\Delta t_j)$ from ~0.98 to 0.481 at the median inter-visit gap and
+to 0.091 at the p90 gap) licenses a **secondary, exploratory** re-run under a
+Kaplan-Meier prior bias initialization, applied **identically to all four neural
+arms**. Full statement, evidence table and the pre-declared proceed/stop gate are
+in `deviation_log.md` §4 A-16. $\alpha = 0.0$ is void as a frozen value and must
+be re-selected over 3 seeds after the fix.
+
+**Reporting rule.** Results under A-16 appear in a separate table block labelled
+*secondary / exploratory* and never replace §5's primary outcome. The primary
+run's raw record is preserved at
+`experiments/results/preregistered_primary_2026-09-04/`.

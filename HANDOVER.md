@@ -1,3 +1,115 @@
+# Handover — Cohort 1 falsification and the A-16 gate (2026-09-04)
+
+**Read this section first; everything below it describes the state before the
+5-seed benchmark ran.**
+
+## Where things stand
+
+The 5-seed Track A run reached Cohort 1 and died early in Cohort 2. **Kill
+Criterion 3 fired.** Synthetic ICU, 5 seeds, alpha = 0.0, default init:
+
+| arm | C^td | Uno AUC | IBS |
+|---|---|---|---|
+| KM reference | 0.5000 ± 0.0000 | 0.5000 ± 0.0000 | 0.119 ± 0.031 |
+| DeepTCSR-Clamped | 0.5115 ± 0.0610 | 0.5145 ± 0.0617 | **0.506 ± 0.156** |
+| **SurvTD (alpha = 0)** | **0.5536 ± 0.0573** | 0.6049 ± 0.0844 | 0.186 ± 0.159 |
+| Person-Period | 0.6367 ± 0.0759 | 0.6958 ± 0.1087 | 0.192 ± 0.066 |
+| Dynamic-DeepHit | **0.6461 ± 0.0605** | 0.6760 ± 0.0814 | 0.115 ± 0.021 |
+
+`C_3` is falsified against **2 of the 3** baselines it names (DeepHit -0.0925,
+Person-Period -0.0831). The `+0.0421` over DeepTCSR is **not** a PASS: §5 requires
+a paired CI lower bound above 0 and the seed-level CI is `[-0.013, +0.097]`; that
+arm also ran at SurvTD's alpha = 0.0 and collapsed (IBS 0.506), so it is not a
+valid baseline in this run.
+
+**This is the preregistered primary outcome and it stands.** The run wrote no JSON
+(results were flushed only after all four cohorts), so the sole record is the
+stdout log, now preserved at
+`experiments/results/preregistered_primary_2026-09-04/cohort1_raw_run.log`.
+
+## The diagnosis, measured
+
+Default `nn.Linear` init puts every hazard at ~0.4999 against a cohort truth of
+0.010–0.039, so `S(72h) = 1.4e-11` and the duration discount
+`gamma_j = S(dt_j)` — which is the operator's contraction modulus — reads **0.481**
+at the median inter-visit gap and **0.091** at the p90 gap, against 0.979 / 0.933.
+The effective credit-assignment horizon `1/(1-gamma)` collapses from ~48 steps to
+~1.9, so at alpha = 0 the terminal Dirac (the only ground truth in the objective)
+reaches the first visit attenuated by `0.48^10 ~ 1e-3`. It is self-reinforcing:
+small gamma routes mass to the near branch, keeping S and therefore gamma small.
+
+Three corroborations in the primary run, none of them anticipated by the original
+research note:
+
+1. `corr(SurvTD, DeepHit)` across seeds is **-0.211**; `corr(Person-Period,
+   DeepHit)` is **+0.988**. Every arm but SurvTD tracks per-seed cohort
+   learnability.
+2. SurvTD IBS on seed 456 is **0.468** (0.084–0.136 elsewhere) — a collapsed
+   survival curve. DeepTCSR shows the same signature in 4 of 5 seeds.
+3. Seed 456's SurvTD run took **335.9s** against 675–952s elsewhere: `patience=5`
+   terminated it near epoch 7, because during cold start validation C^td sits at
+   chance and never improves. The stopping rule and the init defect compound.
+
+**alpha = 0.0 is void as a frozen value.** It was selected on one seed-42
+validation run whose sweep spread (0.078) matches the initialization noise already
+measured (0.042), and seed 42 is the **only** seed where SurvTD beat DeepHit
+(+0.026; the rest: -0.204, -0.096, -0.155, -0.035).
+
+## What changed in the code (all committed)
+
+- `DiscreteHazardHead.init_prior_bias` / `init_constant_bias`, plus
+  `apply_hazard_prior_init(model, mode, train_dataset, delta_s)` which **re-syncs
+  `target_head`** — SurvTD and DeepTCSR deepcopy it in `__init__`, so without the
+  resync the target network keeps the collapsed bias and supplies gamma_j from it.
+- `censoring.marginal_residual_hazards`: KM of **residual times** `R_j = tte - t_j`
+  pooled over training-split (subject, visit) pairs. The research note specified the
+  time-from-enrolment KM, which is the wrong support for this head.
+- `--init {default,optimistic,km_prior}` on `run_track_a.py` and `run_all.py`,
+  applied **identically to all four neural arms**.
+- `train_model(es_warmup=5)`: patience does not accrue before epoch 5.
+- `run_track_a` flushes `table1_benchmarks_raw.json` after every
+  (cohort, seed, method), with `wall_clock_s` and the init record per cell.
+- `experiments/a16_init_gate.py`: adjudicates the gate below.
+
+Verified: with `km_prior`, online and target heads both start at mean hazard
+0.0144, `S(bin0) = 0.980`, mass exactly 1.0.
+
+## Next action
+
+Run the gate, then `python experiments/a16_init_gate.py`:
+
+```bash
+python experiments/run_track_a.py --cohorts synthetic_icu --methods survtd \
+  --seeds 42 123 456 789 101112 --epochs 20 --alpha_anchor 0.0 --init km_prior \
+  --output_dir experiments/results/exploratory_init_gate
+```
+
+**PROCEED** requires both: mean C^td >= 0.60, and `corr(SurvTD, difficulty)` > 0.
+On PROCEED: re-select alpha over 3 seeds, then **run Track B before Track A** —
+Kill Criterion 5 (`run_track_b.py:190-233`) has never once executed, and if the TD
+term cannot beat the anchor-only arm by 0.015 then `C_0` and `C_3` die regardless
+of initialization. On STOP: the diagnosis is rejected and the primary outcome is
+final.
+
+Everything under A-16 is `decided-after-results` and is reported as **secondary /
+exploratory**, never in place of the primary table.
+
+## Two documentation discrepancies found
+
+- HANDOVER below claims **96 passing tests**; `unittest discover` finds **26**
+  (2 backbones + 4 baselines + 15 operator-defects + 5 operators). All four files
+  are discovered, so this is a stale count, not a discovery failure.
+- `experiments/test_operator_defects.py` duplicates
+  `experiments/unit_tests/test_operator_defects.py`. Two copies of the
+  characterization suite is the same reproducibility hazard as two operators.
+- **A-05's 12-trial HPO never ran.** Every method used fixed
+  `lr=1e-3, hidden=64, batch=16`. Uniform across arms, but declared and not done.
+- **The arms were not compute-matched**: SurvTD got 335–952 s per seed against
+  DeepTCSR's 119–189 s and DeepHit's 188–286 s. The falsification is therefore
+  conservative — SurvTD lost with 3–6x the compute.
+
+---
+
 # Handover — experiment repair effort (2026-09-03)
 
 Branch: **`feature/experiment-repair`** (7 commits ahead of `main`, working tree clean)

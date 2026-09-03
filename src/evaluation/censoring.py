@@ -129,3 +129,72 @@ def fit_censoring_from_dataset(dataset, floor: float = 0.05) -> KaplanMeierCenso
 # Backward-compatible alias
 fit_censoring_estimator = fit_censoring_from_dataset
 
+
+
+def marginal_residual_hazards(
+    dataset,
+    K: int,
+    delta_s: float,
+    eps: float = 1e-4,
+) -> np.ndarray:
+    """
+    Per-bin marginal hazards of the RESIDUAL time R_j = tte - t_j, estimated by
+    Kaplan-Meier on the training split's pooled (subject, visit) pairs.
+
+    This is the prior the hazard head should start from. Note the support: the head
+    predicts residual time from each visit, NOT time from enrolment, so the marginal
+    KM of `tte` is the wrong curve. On a cohort whose visit density varies over time
+    the two differ substantially; pooling residual times is what matches the head.
+
+    Censoring indicator is the trajectory-level one: every visit of a censored
+    trajectory contributes R_j > r_j, every visit of an event trajectory contributes
+    an exact R_j. Visits are not independent, so this is a working estimate of a
+    marginal curve, not an inference target -- it is only ever used to place an
+    initialization bias, and it is fit on the training split alone.
+
+    Args:
+        dataset: LongitudinalSurvivalDataset (or any iterable of patient dicts)
+        K: number of genuine bins
+        delta_s: bin width
+        eps: clamp on the returned hazards. Bins beyond the last observed event have
+            no information and land on `eps`; that biases the prior towards survival,
+            which is the safe direction, but it means `eps` DEFINES the tail prior
+            and must be declared rather than tuned.
+    Returns:
+        (K,) hazards in [eps, 1 - eps]
+    """
+    r_all, e_all = [], []
+    for p in dataset:
+        dts = np.asarray(p["dts"], dtype=float)
+        r = float(p["tte"]) - np.cumsum(dts)
+        ev = float(p["event"])
+        for v in r:
+            if v > 0.0:
+                r_all.append(float(v))
+                e_all.append(ev)
+
+    if not r_all:
+        return np.full(K, float(eps))
+
+    t = np.asarray(r_all, dtype=float)
+    e = np.asarray(e_all, dtype=float)
+    order = np.argsort(t)
+    t, e = t[order], e[order]
+
+    surv, running, at_risk = [], 1.0, t.size
+    uniq = np.unique(t)
+    for u in uniq:
+        d = float(np.sum((t == u) & (e > 0.5)))
+        c = float(np.sum((t == u) & (e <= 0.5)))
+        if at_risk > 0 and d > 0:
+            running *= 1.0 - d / at_risk
+        surv.append(running)
+        at_risk -= (d + c)
+    surv = np.asarray(surv, dtype=float)
+
+    grid = (np.arange(K, dtype=float) + 1.0) * float(delta_s)
+    s_grid = np.interp(grid, uniq, surv, left=1.0, right=float(surv[-1]))
+    s_prev = np.concatenate([[1.0], s_grid[:-1]])
+
+    hazards = (s_prev - s_grid) / np.maximum(s_prev, 1e-12)
+    return np.clip(hazards, float(eps), 1.0 - float(eps))

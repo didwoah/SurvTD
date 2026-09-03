@@ -23,6 +23,7 @@ import torch
 from src.data.cohorts import COHORTS
 from src.data.dataset import expand_to_regular_grid
 from src.models.survtd import SurvTDModel
+from src.models.hazard_head import apply_hazard_prior_init
 from src.models.baselines.person_period import PersonPeriodModel
 from src.models.baselines.dynamic_deephit import DynamicDeepHitModel
 from src.models.baselines.deeptcsr_clamped import DeepTCSRClampedModel
@@ -91,6 +92,7 @@ def train_and_evaluate_model(
     alpha_anchor: float,
     device: torch.device,
     verbose: bool = False,
+    init_mode: str = "default",
 ) -> tuple:
     train_data = cohort_data.train
     val_data = cohort_data.val
@@ -102,7 +104,7 @@ def train_and_evaluate_model(
 
     if method_name == "km":
         metrics = evaluate_km_reference(train_data, test_data, l_spec)
-        return None, metrics
+        return None, metrics, {"init": "n/a"}
 
     if method_name == "person_period":
         grid_step = getattr(spec, "person_period_grid_step", 1.0)
@@ -134,6 +136,14 @@ def train_and_evaluate_model(
     if hasattr(model, "backbone") and hasattr(model.backbone, "set_empirical_mean"):
         model.backbone.set_empirical_mean(cohort_data.x_mean)
 
+    # Initialization scheme, applied IDENTICALLY to every neural arm. Applying it to
+    # SurvTD alone would hand the proposal a free advantage over the baselines and
+    # make Kill Criterion 3 unfalsifiable; all four arms expose the same
+    # DiscreteHazardHead at `.head`, so parity is enforceable rather than hoped for.
+    # Fit on `train_data` only -- note this is the person-period expanded split when
+    # method_name == 'person_period', which is the split that model actually trains on.
+    init_record = apply_hazard_prior_init(model, init_mode, train_data, delta_s)
+
     trained_model = train_model(
         model=model,
         train_dataset=train_data,
@@ -153,7 +163,7 @@ def train_and_evaluate_model(
     metrics = evaluate_landmarked(
         trained_model, train_data, test_data, l_spec, delta_s, device, strict=False
     )
-    return trained_model, metrics
+    return trained_model, metrics, init_record
 
 
 def extract_patient_trajectories(model, dataset, delta_s, device):
@@ -191,6 +201,7 @@ def run_track_a(
     batch_size=16,
     lr=0.001,
     alpha_anchor=0.5,
+    init_mode="default",
     dry_run=False,
     output_dir="experiments/results",
 ):
@@ -210,7 +221,26 @@ def run_track_a(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     device = get_device()
-    print(f"[*] Starting Track A on device: {device} | Seeds: {seeds}")
+    print(f"[*] Starting Track A on device: {device} | Seeds: {seeds} | Init: {init_mode}")
+
+    # Incremental result checkpoint. The previous version wrote table1 exactly once,
+    # after every cohort had finished; when the session died inside cohort 2 roughly
+    # two hours of compute survived only as stdout. Results are now flushed after
+    # every (cohort, seed, method) so an interrupted run loses at most one cell.
+    json_path = output_path / "table1_benchmarks_raw.json"
+
+    def _flush_raw():
+        payload = {
+            f"{c}_{m}": {str(s_): v for s_, v in d.items()}
+            for (c, m), d in table1_raw.items()
+        }
+        with open(json_path, "w") as fh:
+            json.dump({"init_mode": init_mode, "alpha_anchor": alpha_anchor,
+                       "epochs": epochs, "seeds": seeds, "results": payload}, fh, indent=2)
+        if table2_raw:
+            with open(output_path / "table2_alarm_fatigue_raw.json", "w") as fh:
+                json.dump({str(k): {str(s_): v for s_, v in d.items()}
+                           for k, d in table2_raw.items()}, fh, indent=2)
 
     table1_raw = {}
     table2_raw = {}
@@ -227,7 +257,7 @@ def run_track_a(
 
             for method in methods:
                 t0 = time.time()
-                trained_model, metrics = train_and_evaluate_model(
+                trained_model, metrics, init_record = train_and_evaluate_model(
                     method_name=method,
                     cohort_data=cohort_data,
                     spec=spec,
@@ -237,6 +267,7 @@ def run_track_a(
                     alpha_anchor=alpha_anchor,
                     device=device,
                     verbose=False,
+                    init_mode=init_mode,
                 )
                 elapsed = time.time() - t0
 
@@ -255,7 +286,10 @@ def run_track_a(
                     "c_td": c_td_mean,
                     "auc": auc_mean,
                     "ibs": ibs_mean,
+                    "wall_clock_s": round(elapsed, 1),
+                    "init": init_record,
                 }
+                _flush_raw()
 
                 if cohort_name == "synthetic_icu" and trained_model is not None:
                     val_risks, _, val_events = extract_patient_trajectories(trained_model, cohort_data.val, spec.delta_s, device)
@@ -269,12 +303,9 @@ def run_track_a(
                         calibrated_threshold=val_thresh,
                     )
                     table2_raw.setdefault(method, {})[seed] = af_metrics
+                    _flush_raw()
 
-    # Save JSON
-    json_path = output_path / "table1_benchmarks_raw.json"
-    serializable_raw = {f"{c}_{m}": {str(s): v for s, v in seeds_dict.items()} for (c, m), seeds_dict in table1_raw.items()}
-    with open(json_path, "w") as f:
-        json.dump(serializable_raw, f, indent=2)
+    _flush_raw()
 
     # Format Table 1 Markdown (with sample std ddof=1)
     md_lines = [
@@ -413,6 +444,9 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--alpha_anchor", type=float, default=0.5)
+    parser.add_argument("--init", type=str, default="default",
+                        choices=["default", "optimistic", "km_prior"],
+                        help="Hazard-head initialization, applied identically to every neural arm")
     parser.add_argument("--dry_run", action="store_true", help="Runs single seed dry run in safe isolated directory")
     parser.add_argument("--output_dir", type=str, default="experiments/results")
     args = parser.parse_args()
@@ -425,6 +459,7 @@ def main():
         batch_size=args.batch_size,
         lr=args.lr,
         alpha_anchor=args.alpha_anchor,
+        init_mode=args.init,
         dry_run=args.dry_run,
         output_dir=args.output_dir,
     )

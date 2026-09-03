@@ -106,6 +106,7 @@ def train_model(
     batch_size: int = 16,
     epochs: int = 20,
     patience: int = 6,
+    es_warmup: int = 5,
     device=None,
     ablation_mode: str = "full",
     alpha_anchor: float | None = None,
@@ -234,7 +235,15 @@ def train_model(
                 best_score = val_score
                 best_weights = copy.deepcopy(model.state_dict())
                 no_improve_epochs = 0
-            else:
+            elif epoch > es_warmup:
+                # Patience does not start accruing until the warm-up grace has
+                # elapsed. Measured reason: on synthetic_icu seed 456 SurvTD stopped
+                # at ~epoch 7 (335.9s against 675-952s on the other seeds) with a
+                # collapsed survival curve (IBS 0.468, AUC 0.474). During cold start
+                # the validation C^td sits at chance and does not improve, so a bare
+                # patience counter terminates training before the model can leave the
+                # degenerate region -- the initialization defect and the stopping rule
+                # compound. Declared in amendment A-16.
                 no_improve_epochs += 1
 
             if verbose and (epoch % 5 == 0 or epoch == epochs):

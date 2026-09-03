@@ -101,3 +101,90 @@ class DiscreteHazardHead(nn.Module):
 
         cdf = torch.cumsum(pmf[..., :self.K], dim=-1)
         return hazard, survival, pmf, cdf
+
+    @torch.no_grad()
+    def init_prior_bias(self, hazards, weight_std: float = 1e-4, eps: float = 1e-4):
+        """
+        Set the final projection so the head emits a given marginal hazard curve at
+        step 0:  b_k = logit(h_k), with the weight shrunk to ~0.
+
+        Why this exists (measured, not assumed): under PyTorch's default Linear init
+        the logits sit at ~0, so hazard ~ 0.4999 in every bin and S(K * delta_s)
+        ~ 1.4e-11. The duration discount gamma_j = S(Delta t_j) is then ~0.48 at the
+        median inter-visit gap and ~0.09 at the p90 gap, against a cohort truth of
+        ~0.98 / ~0.93. Since gamma is the contraction modulus of the renewal
+        operator, the effective credit-assignment horizon 1/(1 - gamma) collapses
+        from ~50 steps to ~2, and the terminal Dirac -- the only ground truth in the
+        objective at alpha = 0 -- is annihilated before it can propagate backwards.
+
+        Args:
+            hazards: (K,) marginal per-bin hazards, fit on the TRAINING split only
+            weight_std: std of the final weight matrix. Near-zero means the model
+                starts at the population curve and learns deviations from it.
+            eps: clamp on the hazards before the logit
+        """
+        h = torch.as_tensor(hazards, dtype=torch.float32).clamp(eps, 1.0 - eps)
+        if h.numel() != self.K:
+            raise ValueError(f"expected {self.K} hazards, got {h.numel()}")
+        final = self.net[-1]
+        final.bias.copy_(torch.log(h / (1.0 - h)).to(final.bias.device))
+        final.weight.normal_(0.0, weight_std)
+
+    @torch.no_grad()
+    def init_constant_bias(self, b: float = -3.5, weight_std: float = 1e-4):
+        """
+        Data-free variant of `init_prior_bias`: a constant optimistic survival bias.
+        sigmoid(-3.5) ~ 0.029 per bin, keeping gamma_j well away from 0 without
+        touching the training split at all.
+        """
+        final = self.net[-1]
+        final.bias.fill_(float(b))
+        final.weight.normal_(0.0, weight_std)
+
+
+def apply_hazard_prior_init(model, mode: str, train_dataset=None, delta_s: float = None):
+    """
+    Apply an initialization scheme to any model exposing `.head: DiscreteHazardHead`,
+    and RE-SYNC the frozen target head if the model has one.
+
+    The resync is load-bearing. SurvTD and DeepTCSR build `target_head` by
+    `copy.deepcopy(self.head)` inside `__init__`, so initializing the online head
+    afterwards would leave the target network holding the original collapsed bias --
+    and the target network is precisely what supplies gamma_j and the bootstrapped
+    target. Fixing only the online head would fix nothing.
+
+    Args:
+        model: any of SurvTD / DeepTCSR-Clamped / Dynamic-DeepHit / Person-Period
+        mode: 'default' (no-op), 'optimistic' (b = -3.5), or 'km_prior'
+        train_dataset: required for 'km_prior'; the TRAINING split only
+        delta_s: required for 'km_prior'
+    Returns:
+        dict describing what was applied, for the run record.
+    """
+    if mode == "default":
+        return {"init": "default"}
+
+    head = getattr(model, "head", None)
+    if not isinstance(head, DiscreteHazardHead):
+        raise TypeError(f"{type(model).__name__} has no DiscreteHazardHead at .head")
+
+    if mode == "optimistic":
+        head.init_constant_bias(-3.5)
+        record = {"init": "optimistic", "b": -3.5}
+    elif mode == "km_prior":
+        if train_dataset is None or delta_s is None:
+            raise ValueError("km_prior needs train_dataset and delta_s")
+        from src.evaluation.censoring import marginal_residual_hazards
+        hazards = marginal_residual_hazards(train_dataset, head.K, delta_s)
+        head.init_prior_bias(hazards)
+        record = {"init": "km_prior", "eps": 1e-4,
+                  "hazard_min": float(hazards.min()), "hazard_max": float(hazards.max())}
+    else:
+        raise ValueError(f"unknown init mode {mode!r}")
+
+    target_head = getattr(model, "target_head", None)
+    if target_head is not None:
+        target_head.load_state_dict(head.state_dict())
+        record["target_head_resynced"] = True
+
+    return record

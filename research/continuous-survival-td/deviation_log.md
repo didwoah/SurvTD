@@ -613,6 +613,82 @@ interaction.**
 
 ---
 
+**[ ] A-16. Hazard-head initialization defect, and the exploratory re-run it licenses.**
+
+- **This entry is `decided-AFTER-results`.** Kill Criterion 3 fired on Synthetic
+  ICU (5 seeds, alpha = 0.0, default initialization) and this amendment was
+  written in response to that outcome. It does **not** carry the standing of
+  A-01 .. A-15 and must never be presented as if it did.
+- **The measured defect.** Under PyTorch's default `nn.Linear` initialization the
+  hazard-head logits sit at ~0, so at step 0:
+
+  | quantity | measured | cohort truth (synthetic_icu, seed 42 train split) |
+  |---|---|---|
+  | mean per-bin hazard | 0.4999 | 0.010 - 0.039 |
+  | `S(K * delta_s)` | 1.41e-11 | 0.59 |
+  | `gamma = S(dt)` at median gap (2.11h) | 0.481 | 0.979 |
+  | `gamma = S(dt)` at p90 gap (6.92h) | 0.091 | 0.933 |
+
+  `gamma_j` is the contraction modulus of the renewal operator, so the effective
+  credit-assignment horizon `1/(1 - gamma)` collapses from ~48 steps to ~1.9.
+  At alpha = 0 the terminal Dirac is the only ground truth in the objective, and
+  over a ~10-visit trajectory it reaches the first visit attenuated by
+  `0.48^10 ~ 1e-3`. The failure is self-reinforcing: small gamma routes mass to
+  the near branch, which keeps S small, which keeps gamma small.
+- **Three corroborating observations in the primary run**, none of which the
+  original diagnosis note anticipated:
+  1. `corr(SurvTD, DeepHit)` across seeds is **-0.211** while
+     `corr(Person-Period, DeepHit)` is **+0.988**. Every arm except SurvTD tracks
+     per-seed cohort learnability; SurvTD's output is dominated by optimization
+     noise rather than data signal.
+  2. SurvTD IBS on seed 456 is **0.468** (0.084 - 0.136 elsewhere), the
+     signature of a survival curve collapsed toward 0. DeepTCSR shows the same
+     signature in 4 of 5 seeds (IBS 0.56 - 0.60).
+  3. Seed 456's SurvTD run took **335.9s** against 675 - 952s on the other seeds,
+     i.e. `patience = 5` terminated it around epoch 7. During cold start the
+     validation C^td sits at chance and does not improve, so the stopping rule
+     and the initialization defect compound.
+- **What changes.** (a) `DiscreteHazardHead.init_prior_bias` /
+  `init_constant_bias` and `apply_hazard_prior_init`, the latter re-syncing
+  `target_head` -- without that resync the target network, which is what supplies
+  gamma_j, would keep the collapsed bias and the fix would be inert. (b) The KM
+  prior is the marginal KM of **residual times** `R_j = tte - t_j` pooled over
+  training-split (subject, visit) pairs, **not** the time-from-enrolment KM the
+  research note specified; the head's support is residual time, and on cohorts
+  whose visit density varies over time the two curves differ materially.
+  `eps = 1e-4` is fixed here and defines the tail prior for bins past the last
+  observed event; it is declared, not tuned. (c) `train_model` gains
+  `es_warmup = 5`: patience does not accrue before epoch 5. (d) `run_track_a`
+  flushes results after every (cohort, seed, method).
+- **Parity is mandatory.** The initialization is applied identically to all four
+  neural arms (SurvTD, DeepTCSR-Clamped, Dynamic-DeepHit, Person-Period). The
+  honest expectation is that Dynamic-DeepHit improves too -- its per-visit
+  likelihood already pulls the hazards down within one epoch, which is why it
+  scored 0.646 from the same broken initialization. If the TD term only wins
+  when the baselines are crippled, there is no contribution.
+- **The alpha = 0.0 selection is void.** It was chosen on a single seed-42
+  validation run whose full sweep spread (0.078) is the same order as the
+  initialization noise HANDOVER measured (0.042), and seed 42 is the **only** one
+  of five seeds on which SurvTD beat Dynamic-DeepHit (+0.026; the other four:
+  -0.204, -0.096, -0.155, -0.035). It was also selected under the defective
+  initialization, which changes the TD term's scale. alpha must be re-selected
+  after the initialization fix, over **3 seeds** rather than 1.
+- **Gate, declared before running.** Synthetic ICU, 5 seeds, `km_prior`. Proceed
+  to a full re-run only if **both**: mean landmarked C^td for SurvTD >= 0.60,
+  **and** `corr(SurvTD, DeepHit)` across seeds turns positive. The second
+  condition is the load-bearing one -- a mean can rise by luck, but tracking
+  cohort difficulty is direct evidence the model is learning the data. If the
+  gate fails, the initialization diagnosis is rejected and the preregistered
+  result stands as final.
+- **Reporting.** The alpha = 0.0 / default-initialization Cohort 1 result is the
+  **preregistered primary outcome and C_3 is falsified on it**; the raw log is
+  preserved at `experiments/results/preregistered_primary_2026-09-04/`. Anything
+  produced under this amendment is reported in a separate, explicitly
+  **secondary / exploratory** block and never replaces it.
+- `decided-after-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**
