@@ -127,3 +127,29 @@ def permute_patient_durations(patient_dict: dict, rng: random.Random) -> dict:
         rng.shuffle(dts)
         new_patient['dts'] = torch.tensor(dts, dtype=torch.float32)
     return new_patient
+
+
+def shuffle_durations_across_patients(patients_list: list[dict], rng: random.Random) -> list[dict]:
+    """
+    NC-B Positive Control (A-12): Shuffles interval durations dt ACROSS different patients.
+    Destroys all patient-specific temporal correlation, establishing the empirical noise floor.
+    Preserves each patient's sequence length L, features, and event label.
+    """
+    new_patients = [copy.deepcopy(p) for p in patients_list]
+    all_dts = []
+    for p in new_patients:
+        dts = p['dts'].tolist() if isinstance(p['dts'], torch.Tensor) else list(p['dts'])
+        all_dts.extend(dts)
+
+    rng.shuffle(all_dts)
+
+    idx = 0
+    for p in new_patients:
+        L = len(p['dts'])
+        p_dts = all_dts[idx:idx + L]
+        idx += L
+        p['dts'] = torch.tensor(p_dts, dtype=torch.float32)
+        # Recompute cumulative times
+        p['times'] = torch.cumsum(p['dts'], dim=0)
+
+    return new_patients

@@ -1,19 +1,26 @@
 """
 Unified Model Trainer for SurvTD and Comparative Baselines:
 - Supports SurvTD, DeepTCSR Clamped, Dynamic-DeepHit, and Person-Period.
-- Manages EMA target network updates, gradient clipping, device placement (MPS/CUDA/CPU), and early stopping.
+- Manages EMA target network updates, gradient clipping, device placement (MPS/CUDA/CPU),
+  validation monitoring (Landmarked C^td / validation loss), and early stopping.
+
+Amended per deviation log:
+- Selects best model weights on VALIDATION metric (C^td or validation loss), NOT training loss.
+- Supports early stopping with patience.
 """
 
+from __future__ import annotations
 import copy
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
 
 from src.data.dataset import collate_patient_batch
+from src.evaluation.landmark import evaluate_landmarked, LandmarkSpec
 
 
-def get_device():
+def get_device() -> torch.device:
     if torch.backends.mps.is_available():
         return torch.device("mps")
     elif torch.cuda.is_available():
@@ -22,19 +29,88 @@ def get_device():
         return torch.device("cpu")
 
 
+def evaluate_val_score(
+    model: nn.Module,
+    train_dataset,
+    val_dataset,
+    val_spec: LandmarkSpec | None,
+    delta_s: float,
+    device: torch.device,
+    model_type: str = "survtd",
+    ablation_mode: str = "full",
+    alpha_anchor: float | None = None
+) -> float:
+    """
+    Computes validation score for checkpoint selection.
+    Prioritizes landmarked Antolini C^td when val_spec is available.
+    Falls back to average validation loss if val_spec is None or evaluation fails.
+    """
+    model.eval()
+
+    if val_spec is not None:
+        try:
+            results = evaluate_landmarked(
+                model, train_dataset, val_dataset, val_spec, delta_s, device, strict=False
+            )
+            c_td_vals = [m["c_td"] for m in results.values() if not np.isnan(m["c_td"])]
+            if len(c_td_vals) > 0:
+                return float(np.mean(c_td_vals))
+        except Exception:
+            pass
+
+    # Fallback: compute validation loss (negative score so higher is always better)
+    total_val_loss = 0.0
+    n_val = 0
+    with torch.no_grad():
+        for p in val_dataset:
+            x = p['features'].to(device)
+            dts = p['dts'].to(device)
+            events = p['events'].to(device)
+            tte = float(p['tte'])
+            tau_event = float(p['tte']) if p['event'] > 0.5 else float(p['tte']) + 100.0
+            mask = p['mask'].to(device) if 'mask' in p and p['mask'] is not None else None
+
+            if model_type == "survtd":
+                l = model.compute_loss_trajectory(
+                    x, dts, events, tte, tau_event, mask=mask,
+                    ablation_mode=ablation_mode, alpha_anchor=alpha_anchor
+                )
+            elif model_type == "deeptcsr":
+                l = model.compute_loss_trajectory(
+                    x, dts, events, tte, tau_event, mask=mask,
+                    alpha_anchor=alpha_anchor
+                )
+            elif model_type == "dynamic_deephit":
+                l = model.compute_loss([p])
+            elif model_type == "person_period":
+                l = model.compute_loss(x, dts, events, tte, mask=mask)
+            else:
+                l = torch.tensor(0.0, device=device)
+
+            total_val_loss += float(l.item())
+            n_val += 1
+
+    avg_loss = total_val_loss / max(1, n_val)
+    return -float(avg_loss)
+
+
 def train_model(
     model: nn.Module,
     train_dataset,
     val_dataset=None,
+    val_spec: LandmarkSpec | None = None,
+    delta_s: float = 1.0,
     model_type: str = "survtd",  # 'survtd', 'deeptcsr', 'dynamic_deephit', 'person_period'
     lr: float = 0.001,
     weight_decay: float = 1e-4,
     batch_size: int = 16,
     epochs: int = 20,
+    patience: int = 6,
     device=None,
     ablation_mode: str = "full",
+    alpha_anchor: float | None = None,
     verbose: bool = False
-):
+) -> nn.Module:
     if device is None:
         device = get_device()
 
@@ -42,15 +118,20 @@ def train_model(
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-5)
 
-    best_loss = float("inf")
+    best_score = -float("inf")
     best_weights = None
+    no_improve_epochs = 0
+
+    history = {
+        "train_loss": [],
+        "val_score": [],
+    }
 
     for epoch in range(1, epochs + 1):
         model.train()
         total_loss = 0.0
         n_batches = 0
 
-        # Shuffle trajectories
         indices = torch.randperm(len(train_dataset)).tolist()
 
         for b_start in range(0, len(train_dataset), batch_size):
@@ -70,7 +151,8 @@ def train_model(
                     mask = p['mask'].to(device) if 'mask' in p and p['mask'] is not None else None
 
                     l = model.compute_loss_trajectory(
-                        x, dts, events, tte, tau_event, mask=mask, ablation_mode=ablation_mode
+                        x, dts, events, tte, tau_event, mask=mask,
+                        ablation_mode=ablation_mode, alpha_anchor=alpha_anchor
                     )
                     batch_loss = batch_loss + l
                 batch_loss = batch_loss / max(1, len(batch_patients))
@@ -84,7 +166,10 @@ def train_model(
                     tau_event = float(p['tte']) if p['event'] > 0.5 else float(p['tte']) + 100.0
                     mask = p['mask'].to(device) if 'mask' in p and p['mask'] is not None else None
 
-                    l = model.compute_loss_trajectory(x, dts, events, tte, tau_event, mask=mask)
+                    l = model.compute_loss_trajectory(
+                        x, dts, events, tte, tau_event, mask=mask,
+                        alpha_anchor=alpha_anchor
+                    )
                     batch_loss = batch_loss + l
                 batch_loss = batch_loss / max(1, len(batch_patients))
 
@@ -115,15 +200,41 @@ def train_model(
 
         scheduler.step()
         avg_loss = total_loss / max(1, n_batches)
+        history["train_loss"].append(avg_loss)
 
-        if avg_loss < best_loss:
-            best_loss = avg_loss
-            best_weights = copy.deepcopy(model.state_dict())
+        # Validation-based checkpointing
+        if val_dataset is not None:
+            val_score = evaluate_val_score(
+                model, train_dataset, val_dataset, val_spec, delta_s, device,
+                model_type=model_type, ablation_mode=ablation_mode, alpha_anchor=alpha_anchor
+            )
+            history["val_score"].append(val_score)
 
-        if verbose and (epoch % 5 == 0 or epoch == epochs):
-            print(f"[{model_type.upper()}] Epoch {epoch:02d}/{epochs:02d} | Train Loss: {avg_loss:.4f}")
+            if val_score > best_score:
+                best_score = val_score
+                best_weights = copy.deepcopy(model.state_dict())
+                no_improve_epochs = 0
+            else:
+                no_improve_epochs += 1
+
+            if verbose and (epoch % 5 == 0 or epoch == epochs):
+                print(f"[{model_type.upper()}] Epoch {epoch:02d}/{epochs:02d} | Train Loss: {avg_loss:.4f} | Val Score: {val_score:.4f}")
+
+            # Early stopping check
+            if no_improve_epochs >= patience:
+                if verbose:
+                    print(f"[{model_type.upper()}] Early stopping triggered at epoch {epoch}")
+                break
+        else:
+            # No validation split: fallback to training loss
+            if -avg_loss > best_score:
+                best_score = -avg_loss
+                best_weights = copy.deepcopy(model.state_dict())
+            if verbose and (epoch % 5 == 0 or epoch == epochs):
+                print(f"[{model_type.upper()}] Epoch {epoch:02d}/{epochs:02d} | Train Loss: {avg_loss:.4f}")
 
     if best_weights is not None:
         model.load_state_dict(best_weights)
 
+    model.history = history
     return model

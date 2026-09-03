@@ -32,3 +32,6 @@ archive/
 .idea/
 .vscode/
 
+
+# Dry run test outputs
+experiments/results/dry_run/

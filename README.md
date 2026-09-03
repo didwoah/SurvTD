@@ -1,44 +1,120 @@
-# SurvTD: Survival Temporal Difference Learning for Dynamic Early Warning
+# SurvTD: Duration-Discounted Temporal-Difference Consistency for Dynamic Survival Analysis
 
-> **SurvTD**는 불규칙 시계열 및 중도절단(Right-Censored) 데이터 환경에서, 강화학습의 **Survival Bellman Operator 및 Multi-step $\lambda$-Return**을 도입하여 표본 효율성과 조기 경보 선행 시간(Lead Time)을 극대화하는 새로운 연속시간 생존분석 학습 프레임워크입니다.
+[![Unit Tests](https://img.shields.io/badge/tests-26%20passed-brightgreen.svg)](experiments/unit_tests/)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](requirements.txt)
+[![Status](https://img.shields.io/badge/pre--registration-locked%20(2026--09--03)-orange.svg)](research/continuous-survival-td/preregistration.md)
 
----
-
-## 📚 문서 목차 (Documentation)
-
-컴퓨터공학/AI 전공자가 직관적으로 이해하고 바로 구현할 수 있도록 영역별로 체계적으로 정리되어 있습니다.
-
-| 번호 | 문서명 | 주요 내용 |
-| :---: | :--- | :--- |
-| **00** | [**Part 0. 필수 문헌 독서 가이드**](docs/00_literature_reading_guide.md) | Dynamic-DeepHit, Spotify NeurIPS 2022, C51 등 핵심 논문 우선순위 및 공략 가이드 |
-| **01** | [**Part 1. 연구 배경, 문제 정의 및 포지셔닝**](docs/01_motivation_and_framing.md) | 기존 Monte Carlo(NLL) 방식의 한계, TD 도입 동기, 단순 스무딩이 아닌 **Bias-Variance 최적화**로의 논문 포지셔닝 |
-| **02** | [**Part 2. 이론적 정식화 및 수학적 유도**](docs/02_mathematical_formulation.md) | 용어 텐서 번역 사전, Survival Bellman Operator 엄밀 유도, $\div S$ 축퇴 오류와 $\times S$ 해결책, $\lambda$-Return |
-| **03** | [**Part 3. 모델 아키텍처 및 손실 함수**](docs/03_loss_and_architecture.md) | Model-Agnostic 파이프라인, Cramér Distance (CDF $L_2$) Loss, Ranking Loss, PyTorch 구현 코드 |
-| **04** | [**Part 4. 실험 설계 및 단계별 검증**](docs/04_experimental_design.md) | Phase 1 (합성 데이터 & NASA C-MAPSS Go/No-Go 검증) $\to$ Phase 2 (MIMIC-IV AKI & Sepsis 임상 실증) |
-| **05** | [**Part 5. 베이스라인 및 리뷰어 방어 전략**](docs/05_baselines_and_defense.md) | 동적 생존분석 SOTA군 (DDH, RDSM, SLODE 등), 필수 Trivial Heuristics 방어군 (EMA 스무딩, Hysteresis) |
-| **06** | [**Part 6. 킬러 평가 지표 및 분석**](docs/06_killer_metrics_and_analysis.md) | 순환논증 탈출, 변동성 분해 (정보성 갱신 vs 잡음 지터), Lead Time vs Precision, Pareto Frontier |
+**SurvTD** is a continuous-time dynamic survival analysis framework designed for irregularly observed longitudinal telemetry under right-censoring. It addresses the fundamental division explosion $\div S(\Delta t)$ of prior continuous temporal consistency methods (DeepTCSR) by substituting an exact **continuous renewal shift $\Phi_{+\Delta t}$**, **categorical projection $\Pi$**, and **duration discounting $\gamma_j = S_{\theta^-}(\Delta t_j)$** with multi-step $\lambda$-return bootstrapping.
 
 ---
 
-## ⚡ 핵심 요약 (Quick Architecture Overview)
+## 🔬 Core Mechanism & Mathematical Architecture
 
-```mermaid
-flowchart LR
-    X["환자 시계열 입력 X_{1:t}"] --> Enc["Time-series Backbone (GRU / Transformer / NCDE)"]
-    Enc --> Head["Survival Hazard Head"]
-    Head --> Pred["예측 PMF p_t (CDF F_t)"]
-    
-    Next["다음 시점 관측 Fact & S(Δt)"] --> Bellman["Survival Bellman Engine"]
-    Bellman --> Target["Target G_t^\lambda"]
-    
-    Pred & Target --> Loss["Cramér Loss L_TD + \alpha L_Rank"]
-    Loss --> Grad["역전파 (Bias-Variance 최적화 & 선제적 위험 전파)"]
+Existing dynamic survival consistency methods assume either uniform unit steps ($\Delta t = 1$) or renormalise future survival distributions by dividing by the survival factor:
+$$\hat{p}(t) \propto \frac{p(t+\Delta t)}{S(\Delta t)}$$
+In high-risk clinical regimes ($S \to 0$), this division degenerates and triggers extreme gradient instability.
+
+SurvTD substitutes this with a **renewal mixture transition operator** that preserves unit probability mass analytically and contracts in the squared Cramér metric:
+$$\mathcal{T} p_j = \underbrace{(1 - \gamma_j) \cdot \Pi \Phi_{+\Delta t_j} p_j}_{\text{died within interval}} + \underbrace{\gamma_j \cdot \Pi \Phi_{+\Delta t_j} p_{j+1}}_{\text{survived beyond interval}}$$
+
+### Hybrid Supervised Consistency Objective
+$$\mathcal{L} = (1 - \alpha) \mathcal{L}_{\text{TD}} + \alpha \mathcal{L}_{\text{anchor}}$$
+- **$\mathcal{L}_{\text{TD}}$**: Squared Cramér distance (trapezoidal Riemann integral on CDFs) between online predictions and multi-step $\lambda$-return targets.
+- **$\mathcal{L}_{\text{anchor}}$**: Per-visit right-censored Continuous Ranked Probability Score (CRPS) with inverse probability of censoring weighting (IPCW).
+- **$\alpha$**: Pre-registered convex weight frozen across all cohorts, arms, and baselines to enforce strict supervision parity.
+
+---
+
+## 📁 Repository Structure
+
+```
+SurvTD/
+├── src/
+│   ├── data/                 # Cohort loaders, preprocessing, and unified registry
+│   │   ├── cohorts.py        # Single source of truth (COHORTS: synthetic_icu, cmapss, pbc, tumor)
+│   │   ├── dataset.py        # LongitudinalSurvivalDataset and batch collation
+│   │   ├── preprocessing.py  # Train-fit standardization, censoring, and split utilities
+│   │   └── synthetic_icu_loader.py # Repaired realistic ICU telemetry benchmark
+│   ├── models/               # Comparative model architectures
+│   │   ├── survtd.py         # SurvTDModel (Online + Target network, hybrid loss)
+│   │   ├── hazard_head.py    # DiscreteHazardHead with explicit overflow coordinate
+│   │   ├── backbones.py      # Shared sequence encoders (GRU-D, ContinuousLSTM)
+│   │   └── baselines/        # Person-Period, Dynamic-DeepHit, DeepTCSR-Clamped
+│   ├── operators/            # Mathematical operator engine
+│   │   ├── survtd_operator.py# Shift, projection, renewal mixture, lambda returns (ARMS)
+│   │   ├── anchors.py        # Censored-CRPS anchor and residual time projections
+│   │   └── ablations.py      # Factorial arms and duration permutation controls
+│   ├── evaluation/           # Leak-free evaluation harness
+│   │   ├── landmark.py       # Landmark-conditional protocol (Antolini C^td, Uno AUC, IBS)
+│   │   ├── censoring.py      # Standalone Kaplan-Meier G(t-) censoring estimator
+│   │   ├── alarm_fatigue.py  # Out-of-sample calibrated bedside alarm fatigue suite
+│   │   └── stats.py          # Subject-level paired bootstrap CIs and Wilcoxon tests
+│   └── training/             # Unified trainer with validation checkpointing & early stopping
+├── experiments/
+│   ├── run_track_a.py        # Publication benchmarks (Table 1, Table 2)
+│   ├── run_track_b.py        # Adversarial stress tests & kill criteria (Table 3)
+│   ├── run_all.py            # Master end-to-end execution pipeline
+│   ├── null_model_gate.py    # Zero-leakage sanity gate across all cohorts
+│   ├── unit_tests/           # 26 discovery-ready unit tests
+│   └── legacy/               # Isolated attempt_1 legacy scripts
+├── research/
+│   └── continuous-survival-td/
+│       ├── preregistration.md# 15 locked amendments (decided-before-results)
+│       ├── deviation_log.md  # Comprehensive audit trail of experiment repairs
+│       └── claim-tree.json   # Formal bipartite claim-evidence mapping
+└── HANDOVER.md               # Technical handover and repair audit documentation
 ```
 
 ---
 
-## 🚀 빠른 시작 (Next Steps)
-1. [Part 0. 필수 문헌 독서 가이드](docs/00_literature_reading_guide.md)의 Tier 1 논문 3편 확인
-2. [Part 1](docs/01_motivation_and_framing.md)과 [Part 2](docs/02_mathematical_formulation.md)를 통해 수학적 직관과 논문 프레이밍 숙지
-3. [Part 3](docs/03_loss_and_architecture.md)의 파이토치 코드를 기반으로 손실 함수 프로토타입 작성
-4. [Part 4](docs/04_experimental_design.md)의 Phase 1 합성 데이터 실험으로 $\lambda$ 스펙트럼 및 Bellman Operator 동작 검증
+## ⚡ Quick Start
+
+### 1. Installation
+```bash
+git clone https://github.com/didwoah/SurvTD.git
+cd SurvTD
+pip install -r requirements.txt
+# Note: scikit-survival is installed without deps to avoid optional build failures on newer Pythons
+pip install --no-deps scikit-survival==0.28.0
+```
+
+### 2. Verify Mathematical Invariants & Leak Gate
+```bash
+# Run full unit test suite (26 tests)
+python -m unittest discover -s experiments/unit_tests -t .
+
+# Run outcome leakage gate (verifies C^td = 0.500 on null reference)
+python experiments/null_model_gate.py
+```
+
+### 3. Run Experiments
+```bash
+# Fast smoke test in safe isolated directory (experiments/results/dry_run/)
+python experiments/run_all.py --dry_run
+
+# Full Track A: Multi-Cohort Benchmarks (5 seeds, 4 cohorts, 5 comparative methods)
+python experiments/run_track_a.py --seeds 42 123 456 789 101112
+
+# Full Track B: Adversarial Stress Tests & Pre-Registered Kill Switches
+python experiments/run_track_b.py --seeds 42 123 456 789 101112
+```
+
+---
+
+## 🛡️ Pre-Registered Kill Criteria & Scientific Integrity
+
+All hypotheses, baseline parity declarations, and falsification rules are locked in [`research/continuous-survival-td/preregistration.md`](research/continuous-survival-td/preregistration.md) prior to reportable runs:
+
+| Rule | Hypothesis Tested | Falsification Trigger | Action if Fired |
+|---|---|---|---|
+| **Kill Criterion 0** | Temporal order alignment | Within-patient permutation (`EXP-04`) retains > 50% gain over floor | Claim $C_0$ abandoned (confounded by visit counting) |
+| **Kill Criterion 1** | Mathematical operator contraction | Empirical Cramér loss diverges or contraction modulus $\ge 1$ | Claim $C_1$ abandoned |
+| **Kill Criterion 2** | Multi-step bootstrapping horizon | Pure Monte Carlo ($\lambda=1$) matches $\lambda \in [0.4, 0.8]$ | Claim $C_2$ abandoned |
+| **Kill Criterion 3** | Empirical superiority margin | SurvTD fails to exceed closest baseline by $\ge 0.025$ in $C^{td}$ / AUC | Claim $C_3$ abandoned |
+| **Kill Criterion 4** | Bedside alarm fatigue reduction | False alert rate & jitter fail to decrease by $\ge 25\%$ at 0.30 PPV | Claim $C_4$ abandoned |
+| **Kill Criterion 5** | TD consistency necessity | Full SurvTD fails to beat anchor-only ($\alpha=1$) by $\ge 0.015$ in $C^{td}$ | Claims $C_0, C_3$ abandoned (TD term carries no value) |
+
+---
+
+## 📖 Citation & References
+Detailed experiment repair logs and pre-registration history are tracked in [`HANDOVER.md`](HANDOVER.md) and [`research/continuous-survival-td/deviation_log.md`](research/continuous-survival-td/deviation_log.md).

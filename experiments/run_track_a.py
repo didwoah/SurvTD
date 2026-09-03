@@ -1,15 +1,17 @@
 """
 Track A: Paper Experiments Pipeline (EXP-01, EXP-02, EXP-07)
-- EXP-01: Multi-Cohort Grand Benchmark Evaluation (NASA C-MAPSS, PBC, Tumor Growth, Sepsis-3)
-- EXP-02: Baseline Ladder Parity (Person-Period, Dynamic-DeepHit, DeepTCSR Clamped, SurvTD)
-- EXP-07: Clinical Bedside Alarm Fatigue & Utility Evaluation (Sepsis-3)
-- Generates Table 1 and Table 2 in Markdown and CSV formats.
+- EXP-01: Multi-Cohort Grand Benchmark Evaluation (Synthetic ICU, NASA C-MAPSS, PBC, Tumor Growth)
+- EXP-02: Baseline Ladder Parity (KM Reference, Person-Period, Dynamic-DeepHit, DeepTCSR Clamped, SurvTD)
+- EXP-07: Clinical Bedside Alarm Fatigue & Utility Evaluation (Synthetic ICU)
+- Generates Table 1 and Table 2 in Markdown and CSV/JSON formats.
 """
 
 import os
 import sys
 import argparse
 import time
+import json
+from pathlib import Path
 
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -17,217 +19,349 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import numpy as np
 import torch
 
-
+from src.data.cohorts import COHORTS
 from src.models.survtd import SurvTDModel
 from src.models.baselines.person_period import PersonPeriodModel
 from src.models.baselines.dynamic_deephit import DynamicDeepHitModel
 from src.models.baselines.deeptcsr_clamped import DeepTCSRClampedModel
 
-from src.data.cmapss_loader import load_cmapss_downsampled
-from src.data.pbc_loader import load_pbc
-from src.data.tumor_loader import generate_tumor_growth_cohort
-from src.data.sepsis_loader import generate_sepsis_icu_cohort
-
-from src.evaluation.metrics import (
-    compute_concordance_td,
-    compute_time_dependent_auc,
-    compute_integrated_brier_score
+from src.evaluation.landmark import (
+    evaluate_landmarked,
+    km_marginal_reference,
+    landmark_labels,
+    LandmarkSpec,
+    DegenerateLandmarkError,
 )
-from src.evaluation.alarm_fatigue import evaluate_alarm_fatigue, compute_decision_curve_analysis
-from src.evaluation.stats import compute_bootstrap_ci, paired_wilcoxon_test
+from src.evaluation.metrics import (
+    concordance_antolini,
+    integrated_brier,
+    make_structured,
+)
+from src.evaluation.alarm_fatigue import (
+    calibrate_threshold_for_ppv,
+    evaluate_alarm_fatigue,
+    compute_decision_curve_analysis,
+)
+from src.evaluation.stats import (
+    compute_bootstrap_ci,
+    compute_paired_bootstrap_ci,
+    paired_wilcoxon_test,
+)
 from src.training.trainer import train_model, get_device
 
 
-def evaluate_dataset_model(model, test_dataset, model_type, delta_s, max_horizon, device):
-    """
-    Evaluates a trained model on a test cohort and returns C-index, AUC, IBS, and risk trajectories.
-    """
+def evaluate_km_reference(train_dataset, test_dataset, spec: LandmarkSpec) -> dict:
+    results = {}
+    for landmark in spec.landmarks:
+        try:
+            train_labels = landmark_labels(train_dataset, landmark, spec)
+            test_labels = landmark_labels(test_dataset, landmark, spec)
+            if train_labels.size == 0 or int(train_labels["event"].sum()) < 2:
+                continue
+            if test_labels.size == 0 or int(test_labels["event"].sum()) < 2:
+                continue
+
+            ref = km_marginal_reference(train_dataset, landmark, spec)
+            surv = np.tile(ref.surv[0], (test_labels.size, 1))
+            c_td = concordance_antolini(surv, ref.grid, test_labels["time"], test_labels["event"].astype(float))
+            ibs = integrated_brier(train_labels, test_labels, surv, ref.grid)
+
+            for delta in spec.horizons:
+                d = float(delta)
+                results[(float(landmark), d)] = {
+                    "c_td": c_td,
+                    "auc": 0.500,
+                    "ibs": ibs,
+                    "n_at_risk": len(test_labels),
+                    "n_events": int(test_labels["event"].sum()),
+                }
+        except (DegenerateLandmarkError, AssertionError):
+            for delta in spec.horizons:
+                results[(float(landmark), float(delta))] = {
+                    "c_td": 0.500, "auc": 0.500, "ibs": float("nan"),
+                    "n_at_risk": 0, "n_events": 0,
+                }
+    return results
+
+
+def train_and_evaluate_model(
+    method_name: str,
+    cohort_data,
+    spec,
+    epochs: int,
+    batch_size: int,
+    lr: float,
+    alpha_anchor: float,
+    device: torch.device,
+    verbose: bool = False,
+) -> tuple:
+    train_data = cohort_data.train
+    val_data = cohort_data.val
+    test_data = cohort_data.test
+    dim = cohort_data.input_dim
+    delta_s = spec.delta_s
+    num_bins = spec.num_bins
+    l_spec = spec.landmark_spec
+
+    if method_name == "km":
+        metrics = evaluate_km_reference(train_data, test_data, l_spec)
+        return None, metrics
+
+    if method_name == "person_period":
+        model = PersonPeriodModel(
+            input_dim=dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s,
+            include_overflow=True
+        )
+    elif method_name == "dynamic_deephit":
+        model = DynamicDeepHitModel(
+            input_dim=dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s
+        )
+    elif method_name == "deeptcsr":
+        model = DeepTCSRClampedModel(
+            input_dim=dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s,
+            alpha_anchor=alpha_anchor, include_overflow=True
+        )
+    elif method_name == "survtd":
+        model = SurvTDModel(
+            input_dim=dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s,
+            alpha_anchor=alpha_anchor, include_overflow=True
+        )
+    else:
+        raise ValueError(f"Unknown method {method_name}")
+
+    if hasattr(model, "backbone") and hasattr(model.backbone, "set_empirical_mean"):
+        model.backbone.set_empirical_mean(cohort_data.x_mean)
+
+    trained_model = train_model(
+        model=model,
+        train_dataset=train_data,
+        val_dataset=val_data,
+        val_spec=l_spec,
+        delta_s=delta_s,
+        model_type=method_name,
+        lr=lr,
+        batch_size=batch_size,
+        epochs=epochs,
+        patience=5,
+        device=device,
+        alpha_anchor=alpha_anchor,
+        verbose=verbose,
+    )
+
+    metrics = evaluate_landmarked(
+        trained_model, train_data, test_data, l_spec, delta_s, device, strict=False
+    )
+    return trained_model, metrics
+
+
+def extract_patient_trajectories(model, dataset, delta_s, device):
     model.eval()
-    risk_scores = []
-    survival_curves = []
     trajectories_risk = []
     trajectories_times = []
-    event_times = []
-    event_indicators = []
+    patient_events = []
 
     with torch.no_grad():
-        for p in test_dataset:
+        for p in dataset:
             x = p['features'].unsqueeze(0).to(device)
             dts = p['dts'].unsqueeze(0).to(device)
             mask = p['mask'].unsqueeze(0).to(device) if p['mask'] is not None else None
-            tte = float(p['tte'])
-            event = float(p['event'])
             times = p['times'].cpu().numpy()
+            event = float(p['event'])
 
-            _, survival, pmf, cdf = model(x, dts, mask)
-            cdf = cdf.squeeze(0).cpu().numpy()          # (L, K)
-            survival = survival.squeeze(0).cpu().numpy()  # (L, K)
+            _, _, _, cdf = model(x, dts, mask)
+            cdf = cdf.squeeze(0).cpu().numpy()
 
-            # Trajectory evaluation
-            # Representative risk score at terminal visit or median visit
-            risk_score = float(cdf[-1, min(len(cdf[-1]) // 2, len(cdf[-1]) - 1)])
-            risk_scores.append(risk_score)
-            survival_curves.append(survival[-1])
+            k_eval = min(cdf.shape[-1] - 1, max(1, cdf.shape[-1] // 2))
+            risk = cdf[:, k_eval]
 
-            # Patient-level longitudinal risk at target horizon
-            h_idx = min(int(round(max_horizon * 0.5 / delta_s)), cdf.shape[-1] - 1)
-            trajectories_risk.append(cdf[:, h_idx])
+            trajectories_risk.append(risk)
             trajectories_times.append(times)
+            patient_events.append(event)
 
-            event_times.append(tte)
-            event_indicators.append(event)
-
-    risk_arr = np.array(risk_scores)
-    time_arr = np.array(event_times)
-    event_arr = np.array(event_indicators)
-
-    # 1. C-index
-    c_index = compute_concordance_td(risk_arr, time_arr, event_arr)
-
-    # 2. Time-Dependent AUC at median follow-up
-    eval_horizon = float(np.median(time_arr))
-    auc = compute_time_dependent_auc(risk_arr, time_arr, event_arr, eval_horizon)
-
-    # 3. Integrated Brier Score
-    eval_grid = np.linspace(eval_horizon * 0.2, eval_horizon * 1.5, 8)
-    eval_grid = eval_grid[eval_grid < max_horizon]
-    if len(eval_grid) == 0:
-        eval_grid = np.array([eval_horizon])
-    ibs = compute_integrated_brier_score(survival_curves, eval_grid, time_arr, event_arr, delta_s)
-
-    return {
-        'c_index': c_index,
-        'auc': auc,
-        'ibs': ibs,
-        'trajectories_risk': trajectories_risk,
-        'trajectories_times': trajectories_times,
-        'event_indicators': event_arr
-    }
+    return trajectories_risk, trajectories_times, patient_events
 
 
-def run_track_a(epochs: int = 15, seeds: list = [0, 1, 2, 3, 4], dry_run: bool = False, output_dir: str = "experiments/results"):
-    os.makedirs(output_dir, exist_ok=True)
-    device = get_device()
-    print(f"=== [Track A] Starting Paper Experiments on {device} ===")
+def run_track_a(
+    seeds=None,
+    cohorts=None,
+    methods=None,
+    epochs=20,
+    batch_size=16,
+    lr=0.001,
+    alpha_anchor=0.5,
+    dry_run=False,
+    output_dir="experiments/results",
+):
+    if seeds is None:
+        seeds = [42, 123, 456, 789, 101112]
+    if cohorts is None:
+        cohorts = ["synthetic_icu", "cmapss", "pbc", "tumor"]
+    if methods is None:
+        methods = ["km", "person_period", "dynamic_deephit", "deeptcsr", "survtd"]
 
     if dry_run:
+        seeds = [42]
         epochs = 2
-        seeds = [0]
-        print(">> Running in DRY RUN mode (2 epochs, 1 seed)")
+        output_dir = "experiments/results/dry_run"
+        print(f"[*] DRY RUN ACTIVE: using seed 42, 2 epochs, output -> {output_dir}")
 
-    benchmarks = ["mimic_sepsis", "cmapss", "pbc", "tumor_growth"]
-    methods = ["person_period", "dynamic_deephit", "deeptcsr", "survtd"]
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    device = get_device()
+    print(f"[*] Starting Track A on device: {device} | Seeds: {seeds}")
 
-    # Table 1: Multi-cohort benchmark storage
-    results_tab1 = {b: {m: {'c_index': [], 'auc': [], 'ibs': []} for m in methods} for b in benchmarks}
-    alarm_results_tab2 = {m: {'false_alert_rate': [], 'alert_jitter': []} for m in methods}
+    table1_raw = {}
+    table2_raw = {}
 
-    for b_idx, b_name in enumerate(benchmarks):
-        print(f"\n[{b_idx + 1}/4] Benchmarking Cohort: {b_name.upper()}")
+    for cohort_name in cohorts:
+        spec = COHORTS[cohort_name]
+        print(f"\n=======================================================")
+        print(f" COHORT: {spec.display_name} ({cohort_name})")
+        print(f"=======================================================")
 
-        for s_idx, seed in enumerate(seeds):
-            print(f"  -> Seed {seed} ({s_idx + 1}/{len(seeds)})")
-            torch.manual_seed(seed)
-            np.random.seed(seed)
+        for seed in seeds:
+            print(f"\n--- Loading Seed {seed} ---")
+            cohort_data = spec.load(seed=seed)
 
-            # Load dataset
-            if b_name == "cmapss":
-                train_set, test_set, in_dim, max_h = load_cmapss_downsampled(seed=seed, max_units=25 if dry_run else None)
-                delta_s = 5.0
-                num_bins = 30
-            elif b_name == "pbc":
-                train_set, test_set, in_dim, max_h = load_pbc(seed=seed)
-                delta_s = 100.0
-                num_bins = 30
-            elif b_name == "tumor_growth":
-                train_set, test_set, in_dim, max_h = generate_tumor_growth_cohort(n_samples=60 if dry_run else 250, seed=seed)
-                delta_s = 0.5
-                num_bins = 25
-            elif b_name == "mimic_sepsis":
-                train_set, test_set, in_dim, max_h = generate_sepsis_icu_cohort(n_patients=60 if dry_run else 300, seed=seed)
-                delta_s = 2.5
-                num_bins = 30
-
-            for m_name in methods:
-                # Instantiate model
-                if m_name == "survtd":
-                    model = SurvTDModel(input_dim=in_dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s)
-                elif m_name == "deeptcsr":
-                    model = DeepTCSRClampedModel(input_dim=in_dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s)
-                elif m_name == "dynamic_deephit":
-                    model = DynamicDeepHitModel(input_dim=in_dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s)
-                elif m_name == "person_period":
-                    model = PersonPeriodModel(input_dim=in_dim, hidden_dim=64, num_bins=num_bins, delta_s=delta_s)
-
-                trained = train_model(
-                    model, train_set, model_type=m_name, epochs=epochs,
-                    batch_size=16, lr=0.002, device=device, verbose=False
+            for method in methods:
+                t0 = time.time()
+                trained_model, metrics = train_and_evaluate_model(
+                    method_name=method,
+                    cohort_data=cohort_data,
+                    spec=spec,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    lr=lr,
+                    alpha_anchor=alpha_anchor,
+                    device=device,
+                    verbose=False,
                 )
+                elapsed = time.time() - t0
 
-                metrics = evaluate_dataset_model(trained, test_set, m_name, delta_s, max_h, device)
-                results_tab1[b_name][m_name]['c_index'].append(metrics['c_index'])
-                results_tab1[b_name][m_name]['auc'].append(metrics['auc'])
-                results_tab1[b_name][m_name]['ibs'].append(metrics['ibs'])
+                valid_c = [m["c_td"] for m in metrics.values() if not np.isnan(m["c_td"])]
+                valid_auc = [m["auc"] for m in metrics.values() if not np.isnan(m["auc"])]
+                valid_ibs = [m["ibs"] for m in metrics.values() if not np.isnan(m["ibs"])]
 
-                # EXP-07: Clinical alarm fatigue evaluation on MIMIC Sepsis
-                if b_name == "mimic_sepsis":
-                    alarm_metrics = evaluate_alarm_fatigue(
-                        metrics['trajectories_risk'],
-                        metrics['trajectories_times'],
-                        metrics['event_indicators'],
-                        target_ppv=0.30,
-                        window_hours=6.0
+                c_td_mean = float(np.mean(valid_c)) if valid_c else float("nan")
+                auc_mean = float(np.mean(valid_auc)) if valid_auc else float("nan")
+                ibs_mean = float(np.mean(valid_ibs)) if valid_ibs else float("nan")
+
+                print(f"[{method:>15s}] Seed {seed:6d} | C_td: {c_td_mean:.4f} | AUC: {auc_mean:.4f} | IBS: {ibs_mean:.4f} ({elapsed:.1f}s)")
+
+                key = (cohort_name, method)
+                table1_raw.setdefault(key, {})[seed] = {
+                    "c_td": c_td_mean,
+                    "auc": auc_mean,
+                    "ibs": ibs_mean,
+                }
+
+                if cohort_name == "synthetic_icu" and trained_model is not None:
+                    val_risks, _, val_events = extract_patient_trajectories(trained_model, cohort_data.val, spec.delta_s, device)
+                    test_risks, test_times, test_events = extract_patient_trajectories(trained_model, cohort_data.test, spec.delta_s, device)
+
+                    val_thresh = calibrate_threshold_for_ppv(val_risks, val_events, target_ppv=0.30)
+                    af_metrics = evaluate_alarm_fatigue(
+                        trajectories_risk=test_risks,
+                        trajectories_times=test_times,
+                        patient_events=test_events,
+                        calibrated_threshold=val_thresh,
                     )
-                    alarm_results_tab2[m_name]['false_alert_rate'].append(alarm_metrics['false_alert_rate_per_day'])
-                    alarm_results_tab2[m_name]['alert_jitter'].append(alarm_metrics['alert_jitter_count'])
+                    table2_raw.setdefault(method, {})[seed] = af_metrics
 
-    # Format Table 1 (Multi-Cohort Dynamic Survival Performance)
-    table1_md = "# Table 1: Multi-Cohort Dynamic Survival Performance (EXP-01 & EXP-02)\n\n"
-    table1_md += "| Method | MIMIC-IV Sepsis-3 (C / AUC / IBS) | NASA C-MAPSS 50% (C / AUC / IBS) | PBC Trial (C / AUC / IBS) | Tumor Growth ODE (C / AUC / IBS) |\n"
-    table1_md += "| :--- | :---: | :---: | :---: | :---: |\n"
+    # Save JSON
+    json_path = output_path / "table1_benchmarks_raw.json"
+    serializable_raw = {f"{c}_{m}": {str(s): v for s, v in seeds_dict.items()} for (c, m), seeds_dict in table1_raw.items()}
+    with open(json_path, "w") as f:
+        json.dump(serializable_raw, f, indent=2)
 
-    for m in methods:
-        m_label = "SurvTD (Ours)" if m == "survtd" else ("DeepTCSR (Clamped)" if m == "deeptcsr" else ("Dynamic-DeepHit" if m == "dynamic_deephit" else "Person-Period (1h)"))
-        row = f"| **{m_label}** |"
-        for b in benchmarks:
-            c_mean = np.mean(results_tab1[b][m]['c_index'])
-            auc_mean = np.mean(results_tab1[b][m]['auc'])
-            ibs_mean = np.mean(results_tab1[b][m]['ibs'])
-            row += f" {c_mean:.3f} / {auc_mean:.3f} / {ibs_mean:.3f} |"
-        table1_md += row + "\n"
+    # Format Table 1 Markdown
+    md_lines = [
+        "# Table 1: Multi-Cohort Dynamic Survival Performance (EXP-01 & EXP-02)",
+        "",
+        "Metrics: Landmarked Antolini $C^{td}$ / Uno Dynamic AUC / Integrated Brier Score (IBS) (mean ± SD across seeds).",
+        "",
+        "| Method | " + " | ".join([f"{c} (C / AUC / IBS)" for c in cohorts]) + " |",
+        "| :--- | " + " | ".join([":---:" for _ in cohorts]) + " |",
+    ]
 
-    # Save Table 1
-    tab1_path = os.path.join(output_dir, "table1_benchmarks.md")
-    with open(tab1_path, "w", encoding="utf-8") as f:
-        f.write(table1_md)
-    print(f"\n>> Saved: {tab1_path}")
+    for method in methods:
+        row = [f"**{method}**"]
+        for cohort in cohorts:
+            seeds_dict = table1_raw.get((cohort, method), {})
+            c_vals = [v["c_td"] for v in seeds_dict.values() if not np.isnan(v["c_td"])]
+            a_vals = [v["auc"] for v in seeds_dict.values() if not np.isnan(v["auc"])]
+            i_vals = [v["ibs"] for v in seeds_dict.values() if not np.isnan(v["ibs"])]
 
-    # Format Table 2 (Clinical Bedside Alarm Fatigue EXP-07)
-    table2_md = "# Table 2: Clinical Bedside Alarm Fatigue & Utility on MIMIC-IV Sepsis-3 (EXP-07)\n\n"
-    table2_md += "| Method | False Alert Episode Rate (per pt-day @ 0.30 PPV) | Alert Jitter Count (6h Window Osc.) | Relative Jitter Reduction vs DDH |\n"
-    table2_md += "| :--- | :---: | :---: | :---: |\n"
+            if c_vals and a_vals and i_vals:
+                c_str = f"{np.mean(c_vals):.3f}±{np.std(c_vals):.3f}" if len(c_vals) > 1 else f"{np.mean(c_vals):.3f}"
+                a_str = f"{np.mean(a_vals):.3f}±{np.std(a_vals):.3f}" if len(a_vals) > 1 else f"{np.mean(a_vals):.3f}"
+                i_str = f"{np.mean(i_vals):.3f}±{np.std(i_vals):.3f}" if len(i_vals) > 1 else f"{np.mean(i_vals):.3f}"
+                cell = f"{c_str} / {a_str} / {i_str}"
+            else:
+                cell = "n/a"
+            row.append(cell)
+        md_lines.append("| " + " | ".join(row) + " |")
 
-    ddh_jitter = max(1e-4, np.mean(alarm_results_tab2['dynamic_deephit']['alert_jitter']))
+    table1_md = "\n".join(md_lines)
+    with open(output_path / "table1_benchmarks.md", "w") as f:
+        f.write(table1_md + "\n")
+    print(f"\nSaved Table 1 -> {output_path / 'table1_benchmarks.md'}")
 
-    for m in methods:
-        m_label = "SurvTD (Ours)" if m == "survtd" else ("DeepTCSR (Clamped)" if m == "deeptcsr" else ("Dynamic-DeepHit" if m == "dynamic_deephit" else "Person-Period (1h)"))
-        fa_mean = np.mean(alarm_results_tab2[m]['false_alert_rate'])
-        jit_mean = np.mean(alarm_results_tab2[m]['alert_jitter'])
-        rel_red = (1.0 - (jit_mean / ddh_jitter)) * 100.0 if ddh_jitter > 0 else 0.0
-        table2_md += f"| **{m_label}** | {fa_mean:.2f} | {jit_mean:.1f} | {rel_red:+.1f}% |\n"
+    if table2_raw:
+        t2_lines = [
+            "# Table 2: Bedside Alarm Fatigue Evaluation on Synthetic ICU (EXP-07)",
+            "",
+            "Operating point calibrated to 0.30 PPV on validation split. Metrics reported on out-of-sample test split.",
+            "",
+            "| Method | Calibrated Thresh | False Alert Rate (/day) | Unstable Window Rate (/day) | Jitter Patient Fraction |",
+            "| :--- | :---: | :---: | :---: | :---: |",
+        ]
+        for method, s_dict in table2_raw.items():
+            ths = [v["calibrated_threshold"] for v in s_dict.values()]
+            fas = [v["false_alert_rate_per_day"] for v in s_dict.values()]
+            jits = [v["unstable_window_rate_per_day"] for v in s_dict.values()]
+            j_fracs = [v["jitter_patient_fraction"] for v in s_dict.values()]
 
-    tab2_path = os.path.join(output_dir, "table2_alarm_fatigue.md")
-    with open(tab2_path, "w", encoding="utf-8") as f:
-        f.write(table2_md)
-    print(f">> Saved: {tab2_path}")
+            th_str = f"{np.mean(ths):.3f}±{np.std(ths):.3f}" if len(ths) > 1 else f"{np.mean(ths):.3f}"
+            fa_str = f"{np.mean(fas):.3f}±{np.std(fas):.3f}" if len(fas) > 1 else f"{np.mean(fas):.3f}"
+            jit_str = f"{np.mean(jits):.3f}±{np.std(jits):.3f}" if len(jits) > 1 else f"{np.mean(jits):.3f}"
+            jf_str = f"{np.mean(j_fracs):.3f}±{np.std(j_fracs):.3f}" if len(j_fracs) > 1 else f"{np.mean(j_fracs):.3f}"
 
-    print("\n=== [Track A] Execution Complete ===")
-    return results_tab1, alarm_results_tab2
+            t2_lines.append(f"| **{method}** | {th_str} | {fa_str} | {jit_str} | {jf_str} |")
+
+        table2_md = "\n".join(t2_lines)
+        with open(output_path / "table2_alarm_fatigue.md", "w") as f:
+            f.write(table2_md + "\n")
+        print(f"Saved Table 2 -> {output_path / 'table2_alarm_fatigue.md'}")
+
+    return table1_raw, table2_raw
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--seeds", type=int, nargs="+", default=[42, 123, 456, 789, 101112])
+    parser.add_argument("--cohorts", type=str, nargs="+", default=["synthetic_icu", "cmapss", "pbc", "tumor"])
+    parser.add_argument("--methods", type=str, nargs="+", default=["km", "person_period", "dynamic_deephit", "deeptcsr", "survtd"])
+    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--lr", type=float, default=0.001)
+    parser.add_argument("--alpha_anchor", type=float, default=0.5)
+    parser.add_argument("--dry_run", action="store_true", help="Runs single seed dry run in safe isolated directory")
+    parser.add_argument("--output_dir", type=str, default="experiments/results")
+    args = parser.parse_args()
+
+    run_track_a(
+        seeds=args.seeds,
+        cohorts=args.cohorts,
+        methods=args.methods,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        alpha_anchor=args.alpha_anchor,
+        dry_run=args.dry_run,
+        output_dir=args.output_dir,
+    )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=15)
-    parser.add_argument("--dry_run", action="store_true")
-    args = parser.parse_args()
-    run_track_a(epochs=args.epochs, dry_run=args.dry_run)
+    main()

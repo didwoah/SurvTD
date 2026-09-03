@@ -45,3 +45,14 @@ def paired_wilcoxon_test(scores_a: list, scores_b: list) -> tuple:
         return 0.0, 1.0
     stat, p_val = stats.wilcoxon(scores_a, scores_b)
     return float(stat), float(p_val)
+
+
+def compute_paired_bootstrap_ci(scores_a: list or np.ndarray, scores_b: list or np.ndarray, n_bootstraps: int = 1000, ci: float = 0.95, seed: int = 42) -> tuple:
+    """
+    Computes empirical bootstrap confidence interval for paired differences (scores_a - scores_b).
+    Mandated by deviation log A-08 for adjudicating meaningful deltas.
+    Returns:
+        (mean_diff, ci_lower, ci_upper, standard_error)
+    """
+    diffs = np.array(scores_a, dtype=np.float64) - np.array(scores_b, dtype=np.float64)
+    return compute_bootstrap_ci(diffs, n_bootstraps=n_bootstraps, ci=ci, seed=seed)
