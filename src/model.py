@@ -9,7 +9,7 @@ class SurvTD_Model(nn.Module):
     SurvTD(λ) 시계열 생존분석 모델
     - Backbone: 2-layer GRU (시계열 종단 특징을 잠재 상태 h_t로 인코딩)
     - Hazard Head: K개 미래 시간 버킷에 대한 조건부 해저드 h_t(s) 출력
-    """
+    """ 
     def __init__(self, input_dim=17, hidden_dim=64, num_buckets=30):
         super().__init__()
         self.K = num_buckets
