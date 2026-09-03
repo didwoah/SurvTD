@@ -15,9 +15,13 @@ import torch
 import torch.nn.functional as F
 
 from src.operators.survtd_operator import (
+    ARMS,
     categorical_projection_shift,
     compute_interval_discount,
-    localized_projected_dirac
+    compute_multistep_lambda_returns,
+    interval_gaps,
+    localized_projected_dirac,
+    residual_times
 )
 
 
@@ -27,93 +31,89 @@ def compute_ablated_lambda_returns(
     dts: torch.Tensor,
     events: torch.Tensor,
     tte: float,
-    tau_event: float,
-    ablation_mode: str = "full",  # 'full', 'arm_a1_discount', 'arm_a2_shift', 'count_geometric'
+    tau_event: float = None,
+    ablation_mode: str = "full",
     lam: float = 0.6,
     delta_s: float = 1.0,
     K: int = 30,
-    censor_ipcw_weight: float = 1.0
+    censor_ipcw_weight: float = 1.0,
+    include_overflow: bool = False,
+    gamma_placement: str = "bootstrap",
 ):
     """
-    Computes backward multi-step targets under designated ablation conditions.
+    Thin delegate to `compute_lambda_returns`.
+
+    This function used to hold a second, hand-maintained copy of the backward
+    recursion, differing from the full model's only in three `if` branches. That
+    duplication is why the gamma renormalization defect existed in two places and
+    why an ablation arm could silently run different mathematics from the arm it is
+    meant to be compared against. The arm definitions now live in the single `ARMS`
+    dict in src/operators/survtd_operator.py, which experiments/run_track_b.py reads
+    as well, so an arm cannot be defined one way in the operator and another way in
+    the experiment script.
     """
-    L = target_pmfs.shape[0]
-    device = target_pmfs.device
-    G_targets = [None] * L
-    step_weights = torch.ones(L, device=device)
-
-    # Terminal step
-    has_event_terminal = bool(events[-1].item() > 0.5)
-    if has_event_terminal:
-        dt_last = float(dts[-1].item())
-        delta_tau = max(0.0, min(dt_last, tau_event - (tte - dt_last)))
-        G_targets[-1] = localized_projected_dirac(delta_tau, delta_s, K, device=device).detach()
-    else:
-        G_targets[-1] = target_pmfs[-1].clone().detach()
-        step_weights[-1] = min(float(censor_ipcw_weight), 10.0)
-
-    for j in range(L - 2, -1, -1):
-        dt_j = float(dts[j].item())
-        event_j = bool(events[j].item() > 0.5)
-
-        # Lambda mixing rule
-        if ablation_mode == "count_geometric":
-            lambda_j = float(lam)  # fixed discrete count-geometric
-        else:
-            lambda_j = float(lam ** (dt_j / delta_s))
-
-        # Gamma discount rule
-        if ablation_mode == "arm_a1_discount":
-            # Arm A1: constant unit-step discount S(delta_s) regardless of elapsed dt
-            gamma_j = compute_interval_discount(target_survivals[j], delta_s, delta_s, K)
-        else:
-            gamma_j = compute_interval_discount(target_survivals[j], dt_j, delta_s, K)
-
-        # Shift rule
-        if ablation_mode == "arm_a2_shift":
-            # Arm A2: fixed unit grid shift Phi_{+delta_s} regardless of continuous dt
-            effective_shift_dt = delta_s
-        else:
-            effective_shift_dt = dt_j
-
-        if event_j:
-            delta_tau = max(0.0, dt_j * 0.5)
-            T_p_j = localized_projected_dirac(delta_tau, delta_s, K, device=device)
-            G_targets[j] = T_p_j.detach()
-        else:
-            p_next_target = target_pmfs[j + 1]
-            T_p_j = categorical_projection_shift(p_next_target, effective_shift_dt, delta_s, K)
-            G_next_shifted = categorical_projection_shift(G_targets[j + 1], effective_shift_dt, delta_s, K)
-
-            G_j = (1.0 - lambda_j) * T_p_j + lambda_j * gamma_j * G_next_shifted
-            G_j = G_j / torch.clamp(torch.sum(G_j), min=1e-8)
-            G_targets[j] = G_j.detach()
-
-    return torch.stack(G_targets, dim=0), step_weights
+    if ablation_mode not in ARMS:
+        raise ValueError(
+            "unknown ablation_mode %r; expected one of %s" % (ablation_mode, sorted(ARMS))
+        )
+    return compute_multistep_lambda_returns(
+        target_pmfs, target_survivals, dts, events, tte, tau_event,
+        lam=lam, delta_s=delta_s, K=K, censor_ipcw_weight=censor_ipcw_weight,
+        include_overflow=include_overflow, arm=ablation_mode,
+        gamma_placement=gamma_placement,
+    )
 
 
-def clamped_division_target(p_next: torch.Tensor, survival_curr: torch.Tensor, dt: float, delta_s: float, K: int, clamp_eps: float = 1e-3) -> torch.Tensor:
+def clamped_division_target(
+    p_next: torch.Tensor,
+    survival_curr: torch.Tensor,
+    dt: float,
+    delta_s: float,
+    K: int,
+    clamp_eps: float = 1e-3,
+    include_overflow: bool = False,
+) -> tuple:
     """
     NC-A3: Clamped continuous division baseline:
     p_target(s) = p_next(s - dt) / max(S(dt), 1e-3)
+
+    Deliberately keeps the integer unit-step shift and the absence of a triangular
+    projection: that is what the preregistration declares for Arm A3, so it must not
+    be quietly upgraded to the full renewal operator.
+
+    Returns (target, diagnostics) where diagnostics records whether the clamp bound
+    and whether the uniform fallback fired. Those two rates are the direct evidence
+    for or against the numerical-degeneracy claim behind C_1, and the previous
+    implementation discarded them.
     """
-    # Shift p_next by integer or continuous steps
     dt_steps = max(1, int(round(dt / delta_s)))
     S_dt = compute_interval_discount(survival_curr, dt, delta_s, K)
     S_clamped = max(S_dt, clamp_eps)
 
+    n = p_next.shape[-1]
     target_p = torch.zeros_like(p_next)
     if dt_steps < K:
-        target_p[dt_steps:] = p_next[:K - dt_steps] / S_clamped
+        target_p[dt_steps:K] = p_next[:K - dt_steps] / S_clamped
+    if include_overflow:
+        # Whatever is shifted past the last bin, plus the incoming perp mass, is
+        # already beyond the horizon.
+        target_p[K] = (
+            p_next[K] + torch.sum(p_next[max(0, K - dt_steps):K])
+        ) / S_clamped
 
-    # Normalization
+    diagnostics = {
+        "clamp_bound": bool(S_dt < clamp_eps),
+        "uniform_fallback": False,
+    }
+
     sum_mass = torch.sum(target_p)
     if sum_mass > 1e-8:
         target_p = target_p / sum_mass
     else:
-        target_p = torch.ones_like(p_next) / K
+        target_p = torch.ones_like(p_next) / n
+        diagnostics["uniform_fallback"] = True
 
-    return target_p.detach()
+    return target_p.detach(), diagnostics
 
 
 def permute_patient_durations(patient_dict: dict, rng: random.Random) -> dict:
