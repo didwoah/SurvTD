@@ -49,6 +49,28 @@ class DynamicDeepHitModel(nn.Module):
         h = self.backbone(x, dts, mask)
         return self.head(h)
 
+    def compute_loss_trajectory(self, x, dts, events, tte, tau_event=None, mask=None):
+        """Computes Dynamic-DeepHit single trajectory L1 log-likelihood loss."""
+        device = x.device
+        hazard, survival, pmf, cdf = self.forward(x.unsqueeze(0), dts.unsqueeze(0), mask.unsqueeze(0) if mask is not None else None)
+        pmf = pmf.squeeze(0)
+        survival = survival.squeeze(0)
+        L = pmf.shape[0]
+
+        has_event = bool(torch.any(events > 0.5).item())
+        times = torch.cumsum(dts, dim=0)
+        rem_time = torch.clamp(float(tte) - times, min=0.0)
+        k_bins = torch.clamp(torch.floor(rem_time / self.delta_s + 1e-6).long(), 0, self.K - 1)
+
+        idx = torch.arange(L, device=device)
+        if has_event:
+            p_val = torch.clamp(pmf[idx, k_bins], min=1e-6)
+            loss = -torch.log(p_val).mean()
+        else:
+            s_val = torch.clamp(survival[idx, k_bins], min=1e-6)
+            loss = -torch.log(s_val).mean()
+        return loss
+
     def compute_loss(self, batch_patients):
         """
         Computes L1 (terminal NLL) + alpha * L2 (ranking loss) over a batch of patient trajectories.
@@ -60,7 +82,8 @@ class DynamicDeepHitModel(nn.Module):
         patient_evals = []
 
         for p in batch_patients:
-            x = p['features'].unsqueeze(0).to(device)
+            x_feat = p['x'] if 'x' in p else p['features']
+            x = x_feat.unsqueeze(0).to(device)
             dts = p['dts'].unsqueeze(0).to(device)
             mask = p['mask'].unsqueeze(0).to(device) if 'mask' in p and p['mask'] is not None else None
             tte = float(p['tte'])
@@ -73,23 +96,19 @@ class DynamicDeepHitModel(nn.Module):
             cdf = cdf.squeeze(0)        # (L, K)
 
             L = pmf.shape[0]
-            # Terminal NLL across all visits
-            for j in range(L):
-                t_j = float(times[j].item())
-                rem_time = max(0.0, tte - t_j)
-                k_bin = min(int(math.floor(rem_time / self.delta_s)), self.K - 1)
+            rem_time = torch.clamp(tte - times, min=0.0)
+            k_bins = torch.clamp(torch.floor(rem_time / self.delta_s + 1e-6).long(), 0, self.K - 1)
+            idx = torch.arange(L, device=device)
 
-                if event > 0.5:
-                    # Event occurred
-                    p_val = torch.clamp(pmf[j, k_bin], min=1e-6)
-                    loss_j = -torch.log(p_val)
-                else:
-                    # Right-censored
-                    s_val = torch.clamp(survival[j, k_bin], min=1e-6)
-                    loss_j = -torch.log(s_val)
+            if event > 0.5:
+                p_val = torch.clamp(pmf[idx, k_bins], min=1e-6)
+                loss_pat = -torch.log(p_val).sum()
+            else:
+                s_val = torch.clamp(survival[idx, k_bins], min=1e-6)
+                loss_pat = -torch.log(s_val).sum()
 
-                total_l1 = total_l1 + loss_j
-                total_steps += 1
+            total_l1 = total_l1 + loss_pat
+            total_steps += L
 
             # Save last visit cdf and event for pairwise ranking loss
             last_time = float(times[-1].item())

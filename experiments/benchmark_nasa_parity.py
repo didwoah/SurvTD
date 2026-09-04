@@ -31,7 +31,9 @@ from src.evaluation.coxsig_evaluator import (
     compute_coxsig_brier
 )
 from src.models.survtd import SurvTDModel
+from src.models.survtd_v2 import SurvTD_v2_Model
 from src.models.baselines.deeptcsr_clamped import DeepTCSRClampedModel
+from src.models.baselines.dynamic_deephit import DynamicDeepHitModel
 
 
 class NASATrajectoryDataset(Dataset):
@@ -118,6 +120,21 @@ def train_pytorch_model(
     model.to(device)
     model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
+
+    if isinstance(model, DynamicDeepHitModel):
+        batch_size = 16
+        for epoch in range(epochs):
+            perm = np.random.permutation(len(train_dataset))
+            for b_start in range(0, len(train_dataset), batch_size):
+                b_indices = perm[b_start:b_start + batch_size]
+                batch_patients = [train_dataset[i] for i in b_indices]
+                optimizer.zero_grad()
+                loss = model.compute_loss(batch_patients)
+                loss.backward()
+                nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
+        model.eval()
+        return model
 
     for epoch in range(epochs):
         perm = np.random.permutation(len(train_dataset))
@@ -308,20 +325,68 @@ def run_benchmark(
             for k in res_survtd:
                 all_results["survtd"][k].append(res_survtd[k])
 
+        # 4. Dynamic-DeepHit (DDH)
+        if "ddh" in models or "dynamic_deephit" in models:
+            m_key = "ddh" if "ddh" in models else "dynamic_deephit"
+            print("\n--- Running Dynamic-DeepHit (DDH) ---", flush=True)
+            t_start = time.time()
+            ddh_model = DynamicDeepHitModel(
+                input_dim=len(splits['feat_cols']),
+                hidden_dim=32,
+                num_bins=40,
+                delta_s=0.1,
+                backbone_type="grud",
+                num_layers=1,
+                dropout=0.1,
+                alpha_rank=0.5
+            )
+            ddh_model = train_pytorch_model(ddh_model, train_ds, epochs=epochs, lr=1e-3)
+            res_ddh = evaluate_pytorch_model_coxsig_protocol(ddh_model, test_ds, pred_times, eval_times)
+            elapsed = time.time() - t_start
+            print(f"DDH completed in {elapsed:.1f}s | t=0 C-index: {res_ddh['t0_cindex']:.4f} | Dynamic C-index: {np.nanmean(res_ddh['dynamic_cindex']):.4f}", flush=True)
+            for k in res_ddh:
+                all_results[m_key][k].append(res_ddh[k])
+
+        # 5. SurvTD-v2
+        if "survtd_v2" in models:
+            print("\n--- Running SurvTD-v2 ---", flush=True)
+            t_start = time.time()
+            survtd_v2_model = SurvTD_v2_Model(
+                input_dim=len(splits['feat_cols']),
+                hidden_dim=32,
+                num_bins=40,
+                delta_s=0.1,
+                backbone_type="grud",
+                num_layers=1,
+                dropout=0.1,
+                rho=0.5,
+                alpha_anchor=0.5
+            )
+            survtd_v2_model = train_pytorch_model(survtd_v2_model, train_ds, epochs=epochs, lr=1e-3)
+            res_survtd_v2 = evaluate_pytorch_model_coxsig_protocol(survtd_v2_model, test_ds, pred_times, eval_times)
+            elapsed = time.time() - t_start
+            print(f"SurvTD-v2 completed in {elapsed:.1f}s | t=0 C-index: {res_survtd_v2['t0_cindex']:.4f} | Dynamic C-index: {np.nanmean(res_survtd_v2['dynamic_cindex']):.4f}", flush=True)
+            for k in res_survtd_v2:
+                all_results["survtd_v2"][k].append(res_survtd_v2[k])
+
     # Consolidated summary
-    summary = {}
-    print("\n" + "=" * 80)
-    print("       FINAL NASA FD001 BENCHMARK SUMMARY (5 SEEDS)")
-    print("=" * 80)
-    print(f"{'Model':<12} | {'t=0 C-index':<16} | {'t=0 Brier':<16} | {'Dynamic C-index':<16} | {'Dynamic Brier':<16}")
-    print("-" * 84)
+    out_file = os.path.join(output_dir, "parity_results.json")
+    final_summary = {}
+    if os.path.exists(out_file):
+        try:
+            with open(out_file, "r") as f:
+                existing = json.load(f)
+                if "summary" in existing:
+                    final_summary.update(existing["summary"])
+        except Exception:
+            pass
 
     for m in models:
         t0_ci = np.array(all_results[m]["t0_cindex"])
         t0_bs = np.array(all_results[m]["t0_bs"])
         dyn_ci = np.array([np.nanmean(arr) for arr in all_results[m]["dynamic_cindex"]])
         dyn_bs = np.array([np.nanmean(arr) for arr in all_results[m]["dynamic_bs"]])
-        summary[m] = {
+        final_summary[m] = {
             "t0_cindex_mean": float(np.mean(t0_ci)),
             "t0_cindex_std": float(np.std(t0_ci)),
             "t0_bs_mean": float(np.mean(t0_bs)),
@@ -335,13 +400,21 @@ def run_benchmark(
             "raw_dynamic_cindex": [float(x) for x in dyn_ci],
             "raw_dynamic_bs": [float(x) for x in dyn_bs]
         }
-        print(f"{m:<12} | {np.mean(t0_ci):.4f} ± {np.std(t0_ci):.4f} | {np.mean(t0_bs):.4f} ± {np.std(t0_bs):.4f} | {np.mean(dyn_ci):.4f} ± {np.std(dyn_ci):.4f} | {np.mean(dyn_bs):.4f} ± {np.std(dyn_bs):.4f}")
-    print("=" * 80)
 
-    out_file = os.path.join(output_dir, "parity_results.json")
+    print("\n" + "=" * 85, flush=True)
+    print("       FINAL CONSOLIDATED NASA FD001 BENCHMARK SUMMARY (5 SEEDS)", flush=True)
+    print("=" * 85, flush=True)
+    print(f"{'Model':<14} | {'t=0 C-index':<16} | {'t=0 Brier':<16} | {'Dynamic C-index':<16} | {'Dynamic Brier':<16}", flush=True)
+    print("-" * 89, flush=True)
+
+    for m in final_summary:
+        s_m = final_summary[m]
+        print(f"{m:<14} | {s_m['t0_cindex_mean']:.4f} ± {s_m['t0_cindex_std']:.4f} | {s_m['t0_bs_mean']:.4f} ± {s_m['t0_bs_std']:.4f} | {s_m['dynamic_cindex_mean']:.4f} ± {s_m['dynamic_cindex_std']:.4f} | {s_m['dynamic_bs_mean']:.4f} ± {s_m['dynamic_bs_std']:.4f}", flush=True)
+    print("=" * 85, flush=True)
+
     with open(out_file, "w") as f:
-        json.dump({"summary": summary, "seeds": list(seeds), "epochs": epochs}, f, indent=2)
-    print(f"Results saved to {out_file}")
+        json.dump({"summary": final_summary, "seeds": list(seeds), "epochs": epochs}, f, indent=2)
+    print(f"Results saved to {out_file}", flush=True)
 
 
 if __name__ == "__main__":

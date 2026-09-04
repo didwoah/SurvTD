@@ -1,0 +1,52 @@
+{
+  "cohort": "synthetic_icu",
+  "epochs": 20,
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    101112
+  ],
+  "reference": {
+    "anchor_cramer": 0.5318,
+    "td_cramer": 0.5353,
+    "anchor_cramer_sd": 0.0407,
+    "td_cramer_sd": 0.0841,
+    "pp_raw_mle": 0.6315
+  },
+  "arms": {
+    "anchor/logit_cramer": {
+      "alpha": 1.0,
+      "anchor_loss": "logit_cramer",
+      "td_loss": "cramer"
+    },
+    "anchor/ce": {
+      "alpha": 1.0,
+      "anchor_loss": "ce",
+      "td_loss": "cramer"
+    },
+    "td/logit_cramer": {
+      "alpha": 0.0,
+      "anchor_loss": "cramer",
+      "td_loss": "logit_cramer"
+    },
+    "td/ce": {
+      "alpha": 0.0,
+      "anchor_loss": "cramer",
+      "td_loss": "ce"
+    }
+  },
+  "records": {
+    "anchor/logit_cramer": {
+      "42": {
+        "c_td": 0.52525335829767,
+        "auc": 0.5605748580573834,
+        "wall_clock_s": 383.4
+      }
+    },
+    "anchor/ce": {},
+    "td/logit_cramer": {},
+    "td/ce": {}
+  }
+}

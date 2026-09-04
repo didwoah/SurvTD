@@ -72,6 +72,7 @@ def train_and_eval_survtd(
     seed: int = 42,
     anchor_loss: str = "cramer",
     td_loss: str = "cramer",
+    use_ipcw: bool = True,
 ) -> tuple:
     train_patients = cohort_data.train.patients
     val_patients = cohort_data.val.patients
@@ -125,6 +126,7 @@ def train_and_eval_survtd(
         include_overflow=True,
         anchor_loss=anchor_loss,
         td_loss=td_loss,
+        use_ipcw=use_ipcw,
     )
     if hasattr(model.backbone, "set_empirical_mean"):
         model.backbone.set_empirical_mean(cohort_data.x_mean)

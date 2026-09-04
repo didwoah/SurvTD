@@ -984,6 +984,47 @@ before it mattered.
 
 ---
 
+**[ ] A-18. Is IPCW on the training loss helping or hurting? Declared before running.**
+
+A-04/D11 weight the anchor by `1/G_hat(c)` on censored trajectories. That is correct
+for an **estimator** -- it is what makes IBS and Uno's AUC unbiased under right
+censoring -- but it was carried into the **training objective** by analogy and never
+justified there. An estimator wants the bias gone; an optimiser pays for it in variance.
+
+Measured, synthetic_icu seed 42 train split: 214/300 trajectories censored, weights
+1.0-10.0 (median 1.72, p90 7.35, capped at 10), and **the top 10% of weighted subjects
+hold 34.3% of the total weight**. Dynamic-DeepHit has no such weighting.
+
+This is also the first of three candidates for a separate puzzle. The `anchor/ce` arm's
+loss is **bit-identical** to Dynamic-DeepHit's L1 -- verified per visit over both
+branches, max |diff| = 0.00e+00 -- so any gap to DeepHit is not the loss. What remains:
+
+| # | difference | effective weight range |
+|---|---|---|
+| 1 | **IPCW** (ours only) | [1.00, 10.00] |
+| 2 | reduction: DeepHit takes a flat mean over visit rows, so a 31-visit subject counts 15.5x a 2-visit subject; SurvTD averages within subject then across subjects | [0.21, 3.23] |
+| 3 | ranking term `+0.5 L2` (DeepHit only) | -- |
+
+**Arms**: `anchor/cramer` and `anchor/ce`, both at `alpha = 1` with `use_ipcw=False`,
+5 seeds. `cramer` is included on purpose -- if IPCW is a general variance source it has
+been depressing **every** SurvTD number measured so far, including the KC5 reference
+0.5318 and the KC3 benchmark, which is a materially different finding from "the ce arm
+has a quirk".
+
+**Reading, fixed now.**
+- Both arms improve similarly -> IPCW is a general cost on the training objective.
+- Only `ce` improves -> the interaction is specific to the likelihood geometry.
+- Neither improves -> IPCW exonerated; the DeepHit gap is candidate 2 or 3, and A-19
+  tests the reduction convention next.
+- **An improvement does not license removing IPCW from the reported pipeline.** It is
+  preregistered in A-04, and dropping it re-opens the censoring bias it corrects. Any
+  such change would be a separate amendment argued on its own merits, not a silent
+  consequence of this measurement.
+
+- `decided-after-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**

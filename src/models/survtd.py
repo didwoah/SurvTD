@@ -67,7 +67,8 @@ class SurvTDModel(nn.Module):
         gamma_placement: str = "bootstrap",
         alpha_anchor: float = 0.5,
         anchor_loss: str = "cramer",
-        td_loss: str = "cramer"
+        td_loss: str = "cramer",
+        use_ipcw: bool = True
     ):
         super().__init__()
         self.input_dim = input_dim
@@ -98,6 +99,15 @@ class SurvTDModel(nn.Module):
         self.td_loss = td_loss
         self.anchor_scale = LOSS_SCALE["anchor"][anchor_loss]
         self.td_scale = LOSS_SCALE["td"][td_loss]
+        # A-04/D11 weight the loss by 1/G_hat(c) on censored trajectories. That is the
+        # right correction for an ESTIMATOR -- it is what makes IBS and Uno's AUC
+        # unbiased -- but it was carried into the TRAINING objective by analogy, never
+        # justified there. Measured on synthetic_icu seed 42: 214/300 trajectories are
+        # censored and carry weights of 1.0-10.0 (median 1.72, p90 7.35), with the top
+        # 10% holding 34.3% of the total weight. Dynamic-DeepHit has no such weighting.
+        # Setting this False matches DeepHit exactly on that axis, which is what
+        # isolates it as a cause.
+        self.use_ipcw = bool(use_ipcw)
 
         # Online Network
         self.backbone = build_backbone(backbone_type, input_dim, hidden_dim, num_layers, dropout)
@@ -172,6 +182,8 @@ class SurvTDModel(nn.Module):
             lam = self.lam
         alpha = self.alpha_anchor if alpha_anchor is None else float(alpha_anchor)
         assert 0.0 <= alpha <= 1.0, f"alpha_anchor must be in [0, 1], got {alpha}"
+        if not self.use_ipcw:
+            ipcw_weight = 1.0
 
         # 1. Online Forward Pass
         hazard_on, surv_on, pmf_on, cdf_on = self.forward(x.unsqueeze(0), dts.unsqueeze(0), mask.unsqueeze(0) if mask is not None else None)

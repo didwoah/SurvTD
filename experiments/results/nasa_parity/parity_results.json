@@ -113,14 +113,54 @@
         0.0668776773231238,
         0.06619095063674305
       ]
+    },
+    "ddh": {
+      "t0_cindex_mean": 0.34893617021276596,
+      "t0_cindex_std": 0.0,
+      "t0_bs_mean": 0.5027595402465926,
+      "t0_bs_std": 0.0,
+      "dynamic_cindex_mean": 0.5282326752306048,
+      "dynamic_cindex_std": 0.0,
+      "dynamic_bs_mean": 0.4210908881461738,
+      "dynamic_bs_std": 0.0,
+      "raw_t0_cindex": [
+        0.34893617021276596
+      ],
+      "raw_t0_bs": [
+        0.5027595402465926
+      ],
+      "raw_dynamic_cindex": [
+        0.5282326752306048
+      ],
+      "raw_dynamic_bs": [
+        0.4210908881461738
+      ]
+    },
+    "survtd_v2": {
+      "t0_cindex_mean": 0.5063829787234042,
+      "t0_cindex_std": 0.0,
+      "t0_bs_mean": 0.06258375790720391,
+      "t0_bs_std": 0.0,
+      "dynamic_cindex_mean": 0.9661317518460376,
+      "dynamic_cindex_std": 0.0,
+      "dynamic_bs_mean": 0.10319286003756191,
+      "dynamic_bs_std": 0.0,
+      "raw_t0_cindex": [
+        0.5063829787234042
+      ],
+      "raw_t0_bs": [
+        0.06258375790720391
+      ],
+      "raw_dynamic_cindex": [
+        0.9661317518460376
+      ],
+      "raw_dynamic_bs": [
+        0.10319286003756191
+      ]
     }
   },
   "seeds": [
-    42,
-    123,
-    456,
-    789,
-    101112
+    42
   ],
-  "epochs": 15
+  "epochs": 1
 }
