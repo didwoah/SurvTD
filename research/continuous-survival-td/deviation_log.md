@@ -1460,6 +1460,20 @@ behaviour; `landmark` is the default.
   on C-MAPSS is **worse than on Framingham**: `spearman(n_observed_steps, tte) = 1.0`
   exactly, across 111 distinct step counts spanning 31 to 362, because every unit runs
   to failure with a different lifetime.
+
+  **Re-run, 5 seeds, `--models ddh`, nothing else changed**
+  (`experiments/results/nasa_tier1_authentic/ddh_D16_repaired.json`):
+
+  | | mean +- sd | per seed |
+  |---|---|---|
+  | under the leak | 0.7599 +- 0.1307 | 0.9029, 0.8198, **0.5935**, 0.8700, **0.6131** |
+  | repaired | **0.8869 +- 0.0332** | 0.8591, 0.8713, 0.9016, 0.9452, 0.8572 |
+
+  Two of the five seeds had been sitting near chance, which is the crippled-arm
+  signature, and the seed spread falls **4x**. The withdrawn value understated
+  Dynamic-DeepHit by 0.127 of dynamic C-index -- i.e. the leak did not merely add
+  noise, it made the strongest non-TD dynamic baseline look weak, which is the
+  direction that would have flattered this project's own method.
 * **The in-process `dynamic_deephit.py` arm is NOT affected** — it consumes the
   project's native irregular visits, where sequence length is the real visit count.
 
