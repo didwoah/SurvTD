@@ -1,0 +1,33 @@
+{
+  "verdict": "LOSS_GEOMETRY",
+  "message": "The Cramer anchor is the deficit. Swapping it for a likelihood is the indicated change; alpha=1 should reach ~0.63.",
+  "pp_expanded_mean": 0.6289359846650833,
+  "pp_expanded_sd": 0.07872662707789484,
+  "pp_raw_mean": 0.6315467861558194,
+  "pp_raw_sd": 0.07725437751427619,
+  "ref_anchor_only": 0.5318,
+  "ref_pp_expanded": 0.6367,
+  "delta_grid_expansion": -0.0026108014907361143,
+  "delta_loss_geometry": 0.09974678615581933,
+  "seeds": [
+    "42",
+    "123",
+    "456",
+    "789",
+    "101112"
+  ],
+  "pp_expanded_c_td": [
+    0.5193072552447552,
+    0.7095167925339227,
+    0.5910511214131721,
+    0.6263153944501094,
+    0.698489359683457
+  ],
+  "pp_raw_c_td": [
+    0.5038622899825647,
+    0.7068705102228772,
+    0.623414514470556,
+    0.6615449194604867,
+    0.6620416966426124
+  ]
+}

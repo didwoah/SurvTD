@@ -277,6 +277,13 @@ experiments both read, so they cannot drift apart. Switching C-MAPSS to FD002
 also changes the setting: it spans six operating conditions rather than one, so
 it is harder as well as larger.
 
+- **Amendment (2026-09-04: Literature Benchmark Parity Protocol on FD001)**:
+  - While FD002 is maintained as the multi-operating continuous landmark benchmark for dynamic evaluation, direct literature comparison with published baselines — notably CoxSig (Bleistein et al., 2023) and DeepTCSR (EPFL, 2024, Table 1) — requires evaluating on their established NASA C-MAPSS FD001 protocol.
+  - In that published protocol: `train_FD001.txt` (100 run-to-failure units, event=1) and `test_FD001.txt` (100 run-until-cutoff units, treated as right-censored at cutoff, event=0) are pooled into 200 units (50% censoring) and randomly split 80% train (160 units) / 20% test (40 units) over 5 random seeds, evaluated with Concordance Index (C-index) and Integrated Brier Score (IBS).
+  - *Operational Rationale*: In industrial telemetry monitoring, assets operating without failure up to observation time $T_{\text{obs}}$ are legitimately treated as right-censored. Adopting this standard ensures apple-to-apple comparability against published numbers (e.g. DeepTCSR 0.730 CI) without reviewer concerns of dataset modification.
+  - *Leak-Free Rule*: Prior implementations (CoxSig, DeepTCSR) fitted scalers globally across all 200 units before splitting (data leakage). We strictly enforce that feature scalers are fitted on the 160 training units only, and then applied to test units.
+
+
 **[ ] X-02. The generator tied event time to the observation schedule.**
 
 - `sepsis_loader.py:82` sets `tte = times[-1] + U(0.1, 2.0)` for events, giving
@@ -796,6 +803,65 @@ predicts the observed pattern -- SurvTD arms have acceptable IBS and poor C^td.
 This is a **fourth** candidate cause and, per the lesson of A-16, it must be
 isolated by measurement (Person-Period without grid expansion) before any loss
 redesign is attempted.
+
+- `decided-after-results`
+
+---
+
+**[x] D-anchor. The Cramér anchor, not the TD term, accounts for the KC3 deficit (measured 2026-09-04).**
+
+Diagnostic run under an interpretation rule fixed and committed before execution
+(`experiments/anchor_geometry_diagnostic.py`, commit `1940a3c`). Person-Period was
+run BOTH ways through one code path, 5 seeds, synthetic_icu. Person-Period on the
+raw irregular visits is, model for model, the alpha = 1 arm with an MLE anchor:
+same backbone, same `DiscreteHazardHead`, same bin convention, same residual-time
+target, no TD in either. Only the loss differs.
+
+| seed | PP expanded | PP raw (MLE) | anchor-only (Cramér) | loss geometry | expansion |
+|---|---|---|---|---|---|
+| 42 | 0.5193 | 0.5039 | 0.5619 | **-0.0580** | +0.0154 |
+| 123 | 0.7095 | 0.7069 | 0.5185 | +0.1884 | +0.0026 |
+| 456 | 0.5911 | 0.6234 | 0.5416 | +0.0818 | -0.0324 |
+| 789 | 0.6263 | 0.6615 | 0.5689 | +0.0927 | -0.0352 |
+| 101112 | 0.6985 | 0.6620 | 0.4679 | +0.1941 | +0.0364 |
+| **mean** | **0.6289 ± 0.0787** | **0.6315 ± 0.0773** | **0.5318 ± 0.0407** | **+0.0998** | **-0.0026** |
+
+**Verdict: LOSS_GEOMETRY.**
+
+- **Grid expansion is worth nothing**: -0.0026, 95% CI [-0.041, +0.036], and the
+  raw variant was *better* on 2 of 5 seeds. Preregistration §3 Rung 1 declared the
+  regular-grid expansion and HANDOVER recorded implementing it as "the conservative
+  choice: it makes the naive baseline stronger, not weaker". **That claim is false**
+  on this cohort. The expansion neither helps nor hurts.
+- **The loss geometry is worth +0.0998** (95% CI [-0.028, +0.227], 4 of 5 seeds
+  positive). The CI crosses zero at n = 5 -- this is a diagnostic, not an
+  adjudication, and must be reported with that caveat -- but the effect is large
+  and the one negative seed (42) is the cohort on which every arm sits near chance.
+- **The mechanism is visible in the pattern.** The Cramér anchor scores 0.5619 on
+  seed 42 and 0.5185 on seed 123, i.e. almost the same, while MLE scores 0.5039 and
+  0.7069 on those same two cohorts. The anchor does not track how learnable the
+  data is; it stays near the population curve. Squared Cramér is L2 on the CDF: its
+  gradient is linear in the residual and is dominated by getting the marginal shape
+  right. That is also why the SurvTD arms had acceptable IBS and poor C^td.
+
+**Consequence for the benchmark result.** The KC3 deficit was
+`SurvTD(alpha=0) - DeepHit = 0.5536 - 0.6461 = -0.0925`. The anchor deficit
+measured here is **-0.0998**. KC5 separately established that alpha = 0 and
+alpha = 1 are equivalent (+0.0036). So essentially **the entire Cohort 1 benchmark
+gap is attributable to the anchor's loss geometry, not to the operator**. Table 1
+was, to a first approximation, measuring the choice of anchor.
+
+A-04 adopted the censored-CRPS anchor so it would live in the same Cramér geometry
+as the TD term. That was principled -- but C_1 constrains the *TD target operator*,
+not the anchor, which is a separate additive term. The coherence was aesthetic and
+it cost ~0.10 C^td.
+
+**What this does NOT do.** Swapping the anchor projects alpha = 1 to ~0.63, which
+is level with Person-Period (0.6367) and within noise of Dynamic-DeepHit (0.6461).
+That is **parity, not superiority**, and C_3 requires +0.025 *over* those
+baselines. The TD term would have to supply that margin, and KC5 measured it
+supplying +0.0036 with 4.3x the variance. The honest projection is that the loss
+swap removes an artefact from the comparison without rescuing C_3.
 
 - `decided-after-results`
 
