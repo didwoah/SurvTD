@@ -94,41 +94,42 @@ def categorical_projection_shift(
     # Shifted locations: s'_m = s_m + dt = (m + 0.5 + dt / delta_s) * delta_s
     # Target bin coordinate u_m = s'_m / delta_s - 0.5 = m + dt / delta_s
     shift_steps = dt_val / delta_s
-
     W = torch.zeros(n, n, device=device, dtype=dtype)
-
-    for m in range(K):
-        u = m + shift_steps
-
-        if include_overflow:
-            if u >= K:
-                W[m, K] = 1.0
-                continue
-            if u <= 0:
-                W[m, 0] = 1.0
-                continue
-            k = int(math.floor(u))
-            f = u - k
-            W[m, k] += 1.0 - f
-            W[m, min(k + 1, K)] += f     # k + 1 == K routes the fraction to perp
-        else:
-            # Legacy path: bin K-1 absorbs everything at or past the final bin center.
-            if u >= K - 1:
-                W[m, K - 1] = 1.0
-            elif u <= 0:
-                W[m, 0] = 1.0
-            else:
-                k = int(math.floor(u))
-                f = u - k
-                k_next = min(k + 1, K - 1)
-                if k == k_next:
-                    W[m, k] = 1.0
-                else:
-                    W[m, k] = 1.0 - f
-                    W[m, k_next] = f
+    m = torch.arange(K, device=device, dtype=dtype)
+    u = m + shift_steps
 
     if include_overflow:
-        W[K, K] = 1.0                    # perp is absorbing: already beyond the horizon
+        mask_high = u >= K
+        mask_low = u <= 0
+        mask_mid = ~mask_high & ~mask_low
+        W[m[mask_high].long(), K] = 1.0
+        W[m[mask_low].long(), 0] = 1.0
+
+        u_mid = u[mask_mid]
+        m_mid = m[mask_mid].long()
+        k = torch.floor(u_mid).long()
+        f = u_mid - k.float()
+        W[m_mid, k] = 1.0 - f
+        k_next = torch.clamp(k + 1, max=K)
+        W.index_put_((m_mid, k_next), f, accumulate=True)
+        W[K, K] = 1.0
+    else:
+        mask_high = u >= (K - 1)
+        mask_low = u <= 0
+        mask_mid = ~mask_high & ~mask_low
+        W[m[mask_high].long(), K - 1] = 1.0
+        W[m[mask_low].long(), 0] = 1.0
+
+        u_mid = u[mask_mid]
+        m_mid = m[mask_mid].long()
+        k = torch.floor(u_mid).long()
+        f = u_mid - k.float()
+        k_next = torch.clamp(k + 1, max=K - 1)
+        eq_mask = (k == k_next)
+        W[m_mid[eq_mask], k[eq_mask]] = 1.0
+        neq_mask = ~eq_mask
+        W[m_mid[neq_mask], k[neq_mask]] = 1.0 - f[neq_mask]
+        W.index_put_((m_mid[neq_mask], k_next[neq_mask]), f[neq_mask], accumulate=True)
 
     p_proj = torch.matmul(p, W)
 

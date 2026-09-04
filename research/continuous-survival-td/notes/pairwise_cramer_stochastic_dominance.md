@@ -5,6 +5,15 @@
 **Status**: Methodological Extension Proposal (SurvTD-Rank Arm)  
 **Target Modules**: `src/bellman.py`, `src/models/loss.py`, `src/models/trainer.py`
 
+> **REVIEW STATUS (2026-09-04, post-KC5). DEFERRED — the motivating premise is dead.**
+> §1's motivation rests on `M-05`'s "+0.185 (0.8481 -> 0.6633)", which comes from the
+> **withdrawn** pre-repair diagnostic regime. On the repaired pipeline the ranking term
+> is worth **~0.009**, not 0.185 (Person-Period, no ranking loss: 0.6367; Dynamic-DeepHit,
+> with it: 0.6461). The FSD construction in §2 is sound and has two real advantages over
+> DeepHit, but it currently solves a problem this cohort does not have, and it has three
+> defects that must be fixed before it is ever run. **§4 (DPO-style target shift) is
+> withdrawn outright** — it voids `thm:1`. See §7.
+
 ---
 
 ## 1. Problem Diagnosis: The Success and Pathology of DeepHit's Ranking Loss
@@ -14,6 +23,13 @@ In benchmark audits (`deviation_log.md:M-05`), Dynamic-DeepHit (Lee et al., 2018
 $$\mathcal{L}_{\text{DeepHit-Rank}} = \sum_{(i,j) \in \mathcal{P}} \exp\left( -\frac{F_i(t_i) - F_j(t_i)}{\sigma} \right)$$
 
 where $F_i(t) = P(T_i \le t)$ is the predicted cumulative failure probability at event time $t_i$ for a comparable pair $(i, j)$ with $t_i < t_j$ and $E_i = 1$. When this ranking loss was ablated ($\alpha_{\text{rank}} = 0$), Dynamic-DeepHit's C-index collapsed from **0.8481 to 0.6633**.
+
+> **[CORRECTED 2026-09-04]** These figures are from the **withdrawn** pre-repair diagnostic
+> regime and must not be used. On the repaired pipeline the ranking term is worth
+> **~0.009**: Person-Period (no ranking loss at all) scores 0.6367 and Dynamic-DeepHit
+> scores 0.6461, with a per-seed correlation of 0.988 between them. The premise that
+> DeepHit's advantage "derives entirely from its auxiliary pairwise ranking objective"
+> is false on this cohort.
 
 ### Pathologies of DeepHit's Formulation:
 1. **Point Evaluation Discarding Distributional Information**:
@@ -153,3 +169,90 @@ def continuous_cramer_pairwise_loss(
     loss = pair_cramer_loss[pair_mask].mean()
     return loss
 ```
+
+---
+
+## 7. Review findings (2026-09-04)
+
+### 7.1 What is genuinely good here
+
+- **The FSD formalism is correct.** `T_j ⪰_st T_i ⟺ S_j(t) ≥ S_i(t) ∀t` is the textbook
+  definition of first-order stochastic dominance, and expressing a ranking penalty as
+  integrated one-sided dominance violation is a real idea.
+- **Dimensional consistency is a real advantage over DeepHit.** Both terms carry
+  `time × probability²`, so `β` is a clean dimensionless trade-off, whereas DeepHit needs
+  a temperature `σ` that is decoupled from the units of everything else.
+- **The hinge is the important design choice.** `max(0, ·)²` means a pair already
+  satisfying dominance contributes exactly zero gradient. DeepHit's exponential never
+  saturates and therefore keeps pushing predictions toward 0/1 — which is precisely the
+  calibration damage §1.3 complains about. The hinge removes that failure mode.
+
+### 7.2 The premise is dead (see the header)
+
+Ranking is worth ~0.009 here, not 0.185. Any run of this loss must be justified on
+different grounds than §1 gives.
+
+### 7.3 Three defects to fix before running
+
+1. **No landmark alignment — the loss is currently ill-posed.** The head predicts
+   *residual* time `R_j = tte - t_j` from each visit, so `F_i(s_k)` and `F_j(s_k)` are
+   "probability of failing within `s_k` **of each subject's own current position**".
+   Comparing them across two subjects at different points in their trajectories does not
+   define a ranking. §4 says "observed at landmark L" but §2 and the §6 code implement no
+   alignment. Since evaluation is landmarked (`evaluate_landmarked`), pairs must be formed
+   within a landmark risk set and residual times measured from that landmark.
+2. **IPCW squaring undoes a deliberate fix.** `w_ij = 1/Ĝ(T_i)²` with
+   `censoring.py`'s floor of 0.05 gives weights up to **400**. That floor was raised from
+   0.01 to 0.05 specifically because, in that module's own words, "a single subject could
+   then dominate an entire metric". Squaring reintroduces the problem at 20x the
+   severity. Cap the pair weight explicitly.
+3. **FSD is stronger than the data licenses.** Observing `T_i < T_j` in one realization
+   does not imply the two conditional distributions are stochastically ordered — survival
+   curves may legitimately cross and still produce that ordering in a single draw.
+   Forcing `F_j(t) ≤ F_i(t)` at **every** `t` asserts more than the observation supports.
+   DeepHit's single-point evaluation is weaker and, in this one respect, more honest.
+   "Whole-horizon" is a trade-off, not a free win. Restricting the integral to
+   `t ≤ Δ` (the evaluation horizon) would bound the over-assertion.
+
+Note also that the hinge does not make the loss proper; it makes it *harmless where the
+constraint already holds*. Added to a proper loss, the combined minimiser is the true
+distribution only on the FSD-consistent subset. That is a defensible position but it must
+be stated, not implied away — especially given §1.3 attacks DeepHit for impropriety.
+
+### 7.4 §5's "Double-Win" narrative is contradicted by measurement
+
+The table assumes SurvTD-Pure holds "SOTA Calibration (Brier Score) & Zero Alarm Jitter".
+Measured on Cohort 1, 5 seeds:
+
+| | IBS |
+|---|---|
+| SurvTD | 0.186 ± 0.159 |
+| **Dynamic-DeepHit** | **0.115 ± 0.021** |
+
+**Dynamic-DeepHit is better calibrated, and far more stable.** Kill Criterion 4 (alarm
+jitter) has never run to completion, so "Zero Alarm Jitter" is unevidenced. The narrative
+must be rebuilt on measurements or dropped.
+
+### 7.5 §4 (DPO-style Bellman target shift) is withdrawn
+
+Shifting the *target* left for short-lived and right for long-lived subjects breaks three
+things at once:
+
+1. The Bellman target stops being an estimate of the true conditional distribution, so the
+   operator's fixed point is no longer the true distribution.
+2. `T_pair ≠ T_Bellman`, so **`thm:1` no longer describes the code**. This is the exact
+   failure mode this project already suffered as **D-gamma**, where the theorem described
+   an operator the implementation did not have.
+3. The bias compounds across bootstrapping steps, since every step shifts again.
+
+An auxiliary loss term changes only the objective; modifying the target changes the
+operator. `C_1` is this project's only surviving theoretical asset and should not be
+wagered this way.
+
+### 7.6 Where this note sits in the queue
+
+Behind A-17. The measured deficit is anchor **loss geometry** (-0.0998), not a missing
+ranking term (~0.009). If A-17 lifts `alpha = 1` to ~0.63 and the TD term still adds
+nothing, a ranking term becomes the natural next question — and at that point this note,
+with §7.3's three fixes applied, is the right way to add one.
+

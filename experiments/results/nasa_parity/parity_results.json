@@ -1,0 +1,13 @@
+{
+  "summary": {
+    "survtd": {
+      "t0_cindex_mean": 0.6297872340425532,
+      "t0_cindex_std": 0.0,
+      "dynamic_cindex_mean": 0.9737678547202356,
+      "dynamic_cindex_std": 0.0
+    }
+  },
+  "seeds": [
+    42
+  ]
+}
