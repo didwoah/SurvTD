@@ -1025,6 +1025,75 @@ has a quirk".
 
 ---
 
+**[x] D15. SurvTD and DeepTCSR treated 100% of events as censored. Every SurvTD number measured before this is withdrawn.**
+
+**The defect.** Every loader fills the per-visit `events` array with zeros --
+`synthetic_icu_loader.py:124` says so outright, `# derived from residual times
+downstream` -- and the authoritative trajectory flag is the scalar `p['event']`. But
+`has_event` was derived from `any(events > 0.5)` alone in three places:
+`src/models/survtd.py:239` (anchor), `src/operators/survtd_operator.py:556` (TD
+target), `src/models/baselines/deeptcsr_clamped.py:110`. That expression returned
+**False for every trajectory in every cohort**.
+
+| seed | event trajectories | trajectories with a visit-level flag | invisible |
+|---|---|---|---|
+| 42 | 86 | 0 | **86 (100%)** |
+| 123 | 113 | 0 | **113 (100%)** |
+| 456 | 76 | 0 | **76 (100%)** |
+
+The terminal Dirac sits behind `if event:` in `compute_lambda_returns`, so it was never
+placed. **At alpha = 0 the objective contained literally no ground truth** -- it was
+pure self-distillation. At alpha = 1 the anchor only ever took its censored branch,
+which scores `F = 0` below the censoring time and never localises anything.
+
+Person-Period (`trainer.py:85,199`, which ORs in `p['event']`) and Dynamic-DeepHit
+(`dynamic_deephit.py:90`, which reads `float(p['event'])`) were unaffected. **That is
+exactly the split in every result table**: the two arms that read the trajectory flag
+worked, the two that did not sat near chance.
+
+**Confirmation.** Fix applied, synthetic_icu seed 123, everything else identical:
+
+| arm | before | after | delta |
+|---|---|---|---|
+| SurvTD anchor-only (alpha = 1, cramer) | 0.5185 | **0.7229** | **+0.2044** |
+| SurvTD full (alpha = 0, cramer) | 0.4350 | **0.6927** | **+0.2577** |
+| *Person-Period raw (reference)* | *0.7069* | -- | -- |
+| *Dynamic-DeepHit (reference)* | *0.7112* | -- | -- |
+
+SurvTD now exceeds both baselines on this seed. The fix is a single expression at each
+of the three sites, deriving the flag from `tau_event` (which the trainer already sets
+to `tte` for an event and `tte + 100` for a censored trajectory), plus
+`experiments/unit_tests/test_event_flag_propagation.py` as a red test.
+
+**Withdrawn as a consequence.** Everything measured on a SurvTD or DeepTCSR arm:
+
+- **Kill Criterion 3** -- SurvTD 0.5536 and DeepTCSR 0.5115 were both crippled arms;
+  the falsification of `C_3` carries no information. DeepTCSR's IBS collapse to 0.506
+  was it fitting a world where nobody ever dies.
+- **Kill Criterion 5** -- both arms are SurvTD. The `+0.0036` delta and the 4.3x
+  variance were measured between two arms that could not see a single event.
+- **A-16 / A-16b** (initialization gates), **A-17 / A-17b** (loss geometry),
+  **A-18** (IPCW), **A-19**, **A-20** -- every cell.
+- **D-anchor** -- the `+0.0998` attribution to anchor loss geometry compared
+  Person-Period against a SurvTD anchor that never saw an event. The Cramér anchor was
+  never shown to be deficient. Its `-0.0998` was this defect.
+
+**Not affected**: Person-Period, Dynamic-DeepHit, the KM reference, and the operator
+mathematics (D8, D9, D-gamma and their 15 unit tests, which are target-level and do not
+depend on the flag).
+
+**What this says about the process.** Five independent audits passed, the leak gate
+passed, 26 unit tests passed, and the null-model gate passed -- none of them compared a
+trajectory's event flag against what the loss actually did with it. The defect was
+found only by asking why an arm whose loss is *bit-identical* to Dynamic-DeepHit's L1
+scored 0.38 below it. **A below-chance result was again the signal** (Person-Period at
+0.263 was the same tell before the repair), and it was nearly explained away three
+times -- as initialization, as IPCW, as loss geometry -- before being traced.
+
+- `decided-after-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**

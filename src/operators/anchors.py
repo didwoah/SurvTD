@@ -187,6 +187,7 @@ def categorical_ce_anchor(
     K: int,
     ipcw_weight: float = 1.0,
     eps: float = 1e-6,
+    normalize: bool = False,
 ) -> torch.Tensor:
     """
     Discrete-time survival likelihood on the categorical head (A-17 arm `ce`):
@@ -214,9 +215,18 @@ def categorical_ce_anchor(
     r = torch.as_tensor(residual, dtype=pred_pmf.dtype, device=pred_pmf.device).clamp_min(0.0)
     k_idx = torch.floor(r / float(delta_s)).long().clamp(0, K - 1)
 
+    # `normalize` divides each visit by its at-risk bin count. -log p(k_j) expands to
+    # -sum_{k<k_j} log(1-h_k) - log h_{k_j}, so a visit with a long residual time
+    # carries proportionally more terms and dominates the gradient; residual times here
+    # span 1 to 36 bins, a 36x range. Person-Period removes exactly this by dividing its
+    # summed BCE by the at-risk row count (`person_period.py`: sum(bce*mask)/n_rows).
+    # Without it the objective is weighted toward early visits, which is a different
+    # objective from the one Person-Period and Dynamic-DeepHit optimise.
+    denom = (k_idx.to(pred_pmf.dtype) + 1.0) if normalize else 1.0
+
     if event:
         p = pred_pmf[..., :K].gather(-1, k_idx.unsqueeze(-1)).squeeze(-1)
-        return -torch.log(p.clamp_min(eps))
+        return -torch.log(p.clamp_min(eps)) / denom
 
     s = pred_survival.gather(-1, k_idx.unsqueeze(-1)).squeeze(-1)
-    return -torch.log(s.clamp_min(eps)) * float(ipcw_weight)
+    return -torch.log(s.clamp_min(eps)) / denom * float(ipcw_weight)

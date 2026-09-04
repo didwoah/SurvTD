@@ -553,7 +553,9 @@ def compute_multistep_lambda_returns(
     interval-event locations are derived from residual times. That pair is what
     produced defect D9 and is retained only so existing call sites keep working.
     """
-    has_event = bool(torch.any(events > 0.5).item())
+    # D15: see src/models/survtd.py -- `events` is an all-zero placeholder; the
+    # authoritative flag reaches us through tau_event (tte for an event).
+    has_event = bool(torch.any(events > 0.5).item()) or float(tau_event) <= float(tte) + 1e-9
     return compute_lambda_returns(
         target_pmfs, target_survivals, dts, tte, has_event,
         lam=lam, delta_s=delta_s, K=K, censor_ipcw_weight=censor_ipcw_weight,

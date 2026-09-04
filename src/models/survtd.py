@@ -28,7 +28,7 @@ from src.operators.survtd_operator import (
 # the Cohort 1 deficit to the loss geometry and -0.0026 to grid expansion, so the
 # geometry of each term is now selectable. C_1 constrains the TD target operator, not
 # the anchor, so the two may differ without touching thm:1.
-LOSS_GEOMETRIES = ("cramer", "logit_cramer", "ce")
+LOSS_GEOMETRIES = ("cramer", "logit_cramer", "ce", "ce_norm")
 
 # A-17b. Fixed scale constants, measured at initialization on synthetic_icu seed 42 and
 # declared before the run. Adam is invariant to a constant rescaling of the loss and
@@ -46,8 +46,8 @@ LOSS_GEOMETRIES = ("cramer", "logit_cramer", "ce")
 # `cramer` is scaled by 1.0, so the already-measured reference cells (anchor 0.5318,
 # TD 0.5353) remain valid and are not re-run.
 LOSS_SCALE = {
-    "anchor": {"cramer": 1.0, "logit_cramer": 0.1155, "ce": 1.8102},
-    "td":     {"cramer": 1.0, "logit_cramer": 0.2501, "ce": 1.7524},
+    "anchor": {"cramer": 1.0, "logit_cramer": 0.1155, "ce": 1.8102, "ce_norm": 1.0},
+    "td":     {"cramer": 1.0, "logit_cramer": 0.2501, "ce": 1.7524, "ce_norm": 1.7524},
 }
 
 
@@ -68,7 +68,9 @@ class SurvTDModel(nn.Module):
         alpha_anchor: float = 0.5,
         anchor_loss: str = "cramer",
         td_loss: str = "cramer",
-        use_ipcw: bool = True
+        use_ipcw: bool = True,
+        anchor_scale: float = None,
+        td_scale: float = None
     ):
         super().__init__()
         self.input_dim = input_dim
@@ -97,8 +99,13 @@ class SurvTDModel(nn.Module):
                 raise ValueError(f"{name}={val!r}; expected one of {LOSS_GEOMETRIES}")
         self.anchor_loss = anchor_loss
         self.td_loss = td_loss
-        self.anchor_scale = LOSS_SCALE["anchor"][anchor_loss]
-        self.td_scale = LOSS_SCALE["td"][td_loss]
+        # A-17b constants by default; overridable so a diagnostic can separate the
+        # normalization from whatever else is under test (it is a variable this
+        # amendment introduced, so it has to be falsifiable on its own).
+        self.anchor_scale = (LOSS_SCALE["anchor"][anchor_loss]
+                             if anchor_scale is None else float(anchor_scale))
+        self.td_scale = (LOSS_SCALE["td"][td_loss]
+                         if td_scale is None else float(td_scale))
         # A-04/D11 weight the loss by 1/G_hat(c) on censored trajectories. That is the
         # right correction for an ESTIMATOR -- it is what makes IBS and Uno's AUC
         # unbiased -- but it was carried into the TRAINING objective by analogy, never
@@ -220,7 +227,7 @@ class SurvTDModel(nn.Module):
             loss_td = logit_cramer_distance_loss(
                 cdf_on, G_cdf, weights=step_weights, delta_s=self.delta_s
             )
-        else:  # 'ce' -- C51's loss, on the PMF rather than the CDF
+        else:  # 'ce' / 'ce_norm' -- C51's loss, on the PMF rather than the CDF
             loss_td = categorical_ce_distance_loss(
                 pmf_on.squeeze(0), G_targets, weights=step_weights
             )
@@ -229,7 +236,18 @@ class SurvTDModel(nn.Module):
         # 4. Anchor term: per-visit right-censored CRPS against the observed
         #    residual time. This is the ground truth the shipped objective lacked
         #    everywhere except one (misplaced) terminal Dirac.
-        has_event = bool(torch.any(events > 0.5).item())
+        # D15. `events` is a per-visit PLACEHOLDER: every loader fills it with zeros
+        # (`synthetic_icu_loader.py:124` says so outright -- "derived from residual times
+        # downstream"), and the authoritative trajectory flag is `p['event']`, which the
+        # trainer encodes here as `tau_event = tte` for an event and `tte + 100` for a
+        # censored trajectory. Reading `any(events > 0.5)` alone therefore returned False
+        # for EVERY trajectory in EVERY cohort, so SurvTD and DeepTCSR treated 100% of
+        # events as censored -- 86/113/76 events per seed on synthetic_icu, all invisible.
+        # The terminal Dirac sits behind `if event:`, so at alpha = 0 the objective held
+        # literally no ground truth and was pure self-distillation. Person-Period
+        # (`trainer.py:85,199`) and Dynamic-DeepHit (`dynamic_deephit.py:90`) read the
+        # trajectory flag and were unaffected, which is exactly the split in the results.
+        has_event = bool(torch.any(events > 0.5).item()) or float(tau_event) <= float(tte) + 1e-9
         r = residual_times(dts, tte)
         if self.anchor_loss == "cramer":
             per_visit = censored_crps_anchor(
@@ -239,10 +257,11 @@ class SurvTDModel(nn.Module):
             per_visit = logit_cramer_anchor(
                 cdf_on, r, has_event, self.delta_s, self.K, ipcw_weight=ipcw_weight
             )
-        else:  # 'ce' -- Dynamic-DeepHit's L1 on this head
+        else:  # 'ce' / 'ce_norm' -- Dynamic-DeepHit's L1 on this head
             per_visit = categorical_ce_anchor(
                 pmf_on.squeeze(0), surv_on.squeeze(0), r, has_event,
-                self.delta_s, self.K, ipcw_weight=ipcw_weight
+                self.delta_s, self.K, ipcw_weight=ipcw_weight,
+                normalize=(self.anchor_loss == "ce_norm")
             )
         loss_anchor = per_visit.mean() * self.anchor_scale
 

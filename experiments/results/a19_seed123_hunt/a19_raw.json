@@ -1,0 +1,43 @@
+{
+  "seed": 123,
+  "reference": {
+    "anchor/cramer (ipcw on, KC5)": 0.5185,
+    "anchor/ce (ipcw on, scale 1.81)": 0.3329,
+    "Person-Period raw (MLE)": 0.7069,
+    "Dynamic-DeepHit": 0.7112
+  },
+  "records": {
+    "ce      ipcw=off  scale=1.81": {
+      "c_td": 0.4217044268434948,
+      "auc": 0.5133192782275726,
+      "anchor_loss": "ce",
+      "use_ipcw": false,
+      "anchor_scale": 1.8102,
+      "wall_clock_s": 411.4
+    },
+    "ce      ipcw=on   scale=1.00": {
+      "c_td": 0.4715355805243446,
+      "auc": 0.6535300984436949,
+      "anchor_loss": "ce",
+      "use_ipcw": true,
+      "anchor_scale": 1.0,
+      "wall_clock_s": 397.0
+    },
+    "ce      ipcw=off  scale=1.00": {
+      "c_td": 0.3238902191932216,
+      "auc": 0.49662973695609736,
+      "anchor_loss": "ce",
+      "use_ipcw": false,
+      "anchor_scale": 1.0,
+      "wall_clock_s": 647.6
+    },
+    "cramer  ipcw=off  scale=1.00": {
+      "c_td": 0.4151900288573709,
+      "auc": 0.4436865306213645,
+      "anchor_loss": "cramer",
+      "use_ipcw": false,
+      "anchor_scale": 1.0,
+      "wall_clock_s": 400.9
+    }
+  }
+}

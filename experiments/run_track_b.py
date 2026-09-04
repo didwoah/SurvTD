@@ -73,6 +73,8 @@ def train_and_eval_survtd(
     anchor_loss: str = "cramer",
     td_loss: str = "cramer",
     use_ipcw: bool = True,
+    anchor_scale: float = None,
+    td_scale: float = None,
 ) -> tuple:
     train_patients = cohort_data.train.patients
     val_patients = cohort_data.val.patients
@@ -127,6 +129,8 @@ def train_and_eval_survtd(
         anchor_loss=anchor_loss,
         td_loss=td_loss,
         use_ipcw=use_ipcw,
+        anchor_scale=anchor_scale,
+        td_scale=td_scale,
     )
     if hasattr(model.backbone, "set_empirical_mean"):
         model.backbone.set_empirical_mean(cohort_data.x_mean)

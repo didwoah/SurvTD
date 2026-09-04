@@ -107,7 +107,9 @@ class DeepTCSRClampedModel(nn.Module):
             # a fair comparison if the clamped arm receives the same correctly aligned
             # durations and the same correctly placed ground truth as the full model;
             # otherwise EXP-05 measures a bug rather than the clamped operator.
-            has_event = bool(torch.any(events > 0.5).item())
+            # D15: see src/models/survtd.py -- `events` is an all-zero placeholder; the
+            # authoritative flag reaches us through tau_event (tte for an event).
+            has_event = bool(torch.any(events > 0.5).item()) or float(tau_event) <= float(tte) + 1e-9
             r_np = residual_times(dts, tte).detach().cpu().numpy()
             gaps_np = interval_gaps(dts).detach().cpu().numpy()
 
