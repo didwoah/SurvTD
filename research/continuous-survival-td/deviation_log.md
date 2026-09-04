@@ -925,6 +925,65 @@ supply a margin.
 
 ---
 
+**[ ] A-17b. A-17's first run is withdrawn: gradient clipping confounded the arms.**
+
+**The defect, measured.** `trainer.py:205` clips at an absolute `max_norm = 2.0`, but
+the three loss geometries differ ~15x in scale. Tracking mean `||g||` over 6 epochs on
+synthetic_icu seed 42, anchor axis:
+
+| arm | epoch 1 | epoch 6 | clip rate at epoch 6 |
+|---|---|---|---|
+| `cramer` | 9.02 | 0.65 | **0%** |
+| `logit_cramer` | 78.11 | 3.21 | **94.7%** |
+| `ce` | 4.98 | 0.49 | **0%** |
+
+Within an epoch the coefficient of variation of `||g||` is small (0.11-0.35), so the
+clip is close to a uniform rescale there and AdamW absorbs it. The damage is across
+training: `cramer` and `ce` stop being clipped by epoch 4-6 and enter the regime where
+Adam sees true gradient magnitudes and the steps shrink as the model settles.
+`logit_cramer` is still clipped on 94.7% of steps at epoch 6 and spends nearly the
+whole 20-epoch run pinned at norm 2.0. **It never reaches the fine-convergence regime
+the other two reach.** That is an optimisation artefact of the clip threshold, not a
+property of the loss.
+
+Consequence: a negative result for `logit_cramer` under the first run could not be
+attributed — bad loss, or a loss whose mechanism the clip suppressed? Uninterpretable,
+which is what this log exists to prevent. **The first run's cells are withdrawn**
+(moved to `experiments/results/a17_loss_geometry_unnormalized_withdrawn/`); its seed-42
+block had `anchor` cramer 0.5619 / logit_cramer 0.5015 / ce 0.4624 and `td` cramer
+0.6089 / logit_cramer 0.6006 / ce 0.5695, recorded here so the withdrawal is on the
+record rather than silent.
+
+**The fix, and why it is narrow.** Adam is invariant to a constant rescaling of the
+loss, and AdamW's weight decay is decoupled, so a fixed per-arm constant changes
+**exactly one thing**: when each arm exits the clip. Constants set to match `cramer`'s
+initialization gradient norm, measured before the run and fixed:
+
+| loss | anchor scale | TD scale |
+|---|---|---|
+| `cramer` | **1.0000** | **1.0000** |
+| `logit_cramer` | 0.1155 | 0.2501 |
+| `ce` | 1.8102 | 1.7524 |
+
+`cramer` is unscaled, so the **reference cells stay valid and are not re-run**: anchor
+0.5318 ± 0.0407 and TD 0.5353 ± 0.0841, both from KC5's training path. Verified after
+wiring: initial `||g||` is 9.8 / 12.1 / 12.2 on the anchor axis and 3.28 / 3.36 / 3.38
+on the TD axis, against a within-arm epoch-to-epoch CV of 0.15-0.35.
+
+**This is confound removal, not tuning.** No constant was chosen to favour an arm; each
+is the ratio that equalises the initial gradient norm, and the reference arm is left
+untouched. A-17's pre-declared criteria are unchanged.
+
+**Recorded as my error.** The clip risk was written into
+`notes/cramer_loss_discriminative_modifications.md` §5.5 as risk 2, with the explicit
+instruction to log the clip activation rate — and the first run was launched without
+instrumenting it. The same failure as A-16: a risk identified in prose and not measured
+before it mattered.
+
+- `decided-after-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**

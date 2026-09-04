@@ -1,0 +1,75 @@
+{
+  "cohort": "synthetic_icu",
+  "epochs": 20,
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    101112
+  ],
+  "reference": {
+    "anchor_cramer": 0.5318,
+    "td_cramer": 0.5353,
+    "anchor_cramer_sd": 0.0407,
+    "td_cramer_sd": 0.0841,
+    "pp_raw_mle": 0.6315
+  },
+  "arms": {
+    "anchor/logit_cramer": {
+      "alpha": 1.0,
+      "anchor_loss": "logit_cramer",
+      "td_loss": "cramer"
+    },
+    "anchor/ce": {
+      "alpha": 1.0,
+      "anchor_loss": "ce",
+      "td_loss": "cramer"
+    },
+    "td/logit_cramer": {
+      "alpha": 0.0,
+      "anchor_loss": "cramer",
+      "td_loss": "logit_cramer"
+    },
+    "td/ce": {
+      "alpha": 0.0,
+      "anchor_loss": "cramer",
+      "td_loss": "ce"
+    }
+  },
+  "records": {
+    "anchor/logit_cramer": {
+      "42": {
+        "c_td": 0.5014862200824218,
+        "auc": 0.600922135670931,
+        "wall_clock_s": 405.0
+      },
+      "123": {
+        "c_td": 0.5155707005587278,
+        "auc": 0.5310667456066205,
+        "wall_clock_s": 379.2
+      }
+    },
+    "anchor/ce": {
+      "42": {
+        "c_td": 0.4624091080202885,
+        "auc": 0.585210645389621,
+        "wall_clock_s": 553.1
+      }
+    },
+    "td/logit_cramer": {
+      "42": {
+        "c_td": 0.6006332719131399,
+        "auc": 0.6336645740940771,
+        "wall_clock_s": 522.6
+      }
+    },
+    "td/ce": {
+      "42": {
+        "c_td": 0.5695388036931367,
+        "auc": 0.6179586609841007,
+        "wall_clock_s": 588.2
+      }
+    }
+  }
+}

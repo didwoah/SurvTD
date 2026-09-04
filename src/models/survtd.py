@@ -30,6 +30,26 @@ from src.operators.survtd_operator import (
 # the anchor, so the two may differ without touching thm:1.
 LOSS_GEOMETRIES = ("cramer", "logit_cramer", "ce")
 
+# A-17b. Fixed scale constants, measured at initialization on synthetic_icu seed 42 and
+# declared before the run. Adam is invariant to a constant rescaling of the loss and
+# AdamW's weight decay is decoupled, so these constants change exactly one thing: how
+# each arm interacts with trainer.py's clip_grad_norm_(max_norm=2.0).
+#
+# Why that needed fixing. Tracked over 6 epochs, mean ||g|| decays 9.02 -> 0.65 for
+# `cramer` and 4.98 -> 0.49 for `ce`, so both stop being clipped by epoch 4-6 and enter
+# the fine-convergence regime where Adam sees true gradient magnitudes. `logit_cramer`
+# starts at 78.1 and is still clipped on 94.7% of steps at epoch 6, so it spends nearly
+# the whole 20-epoch run pinned at norm 2.0 and never settles. That is an optimisation
+# artefact, not a property of the loss, and it would have made a negative result on this
+# axis uninterpretable.
+#
+# `cramer` is scaled by 1.0, so the already-measured reference cells (anchor 0.5318,
+# TD 0.5353) remain valid and are not re-run.
+LOSS_SCALE = {
+    "anchor": {"cramer": 1.0, "logit_cramer": 0.1155, "ce": 1.8102},
+    "td":     {"cramer": 1.0, "logit_cramer": 0.2501, "ce": 1.7524},
+}
+
 
 class SurvTDModel(nn.Module):
     def __init__(
@@ -76,6 +96,8 @@ class SurvTDModel(nn.Module):
                 raise ValueError(f"{name}={val!r}; expected one of {LOSS_GEOMETRIES}")
         self.anchor_loss = anchor_loss
         self.td_loss = td_loss
+        self.anchor_scale = LOSS_SCALE["anchor"][anchor_loss]
+        self.td_scale = LOSS_SCALE["td"][td_loss]
 
         # Online Network
         self.backbone = build_backbone(backbone_type, input_dim, hidden_dim, num_layers, dropout)
@@ -190,6 +212,7 @@ class SurvTDModel(nn.Module):
             loss_td = categorical_ce_distance_loss(
                 pmf_on.squeeze(0), G_targets, weights=step_weights
             )
+        loss_td = loss_td * self.td_scale
 
         # 4. Anchor term: per-visit right-censored CRPS against the observed
         #    residual time. This is the ground truth the shipped objective lacked
@@ -209,7 +232,7 @@ class SurvTDModel(nn.Module):
                 pmf_on.squeeze(0), surv_on.squeeze(0), r, has_event,
                 self.delta_s, self.K, ipcw_weight=ipcw_weight
             )
-        loss_anchor = per_visit.mean()
+        loss_anchor = per_visit.mean() * self.anchor_scale
 
         loss = (1.0 - alpha) * loss_td + alpha * loss_anchor
         if return_parts:
