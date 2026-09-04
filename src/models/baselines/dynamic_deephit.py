@@ -57,7 +57,10 @@ class DynamicDeepHitModel(nn.Module):
         survival = survival.squeeze(0)
         L = pmf.shape[0]
 
-        has_event = bool(torch.any(events > 0.5).item())
+        # D15: `events` is an all-zero placeholder in every loader; the authoritative
+        # flag arrives via tau_event (tte for an event, tte + 100 for a censored one).
+        has_event = (bool(torch.any(events > 0.5).item())
+                     or (tau_event is not None and float(tau_event) <= float(tte) + 1e-9))
         times = torch.cumsum(dts, dim=0)
         rem_time = torch.clamp(float(tte) - times, min=0.0)
         k_bins = torch.clamp(torch.floor(rem_time / self.delta_s + 1e-6).long(), 0, self.K - 1)

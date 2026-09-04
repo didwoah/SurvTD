@@ -123,7 +123,10 @@ class SurvTD_v2_Model(nn.Module):
 
         # 3. Bounded Logit Anchor (BLA) - Vectorized
         r = residual_times(dts, tte)  # (L,)
-        has_event = bool(torch.any(events > 0.5).item())
+        # D15: `events` is an all-zero placeholder in every loader; the authoritative
+        # flag arrives via tau_event (tte for an event, tte + 100 for a censored one).
+        has_event = (bool(torch.any(events > 0.5).item())
+                     or (tau_event is not None and float(tau_event) <= float(tte) + 1e-9))
         k_target = torch.clamp((r / self.delta_s).long(), 0, self.K - 1)  # (L,)
 
         grid_k = torch.arange(self.K, device=device).unsqueeze(0)  # (1, K)
