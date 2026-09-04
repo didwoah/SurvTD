@@ -198,11 +198,23 @@ def main():
     ap.add_argument("--epochs", type=int, default=25)
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--out", default="experiments/results/tier1/tier1_results.json")
+    # A SurvTD cell on Framingham costs 14x what it costs on PBC2, so a run can span
+    # hours and a killed process should not throw away what it already paid for.
+    ap.add_argument("--resume", action="store_true",
+                    help="keep cells already present in --out and skip re-running them")
     args = ap.parse_args()
 
     out_path = os.path.join(ROOT, args.out) if not os.path.isabs(args.out) else args.out
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     results, alarms = {}, []
+    if args.resume and os.path.exists(out_path):
+        with open(out_path) as f:
+            prior = json.load(f)
+        # Only successful cells are kept. A cell that errored is retried, since the
+        # usual cause is the process being killed part-way rather than the arm failing.
+        results = {k: v for k, v in prior.get("results", {}).items() if "metrics" in v}
+        alarms = list(prior.get("below_chance_alarms", []))
+        print(f"resuming: {len(results)} cell(s) already complete in {out_path}")
     tmpdir = tempfile.mkdtemp(prefix="tier1_")
 
     def flush():
@@ -216,6 +228,9 @@ def main():
                 raise SystemExit(f"unknown arm {arm!r}")
             for seed in args.seeds:
                 key = f"{cohort}|{arm}|{seed}"
+                if key in results:
+                    print(f"{key:44s} (cached)", flush=True)
+                    continue
                 t0 = time.time()
                 try:
                     cell = run_cell(cohort, arm, seed, args.epochs, args.timeout, tmpdir)
