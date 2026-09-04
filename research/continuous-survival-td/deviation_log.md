@@ -740,6 +740,67 @@ interaction.**
 
 ---
 
+**[x] A-16/A-16b OUTCOMES and KILL CRITERION 5 (recorded as observed, 2026-09-04).**
+
+**Kill Criterion 5 — FALSIFIED.** First execution ever. Synthetic ICU, 5 seeds,
+preregistered configuration (default init, alpha = 0.0 for the full arm), full
+SurvTD against the anchor-only alpha = 1 control on an identical backbone:
+
+| seed | full (TD) | anchor-only | paired delta |
+|---|---|---|---|
+| 42 | 0.6089 | 0.5619 | +0.0470 |
+| 123 | 0.4350 | 0.5185 | -0.0835 |
+| 456 | 0.5120 | 0.5416 | -0.0296 |
+| 789 | 0.4861 | 0.5689 | -0.0828 |
+| 101112 | 0.6346 | 0.4679 | +0.1667 |
+| **mean** | **0.5353 ± 0.0841** | **0.5318 ± 0.0407** | **+0.0036**, 95% CI **[-0.0724, +0.0929]** |
+
+Requirement was delta >= 0.015 AND CI lower bound > 0. Neither holds; only 2 of 5
+seeds are positive. **Per preregistration §6.5, `C_0` and `C_3` are falsified.**
+
+The sharpest way to state it: the TD term moved the mean by **+0.0036** and
+multiplied the across-seed variance by **4.3x** (SD 0.0407 -> 0.0841). It is not
+that the TD term is slightly worse than the anchor -- it adds noise and no signal.
+Note also that the largest positive delta (+0.1667, seed 101112) comes from the
+anchor arm scoring 0.4679, i.e. below chance, not from the TD arm excelling.
+
+`es_warmup = 5` was in effect for both arms. It can only help the cold-starting
+alpha = 0 arm, so this falsification is conservative.
+
+**A-16 gate — STOP.** `km_prior`, 5 seeds: mean C^td **0.5256** (primary 0.5536),
+corr with cohort difficulty **-0.084**. Both gate conditions failed, and **all five
+seeds moved down**. What the initialization did fix was calibration: mean IBS
+0.186 -> 0.131, and the collapsed seed 456 went 0.468 -> 0.156. Discrimination did
+not move. The initialization defect caused the survival-curve collapse; it did not
+cause the discrimination failure. Two separate failures; A-16 diagnosed one.
+
+**A-16b gate — STOP.** `km_bias_only` (KM bias, default weight matrix retained, so
+gamma ~0.97 with a live covariate pathway) scored **0.4880 ± 0.0645**, *worse* than
+both `km_prior` (0.5256) and the primary run (0.5536), with corr **-0.658**. The
+covariate-pathway confound identified in A-16b was real as a measurement and wrong
+as an explanation.
+
+**As declared in A-16b, this was the last initialization variant.** The
+initialization diagnosis is rejected outright. No further initialization work.
+The preregistered primary outcome stands: `C_3` falsified on Cohort 1.
+
+**What remains unexplained, and is now the live question.** SurvTD's anchor-only
+arm (0.5318) and Person-Period (0.6367) share a backbone, a head, a bin convention
+and a prediction target, and neither uses TD -- yet differ by ~0.10. The two
+remaining differences are the loss geometry (squared Cramer/CRPS versus masked BCE
+on per-bin hazards) and the supervision density (Person-Period trains on the
+1-hour grid expansion, ~3x the rows). Squared Cramer is L2 on the CDF, with a
+gradient linear in the residual and dominated by the population-level curve shape;
+BCE's gradient diverges on confident errors and separates subjects harder. That
+predicts the observed pattern -- SurvTD arms have acceptable IBS and poor C^td.
+This is a **fourth** candidate cause and, per the lesson of A-16, it must be
+isolated by measurement (Person-Period without grid expansion) before any loss
+redesign is attempted.
+
+- `decided-after-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**

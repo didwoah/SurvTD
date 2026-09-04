@@ -2,7 +2,7 @@
   "schema": "paper-forge/citations-verified@1",
   "bib": "/Users/yangjaemo/Desktop/SurvTD/research/references.bib",
   "n_entries": 13,
-  "n_verified": 7,
+  "n_verified": 8,
   "results": [
     {
       "key": "Lee2020DynamicDeepHit",
@@ -53,11 +53,16 @@
     {
       "key": "Bleistein2024CoxSig",
       "title": "Dynamical Survival Analysis with Controlled Latent States",
-      "status": "unresolved",
-      "matched": null,
-      "notes": [
-        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
-      ]
+      "status": "verified",
+      "matched": {
+        "source": "arxiv/id",
+        "title": "Dynamical Survival Analysis with Controlled Latent States",
+        "year": 2024,
+        "venue": "arXiv preprint",
+        "url": "https://arxiv.org/abs/2401.17077"
+      },
+      "notes": [],
+      "title_similarity": 1.0
     },
     {
       "key": "Bellemare2017C51",
@@ -71,11 +76,16 @@
     {
       "key": "Bradtke1994SMDP",
       "title": "Reinforcement Learning Methods for Continuous-Time Markov Decision Problems",
-      "status": "unresolved",
-      "matched": null,
-      "notes": [
-        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
-      ]
+      "status": "verified",
+      "matched": {
+        "source": "openalex/title",
+        "title": "Reinforcement Learning Methods for Continuous-Time Markov Decision Problems",
+        "year": 1994,
+        "venue": "",
+        "url": "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.32.9030"
+      },
+      "notes": [],
+      "title_similarity": 1.0
     },
     {
       "key": "Alaa2017Hawkes",
@@ -92,50 +102,36 @@
       "title_similarity": 1.0
     },
     {
-      "key": "Lin2001Informative",
+      "key": "Lin2005Informative",
       "title": "Semiparametric Regression Analysis of Longitudinal Data with Informative Observation Times",
-      "status": "mismatch",
+      "status": "verified",
       "matched": {
         "source": "crossref/doi",
-        "title": "Data-Driven Rank Tests for Classes of Tail Alternatives",
-        "year": 2001,
+        "title": "Semiparametric Regression Analysis of Longitudinal Data With Informative Observation Times",
+        "year": 2005,
         "venue": "Journal of the American Statistical Association",
-        "url": "https://doi.org/10.1198/016214501753168343"
+        "url": "https://doi.org/10.1198/016214505000000060"
       },
-      "notes": [
-        "resolved record is titled 'Data-Driven Rank Tests for Classes of Tail Alternatives'; the .bib says 'Semiparametric Regression Analysis of Longitudinal Data with Informative Observation Times' — a chimeric citation (real paper, wrong metadata) or the wrong paper entirely"
-      ],
-      "title_similarity": 0.118
+      "notes": [],
+      "title_similarity": 1.0
     },
     {
       "key": "Tang2022SODEN",
       "title": "SODEN: A Scalable Continuous-Time Survival Model through Ordinary Differential Equation Networks",
-      "status": "verified",
-      "matched": {
-        "source": "openalex/title",
-        "title": "SODEN: A Scalable Continuous-Time Survival Model through Ordinary Differential Equation Networks",
-        "year": 2020,
-        "venue": "arXiv (Cornell University)",
-        "url": "http://arxiv.org/abs/2008.08637"
-      },
+      "status": "unresolved",
+      "matched": null,
       "notes": [
-        "year mismatch: .bib says 2022, index says 2020"
-      ],
-      "title_similarity": 1.0
+        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
+      ]
     },
     {
       "key": "Nagpal2021DSM",
       "title": "Deep Survival Machines: Fully Parametric Survival Regression and Representation Learning for Censored Data With Competing Risks",
-      "status": "verified",
-      "matched": {
-        "source": "openalex/title",
-        "title": "Deep Survival Machines : Fully Parametric Survival Regression and Representation Learning for Censored Data With Competing Risks",
-        "year": 2021,
-        "venue": "IEEE Journal of Biomedical and Health Informatics",
-        "url": "https://doi.org/10.1109/jbhi.2021.3052441"
-      },
-      "notes": [],
-      "title_similarity": 1.0
+      "status": "unresolved",
+      "matched": null,
+      "notes": [
+        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
+      ]
     },
     {
       "key": "Jia2019JumpSDE",

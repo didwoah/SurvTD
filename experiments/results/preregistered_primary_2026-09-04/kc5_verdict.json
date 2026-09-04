@@ -1,0 +1,36 @@
+{
+  "test_id": "Kill Criterion 5",
+  "claim": "C0, C3",
+  "cohort": "synthetic_icu",
+  "alpha_full": 0.0,
+  "seeds": [
+    "42",
+    "123",
+    "456",
+    "789",
+    "101112"
+  ],
+  "full_c_td": [
+    0.6089324278808053,
+    0.43501565665868486,
+    0.5120098061777933,
+    0.48606458039175715,
+    0.634644659099534
+  ],
+  "anchor_only_c_td": [
+    0.5618999148042478,
+    0.5185178363111684,
+    0.5416246770195988,
+    0.5688560926027945,
+    0.4679133553217015
+  ],
+  "mean_full": 0.535333426041715,
+  "mean_anchor_only": 0.5317623752119023,
+  "paired_delta": 0.0035710508298127273,
+  "ci_lower": -0.07244400425097668,
+  "ci_upper": 0.09288698243980356,
+  "se": 0.04316219410812485,
+  "threshold": 0.015,
+  "verdict": "FALSIFIED",
+  "caveat": "es_warmup=5 (A-16) applied identically to both arms; it can only help the cold-starting full arm, so a falsification is conservative"
+}

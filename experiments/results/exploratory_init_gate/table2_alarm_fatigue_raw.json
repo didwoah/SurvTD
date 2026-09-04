@@ -15,6 +15,30 @@
       "jitter_patient_fraction": 0.04,
       "total_patient_days": 109.68205285312918,
       "n_patients": 100
+    },
+    "456": {
+      "calibrated_threshold": 0.2599213570356369,
+      "false_alert_rate_per_day": 0.7059911206832488,
+      "unstable_window_rate_per_day": 0.05573614110657227,
+      "jitter_patient_fraction": 0.06,
+      "total_patient_days": 107.65007912061021,
+      "n_patients": 100
+    },
+    "789": {
+      "calibrated_threshold": 0.1095575861632824,
+      "false_alert_rate_per_day": 0.6627649064766187,
+      "unstable_window_rate_per_day": 0.009205068145508593,
+      "jitter_patient_fraction": 0.01,
+      "total_patient_days": 108.63580629633118,
+      "n_patients": 100
+    },
+    "101112": {
+      "calibrated_threshold": 0.11216265025491617,
+      "false_alert_rate_per_day": 0.3451720278613797,
+      "unstable_window_rate_per_day": 0.009862057938896563,
+      "jitter_patient_fraction": 0.01,
+      "total_patient_days": 101.39871477087338,
+      "n_patients": 100
     }
   }
 }

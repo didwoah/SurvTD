@@ -1,0 +1,44 @@
+{
+  "survtd": {
+    "42": {
+      "calibrated_threshold": 0.21364755730847923,
+      "false_alert_rate_per_day": 0.9057430783208098,
+      "unstable_window_rate_per_day": 0.15582676616271998,
+      "jitter_patient_fraction": 0.15,
+      "total_patient_days": 102.67812388079862,
+      "n_patients": 100
+    },
+    "123": {
+      "calibrated_threshold": 0.10140689094455875,
+      "false_alert_rate_per_day": 0.729380950839102,
+      "unstable_window_rate_per_day": 0.05470357131293265,
+      "jitter_patient_fraction": 0.06,
+      "total_patient_days": 109.68205285312918,
+      "n_patients": 100
+    },
+    "456": {
+      "calibrated_threshold": 0.25646740198135376,
+      "false_alert_rate_per_day": 0.5945188384701042,
+      "unstable_window_rate_per_day": 0.018578713702190757,
+      "jitter_patient_fraction": 0.02,
+      "total_patient_days": 107.65007912061021,
+      "n_patients": 100
+    },
+    "789": {
+      "calibrated_threshold": 0.08689919105749958,
+      "false_alert_rate_per_day": 0.22092163549220623,
+      "unstable_window_rate_per_day": 0.018410136291017187,
+      "jitter_patient_fraction": 0.02,
+      "total_patient_days": 108.63580629633118,
+      "n_patients": 100
+    },
+    "101112": {
+      "calibrated_threshold": 0.32079376012695077,
+      "false_alert_rate_per_day": 0.19724115877793125,
+      "unstable_window_rate_per_day": 0.04931028969448281,
+      "jitter_patient_fraction": 0.05,
+      "total_patient_days": 101.39871477087338,
+      "n_patients": 100
+    }
+  }
+}
