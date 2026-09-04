@@ -1586,14 +1586,20 @@ statistic.
 **The KM reference is what makes this legible.** `km_marginal_reference`'s docstring
 already declares the expected band: "IBS in roughly [0.15, 0.25]. Any IBS above ~0.25
 anywhere in a table is then immediately visible as a bug rather than a finding." After
-unifying on the landmark grid, KM lands inside that band on **every** cohort, where it
-had been outside it:
+unifying on the landmark grid, the constant-curve **leak-gate probe** lands inside that
+band on every cohort, where it had been outside it:
 
-| cohort | KM `C^td` | KM IBS | Landmark Cox `C^td` | Landmark Cox IBS |
+| cohort | probe `C^td` | probe IBS | Landmark Cox `C^td` | Landmark Cox IBS |
 |---|---|---|---|---|
 | PBC2 | 0.5000 / 0.5000 | 0.2203 / 0.2403 | 0.8219 / 0.8169 | 0.0878 / 0.1019 |
 | Framingham | 0.5000 / 0.5000 | 0.2083 / 0.2064 | 0.7447 / 0.7455 | 0.0494 / 0.0785 |
 | C-MAPSS | 0.5000 ×3 | 0.2019 / 0.2119 / 0.1856 | 0.6711 / 0.7777 / 0.7481 | 0.0706 / 0.0789 / 0.1420 |
+
+*Naming correction.* The probe row above is a flat `linspace(1.0, 0.2)` handed to the
+scorer to prove the leak gate, **not** the `km` arm. The real Kaplan-Meier arm in
+`run_tier1.py` is fit with `sksurv` on the training at-risk set and is a much better
+predictor: on Framingham it scores IBS **0.0609 / 0.0846**, not 0.208. Both still score
+`C^td` exactly 0.5000, which is the property the gate is about.
 
 **How it was found.** By the in-process shim (`curve_scoring.curves_from_model`)
 reproducing `evaluate_landmarked` **exactly** — `C^td` 0.7396 and IBS 0.4358 to four
@@ -1603,5 +1609,62 @@ substituted. Same two-implementations argument that localised D16.
 **Not a withdrawal.** No headline number had been produced on the worker grid; the
 Phase D gate figures are `C^td`, which moved by <0.02. The Landmark Cox values quoted
 in `97e6eab` (PBC2 0.7991 / 0.7726) are superseded by **0.8219 / 0.8169**.
+
+- `decided-after-results`
+
+
+---
+
+**[x] D20. NCDE ranks correctly on Framingham and is calibrated catastrophically. Only
+the co-primary IBS could see it.**
+
+Framingham, 5 seeds, every arm through the same scorer:
+
+| arm | `C^td` L=2190 | IPCW IBS L=2190 |
+|---|---|---|
+| Landmark Cox | 0.7307 +- 0.0077 | 0.0570 +- 0.0062 |
+| TCSR (landmark arm) | 0.7322 +- 0.0082 | 0.0576 +- 0.0059 |
+| **NCDE** | **0.7341 +- 0.0103** | **0.8029 +- 0.0085** |
+
+On discrimination alone NCDE is the *best* baseline in the column. Its IBS is **0.80**,
+against the declared sanity band of [0.15, 0.25] and against 0.057 for the arms beside
+it.
+
+**The mechanism.** Its conditional survival curve is a step, not a curve:
+
+| residual horizon | NCDE median `S` | fraction actually alive |
+|---|---|---|
+| 182 d | 1.0000 | 0.9964 |
+| 548 d | 1.0000 | 0.9869 |
+| 912 d | **0.0002** | 0.9785 |
+| 1825 d | 0.0000 | 0.9476 |
+| 3650 d | 0.0000 | 0.8665 |
+
+It predicts **certain death** across a window in which 87-95% of the cohort is alive.
+The cumulative hazard rises by ~10 within a single 365-day grid step, so
+`exp(-(H(t) - H(L)))` falls from 1 to 0 between two adjacent evaluation points.
+
+**Checked against our own glue before blaming the model.** The 1.0000 values are
+`np.interp`'s `left` fill, which is correct: upstream returns `surv_preds[:, j,
+t_pred_id + 1:]`, so at `L = 2190` (grid index 7) the curve starts at
+`sampling_times[8] = 2555 d` and any earlier query is legitimately flat-left at 1.0.
+The width arithmetic in `_curve_export.curves_on_residual_grid` checks out
+(`m = 27 - 8 = 19`, `sampling_times[1:][-19:]` = `sampling_times[8:]`). The collapse is
+NCDE's own output, not a D18-style off-by-one.
+
+**Consequence.** NCDE's Framingham `C^td` of 0.7341 must **not** be reported as a
+working baseline. The arm is degenerate in level; it is reported with the IBS alarm
+attached, and the discrimination figure is meaningless on its own. Whether the cause is
+the `time_scale` division interacting with NCDE's hazard parameterisation, or the
+authors' 25 epochs at `lr = 1e-3` simply not suiting a 24-year follow-up with 35%
+events, is **not yet determined**.
+
+**The general fix, which is the point of this entry.** The [0.15, 0.25] band had been
+written down in `km_marginal_reference`'s docstring since it was authored and nothing
+ever checked it. `run_tier1.py` now raises an *IBS out of band* alarm beside the
+below-chance `C^td` alarm. D18 already showed a defect that moved IBS by 0.002 while
+leaving `C^td` bit-identical; this one moves IBS by 0.75 while leaving `C^td` the best
+in its column. **Discrimination and calibration fail independently, and a table
+reporting only the first cannot be trusted.**
 
 - `decided-after-results`

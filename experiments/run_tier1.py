@@ -241,6 +241,19 @@ def main():
                             alarm = f"{key} {lm}: c_td={c:.4f}"
                             alarms.append(alarm)
                             print(f"  !! BELOW CHANCE (defect alarm, not a result): {alarm}")
+                        # The other half of the same rule. `km_marginal_reference`'s
+                        # docstring has declared the band since it was written -- "IBS in
+                        # roughly [0.15, 0.25]. Any IBS above ~0.25 anywhere in a table is
+                        # then immediately visible as a bug rather than a finding" -- but
+                        # nothing enforced it, and NCDE reached Framingham with IBS 0.80
+                        # against a healthy C^td of 0.7341. A model can rank correctly and
+                        # still put S = 0 where 87% of the cohort is alive; discrimination
+                        # cannot see that and calibration can.
+                        b = m.get("ibs")
+                        if b is not None and np.isfinite(b) and b > 0.25:
+                            alarm = f"{key} {lm}: ibs={b:.4f} (> 0.25)"
+                            alarms.append(alarm)
+                            print(f"  !! IBS OUT OF BAND (defect alarm, not a result): {alarm}")
                     tds = [m["c_td"] for m in cell.values() if np.isfinite(m.get("c_td", np.nan))]
                     print(f"{key:44s} c_td={['%.4f' % v for v in tds]} "
                           f"({entry['wall_clock_s']}s)", flush=True)
