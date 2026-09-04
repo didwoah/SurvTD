@@ -1,5 +1,5 @@
 """
-Baseline: Dynamic-DeepHit (Lee et al., 2019) in Native PyTorch
+Baseline: Dynamic-DeepHit (Lee et al., 2020) in Native PyTorch
 - Shares identical GRU-D/LSTM continuous sequence backbone.
 - Discrete hazard output with terminal survival negative log-likelihood (L1) and pairwise ranking loss (L2).
 - Zero consecutive temporal consistency constraints, reproducing bedside alarm jittering.

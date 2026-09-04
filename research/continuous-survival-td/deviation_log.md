@@ -689,6 +689,57 @@ interaction.**
 
 ---
 
+**[ ] A-16b. The first A-16 gate failed; one final initialization variant, declared before it runs.**
+
+- **A-16's gate is failing.** Under `km_prior` (KM bias + `W ~ N(0, 1e-4)`),
+  alpha = 0, 20 epochs, SurvTD scored **0.5365** on seed 42 (primary: 0.5831) and
+  **0.4797** on seed 123 (primary: 0.5076) -- both *below* the defective-init run.
+  G1 requires a 5-seed mean >= 0.60; the remaining three seeds would have to
+  average 0.661 against primary values of 0.519 / 0.517 / 0.641. The run is being
+  carried to all five seeds so the record is complete, but the verdict is STOP.
+- **The substantive result: gamma was not the binding constraint.** Raising
+  gamma from 0.481 to 0.980 did not improve discrimination; it slightly reduced
+  it. That is evidence *against* the credit-assignment reading of A-16 and *for*
+  the more basic one -- at alpha = 0 the TD objective lacks the supervision to
+  learn discrimination at all. This is exactly what **Kill Criterion 5** tests,
+  and what HANDOVER named as the likeliest failure (`C_0`).
+- **A confound in A-16's own design, found by measurement, not by argument.**
+  The declared intervention changed two things at once. Between-subject SD of the
+  predicted risk `F(K/2)` at initialization, over 6 inits on synthetic_icu seed 42:
+
+  | init | risk SD | gamma(bin0) |
+  |---|---|---|
+  | default | 0.00000 | 0.55 |
+  | `km_prior` (`W ~ N(0,1e-4)`) — what the gate ran | 0.00001 | 0.98 |
+  | KM bias, default `W` | **0.00894** | 0.97 |
+
+  Both of the first two are 0, for *different* reasons: default init saturates
+  (hazard ~ 0.5 drives `F(K/2)` to 1.0 for everyone), while `km_prior` zeroes the
+  covariate pathway. The research note's `W ~ N(0, 1e-4)` was adopted for
+  "zero-step calibration", but under alpha = 0 it starts the model at a
+  covariate-free population curve that is close to a fixed point of the
+  bootstrapped target, with no strong gradient to leave it. Dynamic-DeepHit is
+  unaffected because its per-visit likelihood rebuilds the weights within an epoch.
+  **This is a defect in the amendment's experimental design, not a result.**
+- **A-16b, declared before running.** `km_bias_only`: the KM prior bias with the
+  **default weight matrix retained**, so gamma ~ 0.97 *and* the covariate pathway
+  stays alive. Same cohort, same 5 seeds, same alpha = 0.0, same gate thresholds
+  (mean C^td >= 0.60 **and** corr(SurvTD, difficulty) > 0).
+- **This is the LAST initialization variant.** Running variants until one passes
+  is the failure mode this log exists to prevent. If A-16b does not clear the gate,
+  the initialization diagnosis is rejected outright, the preregistered primary
+  outcome is final, and no further initialization work is done. The `km_prior`
+  failure is reported alongside A-16b's outcome either way -- it is not superseded.
+- **Order of work.** Kill Criterion 5 runs **first**, at the preregistered
+  configuration (default init, alpha = 0.0, 5 seeds), because it decides `C_0`
+  independently of any initialization question and has never once executed. Its
+  one deviation is `es_warmup = 5`, applied identically to both arms; it can only
+  help the cold-starting alpha = 0 arm, so a falsification under it is
+  conservative.
+- `decided-after-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**

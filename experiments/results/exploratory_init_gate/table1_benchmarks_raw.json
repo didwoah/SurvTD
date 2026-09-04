@@ -1,0 +1,42 @@
+{
+  "init_mode": "km_prior",
+  "alpha_anchor": 0.0,
+  "epochs": 20,
+  "seeds": [
+    42,
+    123,
+    456,
+    789,
+    101112
+  ],
+  "results": {
+    "synthetic_icu_survtd": {
+      "42": {
+        "c_td": 0.5364516464574417,
+        "auc": 0.6157294896213532,
+        "ibs": 0.1293098536231261,
+        "wall_clock_s": 624.1,
+        "init": {
+          "init": "km_prior",
+          "eps": 0.0001,
+          "hazard_min": 0.0001,
+          "hazard_max": 0.03655734017511291,
+          "target_head_resynced": true
+        }
+      },
+      "123": {
+        "c_td": 0.47973230183581994,
+        "auc": 0.5546438022417353,
+        "ibs": 0.0863405488972454,
+        "wall_clock_s": 915.3,
+        "init": {
+          "init": "km_prior",
+          "eps": 0.0001,
+          "hazard_min": 0.0001,
+          "hazard_max": 0.19791666666666663,
+          "target_head_resynced": true
+        }
+      }
+    }
+  }
+}

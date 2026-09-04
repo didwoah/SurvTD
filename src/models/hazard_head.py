@@ -121,6 +121,15 @@ class DiscreteHazardHead(nn.Module):
             hazards: (K,) marginal per-bin hazards, fit on the TRAINING split only
             weight_std: std of the final weight matrix. Near-zero means the model
                 starts at the population curve and learns deviations from it.
+                **Pass None to leave the weight matrix at its default init.**
+                Measured reason this matters: with weight_std = 1e-4 the
+                between-subject SD of the predicted risk F(K/2) at initialization is
+                1e-5, i.e. every subject gets the same curve. That is the intended
+                "zero-step calibration", but under an alpha = 0 objective it places
+                the model at a covariate-free population curve which is close to a
+                fixed point of the bootstrapped target, with no strong gradient to
+                leave it. Keeping the default weights gives SD 8.9e-3 -- a live
+                covariate pathway -- while the bias still supplies gamma ~ 0.97.
             eps: clamp on the hazards before the logit
         """
         h = torch.as_tensor(hazards, dtype=torch.float32).clamp(eps, 1.0 - eps)
@@ -128,7 +137,8 @@ class DiscreteHazardHead(nn.Module):
             raise ValueError(f"expected {self.K} hazards, got {h.numel()}")
         final = self.net[-1]
         final.bias.copy_(torch.log(h / (1.0 - h)).to(final.bias.device))
-        final.weight.normal_(0.0, weight_std)
+        if weight_std is not None:
+            final.weight.normal_(0.0, weight_std)
 
     @torch.no_grad()
     def init_constant_bias(self, b: float = -3.5, weight_std: float = 1e-4):
@@ -171,13 +181,15 @@ def apply_hazard_prior_init(model, mode: str, train_dataset=None, delta_s: float
     if mode == "optimistic":
         head.init_constant_bias(-3.5)
         record = {"init": "optimistic", "b": -3.5}
-    elif mode == "km_prior":
+    elif mode in ("km_prior", "km_bias_only"):
         if train_dataset is None or delta_s is None:
-            raise ValueError("km_prior needs train_dataset and delta_s")
+            raise ValueError(f"{mode} needs train_dataset and delta_s")
         from src.evaluation.censoring import marginal_residual_hazards
         hazards = marginal_residual_hazards(train_dataset, head.K, delta_s)
-        head.init_prior_bias(hazards)
-        record = {"init": "km_prior", "eps": 1e-4,
+        # km_bias_only keeps the default weight matrix, so the head starts at the
+        # population hazard curve AND retains a live covariate pathway. See A-16b.
+        head.init_prior_bias(hazards, weight_std=1e-4 if mode == "km_prior" else None)
+        record = {"init": mode, "eps": 1e-4,
                   "hazard_min": float(hazards.min()), "hazard_max": float(hazards.max())}
     else:
         raise ValueError(f"unknown init mode {mode!r}")

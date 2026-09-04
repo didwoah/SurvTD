@@ -1,0 +1,20 @@
+{
+  "survtd": {
+    "42": {
+      "calibrated_threshold": 0.11935967320994455,
+      "false_alert_rate_per_day": 0.5551328544546899,
+      "unstable_window_rate_per_day": 0.0,
+      "jitter_patient_fraction": 0.0,
+      "total_patient_days": 102.67812388079862,
+      "n_patients": 100
+    },
+    "123": {
+      "calibrated_threshold": 0.08747570870482192,
+      "false_alert_rate_per_day": 0.7932017840375234,
+      "unstable_window_rate_per_day": 0.036469047541955096,
+      "jitter_patient_fraction": 0.04,
+      "total_patient_days": 109.68205285312918,
+      "n_patients": 100
+    }
+  }
+}

@@ -445,7 +445,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--alpha_anchor", type=float, default=0.5)
     parser.add_argument("--init", type=str, default="default",
-                        choices=["default", "optimistic", "km_prior"],
+                        choices=["default", "optimistic", "km_prior", "km_bias_only"],
                         help="Hazard-head initialization, applied identically to every neural arm")
     parser.add_argument("--dry_run", action="store_true", help="Runs single seed dry run in safe isolated directory")
     parser.add_argument("--output_dir", type=str, default="experiments/results")

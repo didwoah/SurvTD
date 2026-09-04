@@ -1,0 +1,171 @@
+{
+  "schema": "paper-forge/citations-verified@1",
+  "bib": "/Users/yangjaemo/Desktop/SurvTD/research/references.bib",
+  "n_entries": 13,
+  "n_verified": 7,
+  "results": [
+    {
+      "key": "Lee2020DynamicDeepHit",
+      "title": "Dynamic-DeepHit: A Deep Learning Approach for Dynamic Survival Analysis With Competing Risks Based on Longitudinal Data",
+      "status": "verified",
+      "matched": {
+        "source": "crossref/doi",
+        "title": "Dynamic-DeepHit: A Deep Learning Approach for Dynamic Survival Analysis With Competing Risks Based on Longitudinal Data",
+        "year": 2020,
+        "venue": "IEEE Transactions on Biomedical Engineering",
+        "url": "https://doi.org/10.1109/tbme.2019.2909027"
+      },
+      "notes": [],
+      "title_similarity": 1.0
+    },
+    {
+      "key": "Lee2018DeepHit",
+      "title": "DeepHit: A Deep Learning Approach to Survival Analysis with Competing Risks",
+      "status": "verified",
+      "matched": {
+        "source": "crossref/doi",
+        "title": "DeepHit: A Deep Learning Approach to Survival Analysis With Competing Risks",
+        "year": 2018,
+        "venue": "Proceedings of the AAAI Conference on Artificial Intelligence",
+        "url": "https://doi.org/10.1609/aaai.v32i1.11842"
+      },
+      "notes": [],
+      "title_similarity": 1.0
+    },
+    {
+      "key": "Maystre2022TCSR",
+      "title": "Temporally-Consistent Survival Analysis",
+      "status": "unresolved",
+      "matched": null,
+      "notes": [
+        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
+      ]
+    },
+    {
+      "key": "VargasVieyra2024DeepTCSR",
+      "title": "Deep End-to-End Survival Analysis with Temporal Consistency",
+      "status": "unresolved",
+      "matched": null,
+      "notes": [
+        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
+      ]
+    },
+    {
+      "key": "Bleistein2024CoxSig",
+      "title": "Dynamical Survival Analysis with Controlled Latent States",
+      "status": "unresolved",
+      "matched": null,
+      "notes": [
+        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
+      ]
+    },
+    {
+      "key": "Bellemare2017C51",
+      "title": "A Distributional Perspective on Reinforcement Learning",
+      "status": "unresolved",
+      "matched": null,
+      "notes": [
+        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
+      ]
+    },
+    {
+      "key": "Bradtke1994SMDP",
+      "title": "Reinforcement Learning Methods for Continuous-Time Markov Decision Problems",
+      "status": "unresolved",
+      "matched": null,
+      "notes": [
+        "no index returned this work by DOI, arXiv id, or title — treat as fabricated until proven otherwise"
+      ]
+    },
+    {
+      "key": "Alaa2017Hawkes",
+      "title": "Learning from Clinical Judgments: Semi-Markov-Modulated Marked Hawkes Processes for Risk Prognosis",
+      "status": "verified",
+      "matched": {
+        "source": "openalex/title",
+        "title": "Learning from Clinical Judgments: Semi-Markov-Modulated Marked Hawkes Processes for Risk Prognosis",
+        "year": 2017,
+        "venue": "arXiv (Cornell University)",
+        "url": "http://arxiv.org/abs/1705.05267"
+      },
+      "notes": [],
+      "title_similarity": 1.0
+    },
+    {
+      "key": "Lin2001Informative",
+      "title": "Semiparametric Regression Analysis of Longitudinal Data with Informative Observation Times",
+      "status": "mismatch",
+      "matched": {
+        "source": "crossref/doi",
+        "title": "Data-Driven Rank Tests for Classes of Tail Alternatives",
+        "year": 2001,
+        "venue": "Journal of the American Statistical Association",
+        "url": "https://doi.org/10.1198/016214501753168343"
+      },
+      "notes": [
+        "resolved record is titled 'Data-Driven Rank Tests for Classes of Tail Alternatives'; the .bib says 'Semiparametric Regression Analysis of Longitudinal Data with Informative Observation Times' — a chimeric citation (real paper, wrong metadata) or the wrong paper entirely"
+      ],
+      "title_similarity": 0.118
+    },
+    {
+      "key": "Tang2022SODEN",
+      "title": "SODEN: A Scalable Continuous-Time Survival Model through Ordinary Differential Equation Networks",
+      "status": "verified",
+      "matched": {
+        "source": "openalex/title",
+        "title": "SODEN: A Scalable Continuous-Time Survival Model through Ordinary Differential Equation Networks",
+        "year": 2020,
+        "venue": "arXiv (Cornell University)",
+        "url": "http://arxiv.org/abs/2008.08637"
+      },
+      "notes": [
+        "year mismatch: .bib says 2022, index says 2020"
+      ],
+      "title_similarity": 1.0
+    },
+    {
+      "key": "Nagpal2021DSM",
+      "title": "Deep Survival Machines: Fully Parametric Survival Regression and Representation Learning for Censored Data With Competing Risks",
+      "status": "verified",
+      "matched": {
+        "source": "openalex/title",
+        "title": "Deep Survival Machines : Fully Parametric Survival Regression and Representation Learning for Censored Data With Competing Risks",
+        "year": 2021,
+        "venue": "IEEE Journal of Biomedical and Health Informatics",
+        "url": "https://doi.org/10.1109/jbhi.2021.3052441"
+      },
+      "notes": [],
+      "title_similarity": 1.0
+    },
+    {
+      "key": "Jia2019JumpSDE",
+      "title": "Neural Jump Stochastic Differential Equations",
+      "status": "verified",
+      "matched": {
+        "source": "openalex/title",
+        "title": "Neural Jump Stochastic Differential Equations",
+        "year": 2019,
+        "venue": "arXiv (Cornell University)",
+        "url": "http://arxiv.org/abs/1905.10403"
+      },
+      "notes": [],
+      "title_similarity": 1.0
+    },
+    {
+      "key": "Sutton2018RL",
+      "title": "Reinforcement Learning: An Introduction",
+      "status": "verified",
+      "matched": {
+        "source": "openalex/title",
+        "title": "Reinforcement Learning: An Introduction",
+        "year": 1998,
+        "venue": "IEEE Transactions on Neural Networks",
+        "url": "https://doi.org/10.1109/tnn.1998.712192"
+      },
+      "notes": [
+        "year mismatch: .bib says 2018, index says 1998"
+      ],
+      "title_similarity": 1.0
+    }
+  ]
+}
