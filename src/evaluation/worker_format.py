@@ -55,18 +55,45 @@ class WorkerBundle:
     eval_times: np.ndarray
     feature_names: list
     n_backfilled: int
+    time_scale: float = 1.0
 
     def save(self, path: str):
+        """Times go out DIVIDED BY `time_scale`.
+
+        CoxSig takes level-2 path signatures, so a time channel spanning 0-1080 days
+        against features standardised to ~N(0,1) contributes terms of order 1e6 and
+        `np.exp(feats.dot(coefs))` overflows (`coxprox.py:108`). The symptom is silent:
+        the fit returns, every subject gets the same curve, and C^td lands on exactly
+        0.5000. `get_nasa_splits` carries a `time_scale` for the same reason.
+
+        Curve VALUES are unitless probabilities and their columns still correspond to
+        `eval_times[k]`, so scoring uses the original clock; only the worker sees the
+        scaled one.
+        """
+        # `paths` go out as torch Tensors: CoxSig indexes them against a
+        # `torch.FloatTensor` buffer (`src/coxsig.py:126`) and raises on a numpy array,
+        # and `get_nasa_splits` -- the format's origin -- also produces Tensors.
         torch.save({
-            "paths_train": self.paths_train,
-            "surv_labels_train": self.surv_labels_train,
-            "paths_test": self.paths_test,
-            "surv_labels_test": self.surv_labels_test,
-            "sampling_times": self.sampling_times,
-            "pred_times": self.pred_times,
-            "eval_times": self.eval_times,
+            "paths_train": self._scaled_paths(self.paths_train),
+            "surv_labels_train": self._scaled_labels(self.surv_labels_train),
+            "paths_test": self._scaled_paths(self.paths_test),
+            "surv_labels_test": self._scaled_labels(self.surv_labels_test),
+            "sampling_times": self.sampling_times / self.time_scale,
+            "pred_times": self.pred_times / self.time_scale,
+            "eval_times": self.eval_times / self.time_scale,
+            "time_scale": self.time_scale,
         }, path)
         return path
+
+    def _scaled_paths(self, paths):
+        out = np.array(paths, dtype=np.float32, copy=True)
+        out[:, :, 0] /= self.time_scale
+        return torch.as_tensor(out, dtype=torch.float32)
+
+    def _scaled_labels(self, labels):
+        out = np.array(labels, dtype=np.float64, copy=True)
+        out[:, 0] /= self.time_scale
+        return out
 
 
 def _project(patients, grid):
@@ -118,6 +145,21 @@ def build_worker_bundle(cohort_data, spec, pred_times=None, eval_times=None,
     )
     grid = np.arange(0.0, horizon + delta_s, delta_s, dtype=float)
 
+    # CoxSig needs at least TWO grid points at or below every subject's event time.
+    # `coxsig.py:109` builds its label vector as `[0] * (n_i - 1) + [1]` for an event,
+    # and Python returns `[]` for `[0] * -1` instead of raising -- so a subject who dies
+    # before the second grid point contributes a label with no matching feature row, and
+    # the likelihood at `coxprox.py:109` fails with a shape mismatch. On PBC2 that is 10
+    # subjects with tte < 30 days; it cannot fire on NASA, where the minimum
+    # time-to-failure is 128 cycles against a 5-cycle grid, which is why it was never hit.
+    #
+    # Rather than patch vendored author code, insert one early grid point below the
+    # smallest event time. Keeps the grid short (PBC2: 38 points instead of the 360 a
+    # uniformly fine grid would need) and leaves every arm on the same clock.
+    min_time = min(float(p["tte"]) for p in train + test)
+    if min_time <= grid[1]:
+        grid = np.unique(np.concatenate([[0.0, min_time / 2.0], grid]))
+
     paths_tr, labels_tr, bf_tr = _project(train, grid)
     paths_te, labels_te, bf_te = _project(test, grid)
 
@@ -129,4 +171,5 @@ def build_worker_bundle(cohort_data, spec, pred_times=None, eval_times=None,
         eval_times=np.asarray(eval_times, dtype=float),
         feature_names=feature_names or [f"f{i}" for i in range(paths_tr.shape[2] - 1)],
         n_backfilled=bf_tr + bf_te,
+        time_scale=float(grid[-1]) if grid[-1] > 0 else 1.0,
     )
