@@ -1094,6 +1094,59 @@ times -- as initialization, as IPCW, as loss geometry -- before being traced.
 
 ---
 
+**[x] A-19. PBC2 replaces Synthetic ICU as the lead cohort; our copy is verified literature-identical.**
+
+Synthetic ICU has no literature comparison and no external validity, and every SurvTD
+number on it is withdrawn under D15. PBC2 is the cohort **three** of the vendored
+baseline papers published on, and all of their data is already in the tree:
+
+- `baselines/signature_survival/competing_methods/Dynamic_DeepHit/data/pbc2_cleaned.csv`
+  — the file the Dynamic-DeepHit authors used. `src/data/pbc_loader.py:48` reads
+  **exactly this file** as its `DEFAULT_CSV`.
+- `baselines/deep_tcsr/data/pbc-seqs.pkl` — the TCSR / DeepTCSR authors' preprocessed
+  copy, `seqs (312, 16, 15)`, `ts`, `cs`, `cols`.
+- `baselines/tcsr/notebooks/pbc2-{final,experiments,exploratory-analysis}.ipynb` — the
+  TCSR authors' own PBC2 protocol.
+
+**Verified identical** (`experiments/unit_tests/test_pbc2_literature_fidelity.py`):
+
+| | authors | ours |
+|---|---|---|
+| subjects | 312 | 312 |
+| event rate | **0.449** | **0.449** |
+| visits, median / max | 5 / 16 | 5 / 16 |
+| total visit rows | 1945 | **1945 (exact match to the raw CSV)** |
+| features | 15 | 15 |
+
+The event rate pins the competing-risk policy: 0.449 = **140/312**, so the authors
+also count only `label == 1` as an event and treat transplant (`label == 2`, 29
+subjects) as censoring. That is an **independent confirmation of X-04**, which this
+project decided on its own reasoning.
+
+**Two convention differences, recorded rather than reconciled.**
+
+1. *Terminal index.* The authors' `ts` is the index of the period in which a trajectory
+   ends: the last observed visit for a censored subject, one step past it for an event
+   subject. Measured, `ours - (ts + 1)` is `-1` for exactly 140 subjects (the events)
+   and `0` for exactly 172 (the censored), giving the order-free identity
+   `sum(ts) == total_visits - n_censored` = 1773. Pinned by test.
+2. *Clock.* The authors discretise PBC2 onto a **fixed 16-period grid**. We keep the
+   day clock (tte median 328, max 744) with irregular inter-visit gaps. **Their
+   published protocol discretises away the irregularity SurvTD's claim is about**, so
+   any number quoted from their papers is on a different setting than ours and must be
+   labelled as such. This is the single most important caveat for the Tier-1 table.
+
+**Also recorded: the TCSR lambda convention is inverted relative to ours.** In
+`tdsurv`, `lambda_ = 1.0` is landmarking (no bootstrap) and `lambda_ = 0.0` is pure TD
+(`notebooks/pbc2-experiments.ipynb`: `temporal_difference_l2` calls
+`fit(..., lambda_=0.0, n_iters=30)`). SurvTD's `lam` runs the other way, where
+`lambda = 1` reduces to Monte Carlo. Reporting both without stating this would invert
+the reader's understanding of every ablation.
+
+- `decided-before-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**
