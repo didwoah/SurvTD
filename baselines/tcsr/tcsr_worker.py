@@ -92,21 +92,37 @@ def paths_to_period_grid(paths, surv_labels, sampling_times):
     return seqs, ts, cs
 
 
-def conditional_curves(model, seqs, pred_idx, n_eval):
+def conditional_curves(model, seqs, grid, pred_idx, eval_times):
     """(N, |pred_idx|, n_eval) conditional survival, read off the per-period model.
 
     TCSR predicts from the state at a period, so `survival_curve(state_at_L)` is
     already survival over residual periods measured from L -- no `S(L+r)/S(L)`
     renormalisation, unlike the absolute-axis baselines.
+
+    Column `c` is `S(c steps | x)` (`tdsurv/base.py:47-60`), i.e. `c` PERIODS past the
+    landmark -- and the shared clock is deliberately NOT uniform: `build_worker_bundle`
+    inserts one extra early grid point so CoxSig's `[0] * (n - 1)` label builder cannot
+    underflow. Taking column `k + 1` for `eval_times[k]` therefore reads the wrong
+    horizon at any landmark below that insertion. On PBC2 it is landmark L = 0, where
+    the grid opens `[0, 3, 30, 60, ...]`: the scorer asks for residual 30 days and gets
+    survival at 3, then 60 and gets 30 -- every column one grid step too optimistic,
+    and silent in the metrics. So the residual axis is reconstructed from the grid and
+    the curve interpolated onto `eval_times`, as `_curve_export` does for CoxSig/NCDE.
     """
     n = seqs.shape[0]
-    out = np.zeros((n, len(pred_idx), n_eval), dtype=float)
+    grid = np.asarray(grid, dtype=float)
+    eval_times = np.asarray(eval_times, dtype=float)
+    out = np.zeros((n, len(pred_idx), len(eval_times)), dtype=float)
     for j, p in enumerate(pred_idx):
         curve = np.asarray(model.survival_curve(seqs[:, p, :]))   # (N, horizon + 1)
-        for k in range(n_eval):
-            col = min(k + 1, curve.shape[1] - 1)
-            out[:, j, k] = curve[:, col]
-    return np.clip(out, 0.0, 1.0)
+        m = min(curve.shape[1], len(grid) - int(p))
+        residual = grid[int(p):int(p) + m] - grid[int(p)]          # strictly increasing
+        for i in range(n):
+            # flat-left at 1.0, flat-right at the last known value, matching
+            # src/evaluation/landmark.py::interp_survival
+            out[i, j] = np.interp(eval_times, residual, curve[i, :m],
+                                  left=1.0, right=float(curve[i, m - 1]))
+    return np.clip(np.minimum.accumulate(out, axis=-1), 0.0, 1.0)
 
 
 def main():
@@ -138,7 +154,7 @@ def main():
     pred_idx = np.clip(np.searchsorted(grid, pred_times, side="right") - 1,
                        0, horizon - 1)
 
-    curves = conditional_curves(model, te_seqs, pred_idx, len(eval_times))
+    curves = conditional_curves(model, te_seqs, grid, pred_idx, eval_times)
 
     params = np.asarray(model.params)
     with open(args.out, "w") as f:

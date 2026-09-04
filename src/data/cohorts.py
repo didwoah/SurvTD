@@ -40,6 +40,7 @@ import torch
 
 from src.data.cmapss_loader import load_cmapss_downsampled
 from src.data.dataset import LongitudinalSurvivalDataset
+from src.data.framingham_loader import load_framingham
 from src.data.pbc_loader import load_pbc
 from src.data.synthetic_icu_loader import load_synthetic_icu
 from src.data.tumor_loader import generate_tumor_growth_cohort
@@ -120,6 +121,24 @@ COHORTS: dict = {
         time_unit="days",
         is_real_data=True,
         person_period_grid_step=30.0,
+    ),
+    "framingham": CohortSpec(
+        name="framingham",
+        display_name="Framingham Heart Study",
+        loader=lambda seed, **kw: load_framingham(seed=seed, **kw),
+        # A year. Framingham's residual time is measured in years, not the 36 days
+        # PBC2's delta_s = 30 was sized against: median (tte - last exam) is 4,376 days.
+        delta_s=365.0,
+        num_bins=20,                     # 7300 day horizon > the 3650 day window
+        # Only TWO landmarks, and neither is 0. The exams sit at TIME 0 / ~2174 / ~4361,
+        # so 2190 and 4380 are the only points at which a subject can have more than one
+        # observation -- which is what makes this a DYNAMIC prediction rather than a
+        # baseline-covariate one. It also keeps every arm out of the L = 0 regime where
+        # CoxSig is structurally undefined (D16).
+        landmark_spec=LandmarkSpec(landmarks=(2190.0, 4380.0), horizons=(3650.0,)),
+        time_unit="days",
+        is_real_data=True,
+        person_period_grid_step=365.0,
     ),
     "tumor": CohortSpec(
         name="tumor",

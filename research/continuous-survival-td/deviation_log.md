@@ -1382,3 +1382,151 @@ identical by construction on a censored trajectory, because `G_{L-1}` *is*
 `target_pmfs[-1]`. gamma is unobservable there. The test therefore uses `L=4`
 and reads the mixture at `j=1`, with a `test_branches_are_separated` self-guard
 so a future degenerate construction cannot silently make the red test vacuous.
+
+---
+
+**[x] D16. The Dynamic-DeepHit worker trained on a sequence-length label leak that is
+absent at prediction time. It scored BELOW chance on Framingham; the NASA worker
+numbers are affected too.**
+
+**The defect.** Dynamic-DeepHit reads its `inputmask` from the NaN pattern and takes
+the RNN state at the **last observed index**, so *how many steps are un-NaN'd is an
+input feature*. On the shared forward-filled clock every subject carries all `T` grid
+points, so `ddh_worker.py` had to invent a truncation, and it truncated at the
+subject's own `tte`:
+
+```python
+x_train[i, times_train[i] > tte_i, :] = np.nan      # ddh_worker.py, before this entry
+```
+
+Measured on the Framingham training split:
+
+| | |
+|---|---|
+| `spearman(n_observed_steps, tte)` | **0.9999** |
+| `spearman(n_observed_steps, event)` | **-0.9693** |
+| observed steps at prediction time | **constant** — 8 at `L=2190`, 14 at `L=4380` |
+
+So the model trains on a near-perfect proxy for the label, and at prediction time that
+feature is the same for everybody. It learns the shortcut, learns almost nothing from
+the covariates, and the little it does learn arrives with the wrong sign.
+
+**The symptom was below-chance `C^td`, and this time it was not explained away.**
+
+| | `L=2190` | `L=4380` |
+|---|---|---|
+| DDH worker (3 runs) | 0.3453 – 0.4009 | 0.3225 – 0.3701 |
+| DDH port (3 runs) | 0.3501 – 0.3952 | 0.3205 – 0.3599 |
+| *Landmark Cox, same data, same scorer* | *0.7453* | *0.7436* |
+
+Two independent implementations agreeing at 0.35 is what ruled the harness out: the
+Phase D gate's agreement half **passed** while its above-chance half **failed**, which
+localised the fault to the thing they share — the training data preparation. Landmark
+Cox going through the identical converter and scorer at 0.745 ruled out the cohort and
+the scorer separately.
+
+**Confirmation.** Truncate training sequences at the landmarks instead — the same
+truncation prediction uses — giving one example per at-risk `(subject, landmark)` pair.
+Framingham seed 42, nothing else changed:
+
+| | before | after |
+|---|---|---|
+| `spearman(n_observed_steps, tte_bin)` | 0.9999 | **0.087** |
+| `C^td` at `L=2190` | 0.32 – 0.40 | **0.7364** |
+| `C^td` at `L=4380` | 0.32 – 0.40 | **0.7339** |
+
+which puts DDH alongside Landmark Cox (0.7453 / 0.7436), where a correctly specified
+Dynamic-DeepHit belongs. `--train_truncation tte` still reproduces the defective
+behaviour; `landmark` is the default.
+
+**Scope — narrower than D15, but it does reach existing numbers.**
+
+* **`baselines/dynamic_deephit_pytorch/ddh_worker.py` only.** Verified, not assumed:
+  DeepTCSR's TCN is causal (`networks.py::Chomp1D` trims the trailing padding) and its
+  `masks_train` weights the **loss**, never the input, so sequence length is not an
+  input feature there. CoxSig's per-sampling-time expansion is upstream's own
+  time-dependent Cox construction, where each pseudo-subject is censored at its own
+  sampling time — not a leak.
+* **The NASA DDH worker results are affected**, including the `dynamic_cindex` in
+  `experiments/results/nasa_parity/parity_results.json`. The defect is in the training
+  path, so it applies whether the worker emits curves or its own metrics. C-MAPSS units
+  all run to failure with widely varying lifetimes, so the leak is if anything stronger
+  there. Those DDH cells must be re-run before they are cited.
+* **The in-process `dynamic_deephit.py` arm is NOT affected** — it consumes the
+  project's native irregular visits, where sequence length is the real visit count.
+
+**Why the existing gates missed it.** Every check to date compared a component with its
+own specification, and this preparation matched its specification exactly: masking
+steps after `tte` is *correct* for a loss mask, and would be correct here too if the
+mask did not also feed the encoder. What caught it was the Phase D gate's second half —
+the below-chance alarm written into `experiments/phase_d_gate.py` because of D15.
+
+- `decided-after-results`
+
+---
+
+**[x] D17. CoxSig is structurally undefined at `L = 0`, and reporting its 0.5000 as a
+score would misread the arm.**
+
+CoxSig scored **exactly 0.5000** at PBC2's `L = 0` landmark. Under D15's rule that is a
+defect alarm, so it was traced rather than reported.
+
+`coxsig.py:129-133` freezes the feature channels after `idx_pred_time`, which at
+`L = 0` is index 1. Every constructed path is therefore feature-constant, and a level-2
+signature of a path whose feature channels never move depends only on the time channel
+— which is the shared grid, identical for every subject. Measured on the PBC2 test
+split:
+
+| landmark | within-path std over feature channels | distinct signature rows |
+|---|---|---|
+| `L = 0` | **4.8e-06** (float noise) | **37 of 2331** |
+| `L = 180` | 4.88 | 2078 of 2331 |
+
+The 37 are distinct path *lengths*, not distinct subjects. The covariates carry no
+subject information, every subject gets the same curve, and `C^td` is 0.5000 by
+construction.
+
+**This is a property of signature models given a zero-length observation window, not a
+bug in this project's glue.** It is also not a hyperparameter to tune away: there is no
+path to take a signature over.
+
+**Consequence for Table 1.** CoxSig's `L = 0` cell is reported as **undefined (n/a)
+with this mechanism stated**, never as 0.5000 — a reader seeing 0.500 in a results
+column will read "CoxSig performs at chance", which is a claim about the model rather
+than about the landmark. Framingham's landmarks (2190, 4380) are both after an exam and
+avoid the regime entirely; that is one of the reasons they were chosen.
+
+- `decided-after-results`
+
+---
+
+**[x] D18. The TCSR worker read its survival curves off the wrong horizon at any
+landmark below the inserted grid point.**
+
+`tcsr_worker.py::conditional_curves` took column `k + 1` of `survival_curve` for
+`eval_times[k]`. Column `c` is `S(c steps | x)` (`tdsurv/base.py:47-60`) — `c` *periods*
+ahead, which equals `eval_times[k]` only on a uniform grid. The shared clock is
+deliberately **not** uniform: `worker_format.build_worker_bundle` inserts one extra
+early point so CoxSig's `[0] * (n - 1)` label builder cannot underflow, so PBC2's grid
+opens `[0, 3, 30, 60, ...]`.
+
+At `L = 0` the scorer asked for residual 30 days and got survival at 3, then asked for
+60 and got 30 — every column one grid step too optimistic. Repaired by rebuilding the
+residual axis from the grid (`grid[p + c] - grid[p]`) and interpolating, as
+`_curve_export` already did for CoxSig and NCDE.
+
+**Magnitude, and why it was nearly invisible.** Max `|old - new|` on the PBC2 test
+split is **0.2602** at `L = 0` and **3.3e-16** at `L = 180` — exactly the predicted
+footprint, since only landmarks below the insertion are affected.
+
+| | `C^td` | IPCW IBS |
+|---|---|---|
+| before | 0.8303 | 0.1809 |
+| after | 0.8303 | **0.1830** |
+
+`C^td` **does not move at all**: the shift is the same column offset for every subject,
+and a rank statistic cannot see it. Only the calibration metric moves. This is a
+concrete argument for the co-primary IBS that the plan already committed to — a
+discrimination-only table would have carried this defect into the paper untouched.
+
+- `decided-after-results`
