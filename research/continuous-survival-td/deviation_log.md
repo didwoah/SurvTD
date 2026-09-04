@@ -1449,9 +1449,11 @@ behaviour; `landmark` is the default.
   sampling time — not a leak.
 * **The NASA DDH worker results are affected**, including the `dynamic_cindex` in
   `experiments/results/nasa_parity/parity_results.json`. The defect is in the training
-  path, so it applies whether the worker emits curves or its own metrics. C-MAPSS units
-  all run to failure with widely varying lifetimes, so the leak is if anything stronger
-  there. Those DDH cells must be re-run before they are cited.
+  path, so it applies whether the worker emits curves or its own metrics. Measured on
+  `get_nasa_splits(seed=42)` rather than assumed, the leak there is **worse than on
+  Framingham**: `spearman(n_observed_steps, tte) = 1.0` exactly, across 111 distinct
+  step counts spanning 31 to 362, because every C-MAPSS unit runs to failure with a
+  different lifetime. Those DDH cells must be re-run before they are cited.
 * **The in-process `dynamic_deephit.py` arm is NOT affected** — it consumes the
   project's native irregular visits, where sequence length is the real visit count.
 
