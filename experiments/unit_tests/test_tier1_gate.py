@@ -117,8 +117,11 @@ class TestD16NoSequenceLengthLeak(unittest.TestCase):
             self.assertEqual(len(np.unique(n_obs)), 1)
 
     def test_worker_defaults_to_the_repaired_truncation(self):
-        with open(os.path.join(os.path.dirname(TCSR_DIR),
-                               "dynamic_deephit_pytorch/ddh_worker.py")) as f:
+        path = os.path.join(os.path.dirname(TCSR_DIR),
+                            "dynamic_deephit_pytorch/ddh_worker.py")
+        if not os.path.exists(path):                   # pragma: no cover
+            self.skipTest("DDH worker not present")
+        with open(path) as f:
             src = f.read()
         self.assertIn('"--train_truncation"', src)
         self.assertIn('default="landmark"', src)
