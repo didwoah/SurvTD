@@ -137,3 +137,86 @@ __all__ = [
     "censored_crps_anchor",
     "truncated_censoring_target",
 ]
+
+
+def logit_cramer_anchor(
+    pred_cdf: torch.Tensor,
+    residual: torch.Tensor,
+    event: bool,
+    delta_s: float,
+    K: int,
+    ipcw_weight: float = 1.0,
+    eps: float = 1e-5,
+) -> torch.Tensor:
+    """
+    Threshold-integrated cross-entropy against the observed residual time (A-17).
+
+    The censoring treatment mirrors `censored_crps_anchor` exactly, so the two arms
+    differ in geometry and in nothing else:
+
+        uncensored visit j:  -delta_s * sum_k [ F*(k) log F(k) + (1-F*(k)) log(1-F(k)) ]
+        censored   visit j:  -delta_s * sum_{k < k_j} log(1 - F(k))  *  1/G_hat(c_j)
+
+    For a censored visit all that is known is R_j > r_j, so only the bins fully below
+    the censoring time are scored, and there the truth is F* = 0 -- which leaves the
+    -log(1 - F) branch alone. Same support, same IPCW, same Riemann convention.
+
+    Returns:
+        (L,) per-visit losses
+    """
+    r = torch.as_tensor(residual, dtype=pred_cdf.dtype, device=pred_cdf.device).clamp_min(0.0)
+    F = pred_cdf.clamp(eps, 1.0 - eps)
+
+    if event:
+        target = dirac_cdf(r, delta_s, K)
+        ce = -(target * torch.log(F) + (1.0 - target) * torch.log(1.0 - F))
+        return float(delta_s) * torch.sum(ce, dim=-1)
+
+    ks = torch.arange(K, device=pred_cdf.device, dtype=pred_cdf.dtype)
+    below = (ks.unsqueeze(0) * float(delta_s) < r.unsqueeze(-1)).to(pred_cdf.dtype)
+    ce = -torch.log(1.0 - F) * below
+    return float(delta_s) * torch.sum(ce, dim=-1) * float(ipcw_weight)
+
+
+def categorical_ce_anchor(
+    pred_pmf: torch.Tensor,
+    pred_survival: torch.Tensor,
+    residual: torch.Tensor,
+    event: bool,
+    delta_s: float,
+    K: int,
+    ipcw_weight: float = 1.0,
+    eps: float = 1e-6,
+) -> torch.Tensor:
+    """
+    Discrete-time survival likelihood on the categorical head (A-17 arm `ce`):
+
+        uncensored visit j:  -log p(k_j)
+        censored   visit j:  -log S(k_j)  *  1/G_hat(c_j)
+
+    This is Dynamic-DeepHit's L1 (`dynamic_deephit.py:82-89`) and a close relative of
+    Person-Period's masked BCE, which is why it is the option with the strongest
+    empirical support on this cohort -- both of those arms reach ~0.64 while the Cramer
+    anchor reaches 0.53.
+
+    Unlike the Cramer family this constrains only bins up to the observed time. That is
+    the likelihood being honest: it carries no information about the period after the
+    event or censoring. The Cramer anchor additionally pushes F -> 1 beyond the event,
+    which is true but lies outside the likelihood.
+
+    Args:
+        pred_pmf: (L, K+1) with overflow, or (L, K)
+        pred_survival: (L, K), S[k] = P(R > (k+1) delta_s)
+        residual: (L,) residual times
+    Returns:
+        (L,) per-visit losses
+    """
+    r = torch.as_tensor(residual, dtype=pred_pmf.dtype, device=pred_pmf.device).clamp_min(0.0)
+    k_idx = torch.floor(r / float(delta_s)).long().clamp(0, K - 1)
+
+    if event:
+        p = pred_pmf[..., :K].gather(-1, k_idx.unsqueeze(-1)).squeeze(-1)
+        return -torch.log(p.clamp_min(eps))
+
+    s = pred_survival.gather(-1, k_idx.unsqueeze(-1)).squeeze(-1)
+    return -torch.log(s.clamp_min(eps)) * float(ipcw_weight)

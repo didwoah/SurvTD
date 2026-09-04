@@ -11,12 +11,24 @@ import torch.nn as nn
 
 from src.models.backbones import build_backbone
 from src.models.hazard_head import DiscreteHazardHead
-from src.operators.anchors import censored_crps_anchor
+from src.operators.anchors import (
+    categorical_ce_anchor,
+    censored_crps_anchor,
+    logit_cramer_anchor,
+)
 from src.operators.survtd_operator import (
+    categorical_ce_distance_loss,
     compute_multistep_lambda_returns,
+    logit_cramer_distance_loss,
     residual_times,
     squared_cramer_distance_loss
 )
+
+# A-17 (decided-after-results). The anchor-geometry diagnostic attributed +0.0998 of
+# the Cohort 1 deficit to the loss geometry and -0.0026 to grid expansion, so the
+# geometry of each term is now selectable. C_1 constrains the TD target operator, not
+# the anchor, so the two may differ without touching thm:1.
+LOSS_GEOMETRIES = ("cramer", "logit_cramer", "ce")
 
 
 class SurvTDModel(nn.Module):
@@ -33,7 +45,9 @@ class SurvTDModel(nn.Module):
         lam: float = 0.6,
         include_overflow: bool = True,
         gamma_placement: str = "bootstrap",
-        alpha_anchor: float = 0.5
+        alpha_anchor: float = 0.5,
+        anchor_loss: str = "cramer",
+        td_loss: str = "cramer"
     ):
         super().__init__()
         self.input_dim = input_dim
@@ -52,6 +66,16 @@ class SurvTDModel(nn.Module):
         # every lambda, arm, cohort and seed. Until that selection runs, treat this
         # default as a placeholder, not a tuned value.
         self.alpha_anchor = float(alpha_anchor)
+
+        # A-17 loss geometries. Scales differ by ~10x across the three, so mixing them
+        # at 0 < alpha < 1 would silently turn alpha into a scale knob rather than a
+        # convex weight; the A-17 arms are therefore run at alpha in {0, 1}, where the
+        # other term is inactive and each geometry is measured on its own.
+        for name, val in (("anchor_loss", anchor_loss), ("td_loss", td_loss)):
+            if val not in LOSS_GEOMETRIES:
+                raise ValueError(f"{name}={val!r}; expected one of {LOSS_GEOMETRIES}")
+        self.anchor_loss = anchor_loss
+        self.td_loss = td_loss
 
         # Online Network
         self.backbone = build_backbone(backbone_type, input_dim, hidden_dim, num_layers, dropout)
@@ -153,20 +177,39 @@ class SurvTDModel(nn.Module):
             # clamp(max=1.0) would now mask a real invariant rather than enforce one.
             G_cdf = torch.cumsum(G_targets[..., :self.K], dim=-1)
 
-        # 3. TD term: squared Cramér distance to the bootstrapped target.
-        loss_td = squared_cramer_distance_loss(
-            cdf_on, G_cdf, weights=step_weights, delta_s=self.delta_s
-        )
+        # 3. TD term: distance to the bootstrapped target, in the selected geometry.
+        if self.td_loss == "cramer":
+            loss_td = squared_cramer_distance_loss(
+                cdf_on, G_cdf, weights=step_weights, delta_s=self.delta_s
+            )
+        elif self.td_loss == "logit_cramer":
+            loss_td = logit_cramer_distance_loss(
+                cdf_on, G_cdf, weights=step_weights, delta_s=self.delta_s
+            )
+        else:  # 'ce' -- C51's loss, on the PMF rather than the CDF
+            loss_td = categorical_ce_distance_loss(
+                pmf_on.squeeze(0), G_targets, weights=step_weights
+            )
 
         # 4. Anchor term: per-visit right-censored CRPS against the observed
         #    residual time. This is the ground truth the shipped objective lacked
         #    everywhere except one (misplaced) terminal Dirac.
         has_event = bool(torch.any(events > 0.5).item())
         r = residual_times(dts, tte)
-        loss_anchor = censored_crps_anchor(
-            cdf_on, r, has_event, self.delta_s, self.K,
-            ipcw_weight=ipcw_weight
-        ).mean()
+        if self.anchor_loss == "cramer":
+            per_visit = censored_crps_anchor(
+                cdf_on, r, has_event, self.delta_s, self.K, ipcw_weight=ipcw_weight
+            )
+        elif self.anchor_loss == "logit_cramer":
+            per_visit = logit_cramer_anchor(
+                cdf_on, r, has_event, self.delta_s, self.K, ipcw_weight=ipcw_weight
+            )
+        else:  # 'ce' -- Dynamic-DeepHit's L1 on this head
+            per_visit = categorical_ce_anchor(
+                pmf_on.squeeze(0), surv_on.squeeze(0), r, has_event,
+                self.delta_s, self.K, ipcw_weight=ipcw_weight
+            )
+        loss_anchor = per_visit.mean()
 
         loss = (1.0 - alpha) * loss_td + alpha * loss_anchor
         if return_parts:

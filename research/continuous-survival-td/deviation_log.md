@@ -867,6 +867,64 @@ swap removes an artefact from the comparison without rescuing C_3.
 
 ---
 
+**[ ] A-17. Loss geometry of each objective term, declared before running.**
+
+The D-anchor diagnostic attributed **+0.0998** of the Cohort 1 deficit to the anchor's
+loss geometry and **-0.0026** to grid expansion. A-17 measures the geometry of both
+terms directly, on the same training path KC5 used, so the reference cells are
+comparable.
+
+**Design.** `alpha` separates the two terms with no new hyperparameter: at `alpha = 1`
+the TD term is inactive, at `alpha = 0` the anchor is. Three geometries per axis:
+
+| axis | `cramer` | `logit_cramer` | `ce` |
+|---|---|---|---|
+| anchor (`alpha = 1`) | measured **0.5318 ± 0.0407** | new | new |
+| TD (`alpha = 0`) | measured **0.5353 ± 0.0841** | new | new |
+
+Four new cells, 5 seeds. **Deliberately not a weighted blend**: the three losses differ
+in scale by ~10x, so blending would make `alpha` a scale knob rather than a convex
+weight, and with the target effect (0.025) smaller than the seed noise (SD 0.04-0.10)
+a blend's outcome could not be attributed to any term. One change per cell.
+
+**Criteria, fixed now.**
+- *Anchor axis*: a cell clears at mean `C^td >= 0.60`, which would confirm the -0.0998
+  attribution. Person-Period on the same raw irregular visits reached 0.6315; that is
+  the reasonable ceiling for this axis.
+- *TD axis*: the absolute level is low at `alpha = 0` regardless, so the criteria are
+  improvement over 0.5353 **and** reduction of the across-seed SD. KC5 measured the TD
+  term multiplying variance 4.3x (0.0407 -> 0.0841) while moving the mean +0.0036;
+  that is what this axis must explain.
+- A cell clearing neither is reported as such and is **not** re-run under a different
+  setting to make it clear.
+
+**Why `ce` is included on the anchor axis.** It is Dynamic-DeepHit's `L1`
+(`dynamic_deephit.py:82-89`) and a close relative of Person-Period's masked BCE. Both
+of those arms reach ~0.64 here, so it is the option with the strongest empirical
+support -- and the proposal note omitted it. Its structural cost was measured: through
+the hazard-cumprod parameterisation, `p_{k_j}` involves no hazard beyond bin `k_j`, so
+CE's loss and gradient are bit-identical whether the misplaced mass sits 1 bin or 24
+bins from the truth. That is the likelihood being honest about carrying no information
+past the observed time, not a bug, but it is a real difference from the Cramér family,
+which additionally pushes `F -> 1` after the event.
+
+**Why this does not touch `thm:1`.** `C_1` constrains the TD *target operator* `ΠΦ`,
+not the anchor, which is a separate additive term that never passes through `Π`. The
+`logit_cramer` and `ce` TD cells do change the metric the TD term is minimised in --
+which is exactly what C51 does (contraction proved in Cramér, trained with
+cross-entropy; Rowland et al. 2018 analyse the mismatch). The contraction result is
+unaffected; only the surrogate changes.
+
+**What A-17 cannot do.** It does not revive the preregistered outcome. KC3 and KC5 both
+fired and both stand. A clean sweep of the anchor axis projects `alpha = 1` to ~0.63 --
+parity with Person-Period (0.6367) and Dynamic-DeepHit (0.6461), not the +0.025 over
+them that `C_3` requires. A-17 removes an artefact from the comparison; it does not
+supply a margin.
+
+- `decided-after-results`
+
+---
+
 ## 5. Environment
 
 **[x] E-01. `scikit-survival` cannot be installed normally on Python 3.14.**

@@ -598,3 +598,76 @@ def squared_cramer_distance_loss(
         per_step_loss = per_step_loss * weights
 
     return torch.mean(per_step_loss)
+
+
+def logit_cramer_distance_loss(
+    pred_cdf: torch.Tensor,
+    target_cdf: torch.Tensor,
+    weights: torch.Tensor = None,
+    delta_s: float = 1.0,
+    eps: float = 1e-5,
+) -> torch.Tensor:
+    """
+    Threshold-integrated cross-entropy between lifetime CDFs (A-17 arm `logit_cramer`):
+
+        L_j = -delta_s * sum_k [ G(k) log F(k) + (1 - G(k)) log(1 - F(k)) ]
+
+    At each threshold s_k the pair (F(k), G(k)) is two Bernoulli probabilities for the
+    same event "R <= s_k", so this is a sum of Bernoulli cross-entropies. It is a proper
+    scoring rule -- dL/dF = 0 at F = G, verified numerically -- and unlike the squared
+    Cramer distance its gradient
+
+        dL/dF = (F - G) / (F (1 - F))
+
+    diverges as the prediction becomes confidently wrong instead of staying linear in
+    the residual. Measured at |F - G| = 0.05 it is 10.5x the squared-Cramer gradient,
+    and 500x on a confident error.
+
+    Same Riemann-sum convention and same units as `squared_cramer_distance_loss`, so
+    alpha remains a convex mixing weight.
+
+    `eps` is deliberately 1e-5 rather than the 1e-6 the proposal note used: the loss
+    admits gradients up to 1/eps, and `trainer.py` clips at max_norm 2.0, so a smaller
+    eps drives the clip to fire on nearly every step and degrades the optimiser toward
+    sign-SGD. See the note's review section 5.5.
+    """
+    F = pred_cdf.clamp(eps, 1.0 - eps)
+    G = target_cdf.clamp(0.0, 1.0)
+    ce = -(G * torch.log(F) + (1.0 - G) * torch.log(1.0 - F))
+    per_step_loss = float(delta_s) * torch.sum(ce, dim=-1)
+    if weights is not None:
+        per_step_loss = per_step_loss * weights
+    return per_step_loss.mean()
+
+
+def categorical_ce_distance_loss(
+    pred_pmf: torch.Tensor,
+    target_pmf: torch.Tensor,
+    weights: torch.Tensor = None,
+    eps: float = 1e-6,
+) -> torch.Tensor:
+    """
+    Cross-entropy on the categorical PMF (A-17 arm `ce`) -- the C51 loss:
+
+        L_j = - sum_k G_pmf(k) log p_pmf(k)
+
+    This is what categorical distributional RL actually minimises: Bellemare et al.
+    (2017) prove the projection a contraction in the Cramer metric but train with
+    cross-entropy, and Rowland et al. (2018) analyse that deliberate mismatch.
+
+    Note the structural cost, measured rather than assumed: cross-entropy on the PMF is
+    ordinal-blind. With the hazard-cumprod parameterisation, `p_k = h_k prod_{m<k}(1-h_m)`
+    involves no hazard beyond bin k, so loss and gradient are bit-identical whether the
+    misplaced mass sits one bin or twenty-four bins from the truth. The Cramer family
+    measures how far wrong a prediction is; this does not. Whether that matters here is
+    exactly what the A-17 experiment is for.
+
+    Carries no delta_s factor -- it is dimensionless, unlike the Cramer family. Only
+    compare it against arms sharing its geometry, or at alpha in {0, 1} where the other
+    term is inactive.
+    """
+    logp = torch.log(pred_pmf.clamp_min(eps))
+    per_step_loss = -torch.sum(target_pmf * logp, dim=-1)
+    if weights is not None:
+        per_step_loss = per_step_loss * weights
+    return per_step_loss.mean()
