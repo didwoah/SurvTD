@@ -1447,13 +1447,19 @@ behaviour; `landmark` is the default.
   input feature there. CoxSig's per-sampling-time expansion is upstream's own
   time-dependent Cox construction, where each pseudo-subject is censored at its own
   sampling time — not a leak.
-* **The NASA DDH worker results are affected**, including the `dynamic_cindex` in
-  `experiments/results/nasa_parity/parity_results.json`. The defect is in the training
-  path, so it applies whether the worker emits curves or its own metrics. Measured on
-  `get_nasa_splits(seed=42)` rather than assumed, the leak there is **worse than on
-  Framingham**: `spearman(n_observed_steps, tte) = 1.0` exactly, across 111 distinct
-  step counts spanning 31 to 362, because every C-MAPSS unit runs to failure with a
-  different lifetime. Those DDH cells must be re-run before they are cited.
+* **The NASA DDH results are affected in exactly one file**, and it is not the
+  obvious one. `experiments/results/nasa_tier1_authentic/final_5seeds_authentic_benchmark.json`
+  runs `ddh_worker.py` and reports **0.7599 +- 0.1307** — a wide spread that reads, in
+  hindsight, like a crippled arm. `experiments/results/nasa_parity/parity_results.json`
+  reports `ddh` **0.9525** but calls `DynamicDeepHitModel`
+  (`benchmark_nasa_parity.py:333`), the in-process arm on native irregular visits,
+  which has no such truncation and is **not** affected. Two files, the same arm name,
+  two different implementations.
+  The defect is in the training path, so it applies whether the worker emits curves or
+  its own metrics. Measured on `get_nasa_splits(seed=42)` rather than assumed, the leak
+  on C-MAPSS is **worse than on Framingham**: `spearman(n_observed_steps, tte) = 1.0`
+  exactly, across 111 distinct step counts spanning 31 to 362, because every unit runs
+  to failure with a different lifetime.
 * **The in-process `dynamic_deephit.py` arm is NOT affected** — it consumes the
   project's native irregular visits, where sequence length is the real visit count.
 
@@ -1530,5 +1536,58 @@ footprint, since only landmarks below the insertion are affected.
 and a rank statistic cannot see it. Only the calibration metric moves. This is a
 concrete argument for the co-primary IBS that the plan already committed to — a
 discrimination-only table would have carried this defect into the paper untouched.
+
+- `decided-after-results`
+
+---
+
+**[x] D19. Worker arms and in-process arms were being scored on different grids, and
+the worker grid integrated the Brier score far past the prediction window.**
+
+`build_worker_bundle` defaulted `eval_times` to the cohort's own **bin** grid,
+`(arange(num_bins) + 1) * delta_s`, on the stated reasoning that this "matches what
+in-process arms are scored on". That reasoning was wrong. `predict_landmark` scores on
+`linspace(top / brier_grid_n, top, brier_grid_n)` with `top = min(censor_cap,
+max_horizon)` — the **landmark** grid. On PBC2 the two are:
+
+| | grid | span |
+|---|---|---|
+| in-process (`predict_landmark`) | 20 points | **18 – 365 days** |
+| worker (`build_worker_bundle`) | 30 points | **30 – 900 days** |
+
+The integrated Brier score is an integral *over* that grid, so the worker arms' IBS was
+computed 535 days past the prediction window and past most of PBC2's follow-up
+(max `tte` 744). Two arms in the same column were not being scored on the same
+statistic.
+
+**Magnitude.** One SurvTD fit, scored both ways, nothing else changed:
+
+| | `C^td` | IPCW IBS |
+|---|---|---|
+| landmark grid, `L = 0` | 0.7396 | **0.4358** |
+| bin grid, `L = 0` | 0.7256 | **0.6166** |
+
+0.18 of IBS — larger than any between-arm gap Table 1 is meant to resolve.
+
+**The KM reference is what makes this legible.** `km_marginal_reference`'s docstring
+already declares the expected band: "IBS in roughly [0.15, 0.25]. Any IBS above ~0.25
+anywhere in a table is then immediately visible as a bug rather than a finding." After
+unifying on the landmark grid, KM lands inside that band on **every** cohort, where it
+had been outside it:
+
+| cohort | KM `C^td` | KM IBS | Landmark Cox `C^td` | Landmark Cox IBS |
+|---|---|---|---|---|
+| PBC2 | 0.5000 / 0.5000 | 0.2203 / 0.2403 | 0.8219 / 0.8169 | 0.0878 / 0.1019 |
+| Framingham | 0.5000 / 0.5000 | 0.2083 / 0.2064 | 0.7447 / 0.7455 | 0.0494 / 0.0785 |
+| C-MAPSS | 0.5000 ×3 | 0.2019 / 0.2119 / 0.1856 | 0.6711 / 0.7777 / 0.7481 | 0.0706 / 0.0789 / 0.1420 |
+
+**How it was found.** By the in-process shim (`curve_scoring.curves_from_model`)
+reproducing `evaluate_landmarked` **exactly** — `C^td` 0.7396 and IBS 0.4358 to four
+decimals on both paths — and then *not* reproducing it once the worker grid was
+substituted. Same two-implementations argument that localised D16.
+
+**Not a withdrawal.** No headline number had been produced on the worker grid; the
+Phase D gate figures are `C^td`, which moved by <0.02. The Landmark Cox values quoted
+in `97e6eab` (PBC2 0.7991 / 0.7726) are superseded by **0.8219 / 0.8169**.
 
 - `decided-after-results`

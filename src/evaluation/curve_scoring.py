@@ -22,6 +22,7 @@ them.
 from __future__ import annotations
 
 import numpy as np
+import torch
 
 from src.evaluation.landmark import (
     DegenerateLandmarkError,
@@ -175,3 +176,55 @@ def evaluate_curves(curves: np.ndarray,
                     "reason": f"{type(exc).__name__}: {exc}",
                 }
     return results
+
+
+@torch.no_grad()
+def curves_from_model(model, dataset, spec, delta_s: float, eval_times, device):
+    """(N, n_landmarks, n_eval) conditional survival from an in-process model.
+
+    The bridge that lets SurvTD and the GRU-D-backbone baselines be scored by the same
+    code, on the same residual grid, as the subprocess arms.
+
+    Why not just call `evaluate_landmarked` for these arms
+    ------------------------------------------------------
+    Because it scores on a different grid. `predict_landmark` builds
+    `linspace(max_horizon / brier_grid_n, max_horizon, brier_grid_n)` -- on PBC2 that
+    is 20 points spanning 18 to 365 days -- while the worker arms are scored on the
+    cohort's own bin grid, 30 points spanning 30 to 900 days. The integrated Brier
+    score is an integral OVER that grid, so the two are not the same statistic, and a
+    table mixing them would be comparing arms on different quantities while presenting
+    one column. Here the grid is passed in, so every arm shares it.
+
+    What is preserved from the in-process path
+    ------------------------------------------
+    `conditional_survival(..., gap, ...)` still conditions each curve forward by
+    `L - times[j_L]`, the landmark falling between visits. That gap is real
+    duration-awareness the worker arms structurally cannot have -- they read a
+    forward-filled regular grid -- and it is the method's own protocol, so it stays.
+    Both protocols are reported; they are never mixed within a column.
+
+    Rows for subjects not at risk at a landmark are left at 1.0 and dropped by
+    `predictions_from_curves`, exactly as with a worker's output.
+    """
+    from src.evaluation.landmark import conditional_survival, truncate_history
+
+    model.eval()
+    patients = list(dataset)
+    eval_times = np.asarray(eval_times, dtype=float)
+    landmarks = np.asarray(spec.landmarks, dtype=float)
+    out = np.ones((len(patients), len(landmarks), len(eval_times)), dtype=float)
+
+    for j, landmark in enumerate(landmarks):
+        for i, p in enumerate(patients):
+            trunc = truncate_history(p, float(landmark))
+            if trunc is None:
+                continue
+            x = trunc["features"].unsqueeze(0).to(device)
+            dts = trunc["dts"].unsqueeze(0).to(device)
+            mask = (trunc["mask"].unsqueeze(0).to(device)
+                    if trunc.get("mask") is not None else None)
+            _, survival, _, _ = model(x, dts, mask)
+            surv_bins = survival.squeeze(0)[-1].cpu().numpy()   # last visit at or before L
+            out[i, j] = conditional_survival(surv_bins, delta_s, trunc["gap"], eval_times)
+
+    return np.clip(np.minimum.accumulate(out, axis=-1), 0.0, 1.0)

@@ -126,15 +126,29 @@ def build_worker_bundle(cohort_data, spec, pred_times=None, eval_times=None,
         cohort_data: from `src.data.cohorts.COHORTS[name].load(seed)`
         spec: the cohort spec, for `delta_s`, `num_bins` and `landmark_spec`
         pred_times: landmarks; defaults to the preregistered `spec.landmark_spec.landmarks`
-        eval_times: residual horizons; defaults to the cohort's own bin grid, so the
-            worker curve resolution matches what in-process arms are scored on
+        eval_times: residual horizons; defaults to the SAME grid `predict_landmark`
+            builds, so worker arms and in-process arms are scored on one grid
     """
     l_spec = spec.landmark_spec
     delta_s = float(spec.delta_s)
     if pred_times is None:
         pred_times = np.asarray(l_spec.landmarks, dtype=float)
     if eval_times is None:
-        eval_times = (np.arange(int(spec.num_bins)) + 1.0) * delta_s
+        # `linspace(top / brier_grid_n, top, brier_grid_n)` with
+        # `top = min(censor_cap, max_horizon)` -- character for character what
+        # `landmark.predict_landmark` uses.
+        #
+        # This used to default to the cohort's own BIN grid,
+        # `(arange(num_bins) + 1) * delta_s`, on the reasoning that it "matches what
+        # in-process arms are scored on". That reasoning was wrong: in-process arms are
+        # scored on the landmark grid, not the bin grid, and on PBC2 the two are 30..900
+        # days versus 18..365. The integrated Brier score is an integral OVER the grid,
+        # so the bin grid was integrating 535 days past the prediction window and past
+        # most of the follow-up. Measured on one SurvTD fit, the same model scored
+        # IBS 0.4358 on the landmark grid and 0.6166 on the bin grid at L = 0 -- a
+        # difference bigger than any between-arm gap the table is meant to show.
+        top = min(l_spec.censor_cap(), l_spec.max_horizon())
+        eval_times = np.linspace(top / l_spec.brier_grid_n, top, l_spec.brier_grid_n)
 
     train = list(cohort_data.train)
     test = list(cohort_data.test)

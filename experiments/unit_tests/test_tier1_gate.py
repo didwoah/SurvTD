@@ -47,6 +47,14 @@ class TestKMLeakGate(unittest.TestCase):
         for _, m in self._km("framingham").items():
             self.assertAlmostEqual(m["c_td"], 0.5, places=10)
 
+    def test_cmapss(self):
+        """The only cohort with `admin_censor_at`, so the only one that exercises the
+        capping branch in `predictions_from_curves`."""
+        res = self._km("cmapss")
+        self.assertEqual(len(res), 3)                  # three landmarks, one horizon
+        for _, m in res.items():
+            self.assertAlmostEqual(m["c_td"], 0.5, places=10)
+
 
 class TestCurveScorerContract(unittest.TestCase):
     """Properties every arm's curves are scored under, whoever produced them."""

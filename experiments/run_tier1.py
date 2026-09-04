@@ -64,11 +64,23 @@ WORKERS = {
                       "baselines/tcsr", "--data", "--out", ["--arm", "landmark"]),
 }
 
-# Arms that run in this process rather than as a subprocess.
-IN_PROCESS = ("km", "landmark_cox")
+# In-process arms. `alpha_anchor` is SurvTD's mixing weight between the anchor loss
+# and the TD loss: 1.0 is the anchor-only control that answers Q1 ("does TD help at
+# all?"), and the configured default is the full method.
+#
+# NOTE for anyone reading this beside a `tdsurv` result: SurvTD's `lam` and TCSR's
+# `lambda_` run in OPPOSITE directions. SurvTD's lam = 1 is Monte Carlo; tdsurv's
+# lambda_ = 1 is landmarking and 0 is pure TD. The `tcsr` / `tcsr_landmark` arm names
+# above exist so no raw lambda ever has to be read off this table.
+IN_PROCESS = {
+    "km": None,
+    "landmark_cox": None,
+    "survtd": dict(alpha_anchor=0.5),
+    "survtd_anchor_only": dict(alpha_anchor=1.0),
+}
 
-DEFAULT_ARMS = ["km", "landmark_cox", "ddh", "tcsr", "tcsr_landmark",
-                "coxsig", "ncde", "deeptcsr_tcn"]
+DEFAULT_ARMS = ["km", "landmark_cox", "survtd", "survtd_anchor_only",
+                "ddh", "tcsr", "tcsr_landmark", "coxsig", "ncde", "deeptcsr_tcn"]
 
 
 def km_curves(bundle, wb):
@@ -88,6 +100,45 @@ def km_curves(bundle, wb):
         ahead = np.interp(L + wb.eval_times, t, s, left=1.0, right=float(s[-1]))
         out[:, j, :] = np.clip(ahead / max(s_at_L, 1e-12), 0.0, 1.0)
     return np.minimum.accumulate(out, axis=-1)
+
+
+def survtd_curves(cd, spec, seed, arm_cfg, eval_times, epochs):
+    """Train SurvTD on the cohort's NATIVE irregular visits and read curves off it.
+
+    Deliberately not the forward-filled worker bundle. The claim under test is about
+    irregular Delta-t, and projecting onto a regular grid is precisely what removes
+    that signal -- so the method is evaluated on the protocol its claim is about, and
+    `curves_from_model` puts the result on the same residual grid the worker arms are
+    scored on. The two protocols are reported side by side and never mixed inside a
+    column; `worker_format.py` states the same split from the other side.
+    """
+    import torch as _torch
+    from src.evaluation.curve_scoring import curves_from_model
+    from src.models.survtd import SurvTDModel
+    from src.training.trainer import get_device, train_model
+
+    _torch.manual_seed(seed)
+    np.random.seed(seed)
+    device = get_device()
+
+    model = SurvTDModel(input_dim=cd.input_dim, hidden_dim=64,
+                        num_bins=spec.num_bins, delta_s=spec.delta_s,
+                        alpha_anchor=arm_cfg["alpha_anchor"], include_overflow=True)
+    if hasattr(model.backbone, "set_empirical_mean"):
+        model.backbone.set_empirical_mean(cd.x_mean)
+
+    trained = train_model(model=model, train_dataset=cd.train, val_dataset=cd.val,
+                          val_spec=spec.landmark_spec, delta_s=spec.delta_s,
+                          model_type="survtd",
+                          # `ablation_mode` is the RETURN-CONSTRUCTION axis (A1/A2/
+                          # count-geometric); it has no "anchor_only" value and never
+                          # had one. The anchor-only control is `alpha_anchor = 1.0`,
+                          # which is what actually zeroes the TD term at the loss.
+                          ablation_mode="full",
+                          alpha_anchor=arm_cfg["alpha_anchor"],
+                          epochs=epochs, patience=5, device=device, verbose=False)
+    return curves_from_model(trained, cd.test, spec.landmark_spec,
+                             spec.delta_s, eval_times, device)
 
 
 def run_worker(arm, bundle_path, out_json, epochs, timeout):
@@ -113,6 +164,8 @@ def run_cell(cohort_name, arm, seed, epochs, timeout, tmpdir):
         from src.models.baselines.authentic.landmark_cox import landmark_cox_curves
         curves = landmark_cox_curves(cd.train, cd.test, spec.landmark_spec,
                                      wb.eval_times)
+    elif arm in IN_PROCESS:
+        curves = survtd_curves(cd, spec, seed, IN_PROCESS[arm], wb.eval_times, epochs)
     else:
         path = os.path.join(tmpdir, f"{cohort_name}_{seed}.pt")
         if not os.path.exists(path):
@@ -128,6 +181,9 @@ def run_cell(cohort_name, arm, seed, epochs, timeout, tmpdir):
     # means `eval_times[k]`, so the in-memory axes are the right ones to score against
     # and nothing needs converting back. (Scaling them again here is exactly the bug
     # that put PBC2's second landmark at 194400 days on this runner's first run.)
+    # `wb.surv_labels_test` is built by iterating `cohort_data.test` in order, which is
+    # the same order `landmark_cox_curves` and `curves_from_model` iterate, so one
+    # label array serves every arm.
     res = evaluate_curves(curves, wb.surv_labels_test,
                           wb.pred_times, wb.eval_times,
                           cd.train, spec.landmark_spec)
