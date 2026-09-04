@@ -1,0 +1,264 @@
+{
+  "config": {
+    "cohorts": [
+      "pbc",
+      "framingham",
+      "cmapss"
+    ],
+    "arms": [
+      "km",
+      "landmark_cox",
+      "survtd",
+      "survtd_anchor_only",
+      "ddh",
+      "tcsr",
+      "tcsr_landmark",
+      "coxsig",
+      "ncde",
+      "deeptcsr_tcn"
+    ],
+    "seeds": [
+      42,
+      123,
+      456,
+      789,
+      101112
+    ],
+    "epochs": 25,
+    "timeout": 3600,
+    "out": "experiments/results/tier1/tier1_results.json"
+  },
+  "results": {
+    "pbc|km|42": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.16882327481109877,
+          "n_at_risk": 63,
+          "n_events": 32,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.17664692593406936,
+          "n_at_risk": 47,
+          "n_events": 18,
+          "n_dropped": 16
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|km|123": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.17503347811863942,
+          "n_at_risk": 63,
+          "n_events": 28,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.1717166478455267,
+          "n_at_risk": 47,
+          "n_events": 13,
+          "n_dropped": 16
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|km|456": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.15657789021942406,
+          "n_at_risk": 63,
+          "n_events": 24,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.1308864287240647,
+          "n_at_risk": 49,
+          "n_events": 11,
+          "n_dropped": 14
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|km|789": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.14813345830065078,
+          "n_at_risk": 63,
+          "n_events": 23,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.12146593562501695,
+          "n_at_risk": 49,
+          "n_events": 12,
+          "n_dropped": 14
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|km|101112": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.16915342776049072,
+          "n_at_risk": 63,
+          "n_events": 28,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.5,
+          "c_ipcw": 0.5,
+          "auc": 0.5,
+          "ibs": 0.14142924883352698,
+          "n_at_risk": 45,
+          "n_events": 12,
+          "n_dropped": 18
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|landmark_cox|42": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.8218849840255591,
+          "c_ipcw": 0.8326198434792302,
+          "auc": 0.8520802930044082,
+          "ibs": 0.08783735234029663,
+          "n_at_risk": 63,
+          "n_events": 32,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.8168724279835391,
+          "c_ipcw": 0.8372837530311831,
+          "auc": 0.9131194154541312,
+          "ibs": 0.10191083800558179,
+          "n_at_risk": 47,
+          "n_events": 18,
+          "n_dropped": 16
+        }
+      },
+      "wall_clock_s": 0.2
+    },
+    "pbc|landmark_cox|123": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.8024,
+          "c_ipcw": 0.80525999705789,
+          "auc": 0.800606894656291,
+          "ibs": 0.1184766518302385,
+          "n_at_risk": 63,
+          "n_events": 28,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.7824074074074074,
+          "c_ipcw": 0.7696274566980108,
+          "auc": 0.8597583852940127,
+          "ibs": 0.1136579189182983,
+          "n_at_risk": 47,
+          "n_events": 13,
+          "n_dropped": 16
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|landmark_cox|456": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.8671128107074569,
+          "c_ipcw": 0.8771330389158184,
+          "auc": 0.9333208859350041,
+          "ibs": 0.08176176763965419,
+          "n_at_risk": 63,
+          "n_events": 24,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.8297213622291022,
+          "c_ipcw": 0.8332374435159382,
+          "auc": 0.8832975612940307,
+          "ibs": 0.07928437858312479,
+          "n_at_risk": 49,
+          "n_events": 11,
+          "n_dropped": 14
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|landmark_cox|789": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.7625523012552301,
+          "c_ipcw": 0.7501287426008412,
+          "auc": 0.7057165099159795,
+          "ibs": 0.10322468026014281,
+          "n_at_risk": 63,
+          "n_events": 23,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.772189349112426,
+          "c_ipcw": 0.8444579758165988,
+          "auc": 0.8415118716872735,
+          "ibs": 0.07218427744749537,
+          "n_at_risk": 49,
+          "n_events": 12,
+          "n_dropped": 14
+        }
+      },
+      "wall_clock_s": 0.1
+    },
+    "pbc|landmark_cox|101112": {
+      "metrics": {
+        "L=0,H=365": {
+          "c_td": 0.8245915735167669,
+          "c_ipcw": 0.8439226237186445,
+          "auc": 0.885541736119344,
+          "ibs": 0.0884686619703083,
+          "n_at_risk": 63,
+          "n_events": 28,
+          "n_dropped": 0
+        },
+        "L=180,H=365": {
+          "c_td": 0.8489932885906041,
+          "c_ipcw": 0.8635515886516442,
+          "auc": 0.9003667562006752,
+          "ibs": 0.06799388052672152,
+          "n_at_risk": 45,
+          "n_events": 12,
+          "n_dropped": 18
+        }
+      },
+      "wall_clock_s": 0.1
+    }
+  },
+  "below_chance_alarms": []
+}

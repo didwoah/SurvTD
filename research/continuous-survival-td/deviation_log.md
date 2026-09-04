@@ -1668,3 +1668,65 @@ in its column. **Discrimination and calibration fail independently, and a table
 reporting only the first cannot be trusted.**
 
 - `decided-after-results`
+
+---
+
+**[x] R-1 (result, not defect). PBC2, all 10 arms x 5 seeds, one scorer: the TD term
+contributes nothing, and SurvTD does not lead.**
+
+The first Table-1 column produced on a pipeline with D15-D20 repaired.
+
+| arm | `C^td` L=0 | `C^td` L=180 |
+|---|---|---|
+| KM (leak gate) | 0.5000 +- 0.0000 | 0.5000 +- 0.0000 |
+| **Dynamic-DeepHit** | **0.8490 +- 0.0225** | 0.7210 +- 0.0744 |
+| SurvTD (ours, alpha=0.5) | 0.8428 +- 0.0336 | 0.8048 +- 0.0569 |
+| SurvTD anchor-only (alpha=1) | 0.8427 +- 0.0272 | 0.8044 +- 0.0559 |
+| TCSR, landmark arm | 0.8368 +- 0.0229 | **0.8226 +- 0.0513** |
+| TCSR | 0.8349 +- 0.0350 | 0.8061 +- 0.0654 |
+| Landmark Cox | 0.8157 +- 0.0339 | 0.8100 +- 0.0288 |
+| NCDE | 0.7798 +- 0.0252 | 0.6184 +- 0.0391 |
+| DeepTCSR tcn | 0.7242 +- 0.0415 | 0.7694 +- 0.0576 |
+| CoxSig | n/a (D17) | **0.4894 +- 0.1037** [4 seeds, 1 NaN] |
+
+**Q1 -- "does TD help at all?" -- is answered NO on PBC2.** Paired by seed:
+
+| landmark | full | anchor-only | paired delta | wins | t |
+|---|---|---|---|---|---|
+| L = 0 | 0.8428 | 0.8427 | **+0.0000 +- 0.0146** | 4/5 | +0.01 |
+| L = 180 | 0.8048 | 0.8044 | **+0.0003 +- 0.0130** | 2/5 | +0.06 |
+
+Per-seed deltas at L = 0 are `+0.0016, +0.0128, +0.0058, -0.0251, +0.0051` -- sign
+inconsistent, and the means agree to four decimal places. SurvTD *does* beat Landmark
+Cox at L = 0 by +0.0271 (5/5 seeds, paired sd 0.0085 against marginal sds of 0.034, so
+the seed variation is common-mode and the effect is real) -- **but the anchor-only
+control beats it by the same margin.** What is winning on PBC2 is the backbone and the
+Cramer anchor, not the temporal-difference term the paper is about.
+
+This is the question Kill Criterion 5 was written to ask. D15 invalidated the previous
+attempt; this is the answer on a repaired pipeline. It is one cohort -- C-MAPSS
+(controlled irregularity) and Framingham are still running and are where a Delta-t
+effect would be expected to show if it exists.
+
+**SurvTD does not lead PBC2 on either landmark**: Dynamic-DeepHit is ahead at L = 0 and
+TCSR's landmark arm at L = 180. Worth stating that DDH only reaches 0.8490 *because of*
+the D16 repair; the leaked worker would have understated the strongest competitor.
+
+**CoxSig must be reported as failed on PBC2, not scored.** Undefined at L = 0 (D17),
+0.4894 at L = 180 across four seeds with the fifth raising
+`ValueError: Input estimate contains NaN`. Candidate mechanism, measured: a level-2
+signature has `d + d^2` terms, so the design matrix width scales quadratically in path
+dimension while the ridge stays at `alphas = 1e-5`.
+
+| cohort | signature features | train subjects | features / subject | observed |
+|---|---|---|---|---|
+| Framingham | 380 | 2660 | **0.14** | stable, 0.6145 / 0.6518 |
+| PBC2 | 272 | 187 | **1.45** | chance, then NaN |
+| C-MAPSS | 650 | 156 | **4.17** | *prediction: worse than PBC2* |
+
+The C-MAPSS row is a **standing prediction**, not a result. It cuts against the
+existing NASA parity figure of 0.8656, so if C-MAPSS CoxSig comes back healthy the
+overparameterisation story is wrong and the difference localises to the loader and
+scorer instead. Recorded before the cell ran.
+
+- `decided-after-results`

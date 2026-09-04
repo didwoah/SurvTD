@@ -1,0 +1,94 @@
+{
+  "config": {
+    "cohorts": [
+      "framingham"
+    ],
+    "arms": [
+      "survtd",
+      "survtd_anchor_only"
+    ],
+    "seeds": [
+      42,
+      123,
+      456,
+      789,
+      101112
+    ],
+    "epochs": 25,
+    "timeout": 3600,
+    "out": "experiments/results/tier1/tier1_framingham_survtd.json",
+    "resume": true
+  },
+  "results": {
+    "framingham|survtd|42": {
+      "metrics": {
+        "L=2190,H=3650": {
+          "c_td": 0.753884280471651,
+          "c_ipcw": 0.7416929115888448,
+          "auc": 0.7608076242876793,
+          "ibs": 0.05735090689202687,
+          "n_at_risk": 839,
+          "n_events": 260,
+          "n_dropped": 48
+        },
+        "L=4380,H=3650": {
+          "c_td": 0.7551339175031345,
+          "c_ipcw": 0.7633419722802486,
+          "auc": 0.7943396596345383,
+          "ibs": 0.080072893759534,
+          "n_at_risk": 786,
+          "n_events": 207,
+          "n_dropped": 101
+        }
+      },
+      "wall_clock_s": 977.5
+    },
+    "framingham|survtd|123": {
+      "metrics": {
+        "L=2190,H=3650": {
+          "c_td": 0.7349494723287517,
+          "c_ipcw": 0.7265816779091115,
+          "auc": 0.7467277339978895,
+          "ibs": 0.06145824397426954,
+          "n_at_risk": 833,
+          "n_events": 253,
+          "n_dropped": 54
+        },
+        "L=4380,H=3650": {
+          "c_td": 0.7267974065220694,
+          "c_ipcw": 0.7381182870050247,
+          "auc": 0.7684252165223184,
+          "ibs": 0.08177357465919047,
+          "n_at_risk": 766,
+          "n_events": 186,
+          "n_dropped": 121
+        }
+      },
+      "wall_clock_s": 1075.1
+    },
+    "framingham|survtd|456": {
+      "metrics": {
+        "L=2190,H=3650": {
+          "c_td": 0.740405530271291,
+          "c_ipcw": 0.7281407421227652,
+          "auc": 0.7497513262599469,
+          "ibs": 0.059813650760973405,
+          "n_at_risk": 844,
+          "n_events": 241,
+          "n_dropped": 43
+        },
+        "L=4380,H=3650": {
+          "c_td": 0.7521946533275914,
+          "c_ipcw": 0.7521890724672134,
+          "auc": 0.7771268101976764,
+          "ibs": 0.07129252301961558,
+          "n_at_risk": 778,
+          "n_events": 175,
+          "n_dropped": 109
+        }
+      },
+      "wall_clock_s": 999.3
+    }
+  },
+  "below_chance_alarms": []
+}
