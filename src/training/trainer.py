@@ -71,13 +71,13 @@ def evaluate_val_score(
                 l = model.compute_loss_trajectory(
                     x, dts, events, tte, tau_event, mask=mask,
                     ablation_mode=ablation_mode, alpha_anchor=alpha_anchor,
-                    ipcw_weight=ipcw_w
+                    ipcw_weight=ipcw_w, event=bool(p['event'] > 0.5)
                 )
             elif model_type == "deeptcsr":
                 l = model.compute_loss_trajectory(
                     x, dts, events, tte, tau_event, mask=mask,
                     alpha_anchor=alpha_anchor,
-                    ipcw_weight=ipcw_w
+                    ipcw_weight=ipcw_w, event=bool(p['event'] > 0.5)
                 )
             elif model_type == "dynamic_deephit":
                 l = model.compute_loss([p])
@@ -163,7 +163,7 @@ def train_model(
                     l = model.compute_loss_trajectory(
                         x, dts, events, tte, tau_event, mask=mask,
                         ablation_mode=ablation_mode, alpha_anchor=alpha_anchor,
-                        ipcw_weight=ipcw_w
+                        ipcw_weight=ipcw_w, event=bool(p['event'] > 0.5)
                     )
                     batch_loss = batch_loss + l
                 batch_loss = batch_loss / max(1, len(batch_patients))
@@ -181,7 +181,7 @@ def train_model(
                     l = model.compute_loss_trajectory(
                         x, dts, events, tte, tau_event, mask=mask,
                         alpha_anchor=alpha_anchor,
-                        ipcw_weight=ipcw_w
+                        ipcw_weight=ipcw_w, event=bool(p['event'] > 0.5)
                     )
                     batch_loss = batch_loss + l
                 batch_loss = batch_loss / max(1, len(batch_patients))

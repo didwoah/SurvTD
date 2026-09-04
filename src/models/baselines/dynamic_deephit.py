@@ -49,7 +49,7 @@ class DynamicDeepHitModel(nn.Module):
         h = self.backbone(x, dts, mask)
         return self.head(h)
 
-    def compute_loss_trajectory(self, x, dts, events, tte, tau_event=None, mask=None):
+    def compute_loss_trajectory(self, x, dts, events, tte, tau_event=None, mask=None, event=None):
         """Computes Dynamic-DeepHit single trajectory L1 log-likelihood loss."""
         device = x.device
         hazard, survival, pmf, cdf = self.forward(x.unsqueeze(0), dts.unsqueeze(0), mask.unsqueeze(0) if mask is not None else None)
@@ -59,8 +59,8 @@ class DynamicDeepHitModel(nn.Module):
 
         # D15: `events` is an all-zero placeholder in every loader; the authoritative
         # flag arrives via tau_event (tte for an event, tte + 100 for a censored one).
-        has_event = (bool(torch.any(events > 0.5).item())
-                     or (tau_event is not None and float(tau_event) <= float(tte) + 1e-9))
+        has_event = (bool(event) if event is not None
+                     else bool(torch.any(events > 0.5).item()))
         times = torch.cumsum(dts, dim=0)
         rem_time = torch.clamp(float(tte) - times, min=0.0)
         k_bins = torch.clamp(torch.floor(rem_time / self.delta_s + 1e-6).long(), 0, self.K - 1)

@@ -545,6 +545,7 @@ def compute_multistep_lambda_returns(
     arm: str = "full",
     gamma_placement: str = "bootstrap",
     censoring_aware_target: bool = True,
+    event: bool = None,
 ):
     """
     Back-compatible delegate to `compute_lambda_returns`.
@@ -555,7 +556,8 @@ def compute_multistep_lambda_returns(
     """
     # D15: see src/models/survtd.py -- `events` is an all-zero placeholder; the
     # authoritative flag reaches us through tau_event (tte for an event).
-    has_event = bool(torch.any(events > 0.5).item()) or float(tau_event) <= float(tte) + 1e-9
+    has_event = (bool(event) if event is not None
+                 else bool(torch.any(events > 0.5).item()))
     return compute_lambda_returns(
         target_pmfs, target_survivals, dts, tte, has_event,
         lam=lam, delta_s=delta_s, K=K, censor_ipcw_weight=censor_ipcw_weight,

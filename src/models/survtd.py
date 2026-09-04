@@ -172,6 +172,7 @@ class SurvTDModel(nn.Module):
         lam: float = None,
         ipcw_weight: float = 1.0,
         ablation_mode: str = "full",
+        event: bool = None,
         alpha_anchor: float = None,
         return_parts: bool = False
     ):
@@ -210,7 +211,7 @@ class SurvTDModel(nn.Module):
                 pmf_tgt, surv_tgt, dts, events, tte, tau_event,
                 lam=lam, delta_s=self.delta_s, K=self.K, censor_ipcw_weight=ipcw_weight,
                 include_overflow=self.include_overflow,
-                arm=ablation_mode, gamma_placement=self.gamma_placement
+                arm=ablation_mode, gamma_placement=self.gamma_placement, event=event
             )
 
             # Cumulate over the K genuine bins only. With an explicit overflow
@@ -247,7 +248,8 @@ class SurvTDModel(nn.Module):
         # literally no ground truth and was pure self-distillation. Person-Period
         # (`trainer.py:85,199`) and Dynamic-DeepHit (`dynamic_deephit.py:90`) read the
         # trajectory flag and were unaffected, which is exactly the split in the results.
-        has_event = bool(torch.any(events > 0.5).item()) or float(tau_event) <= float(tte) + 1e-9
+        has_event = (bool(event) if event is not None
+                     else bool(torch.any(events > 0.5).item()))
         r = residual_times(dts, tte)
         if self.anchor_loss == "cramer":
             per_visit = censored_crps_anchor(

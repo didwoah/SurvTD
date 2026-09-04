@@ -99,7 +99,8 @@ class SurvTD_v2_Model(nn.Module):
         events: torch.Tensor,
         tte: float,
         tau_event: float,
-        mask: torch.Tensor = None
+        mask: torch.Tensor = None,
+        event: bool = None
     ):
         """
         Computes SurvTD-v2 loss for a single trajectory of length L.
@@ -125,8 +126,8 @@ class SurvTD_v2_Model(nn.Module):
         r = residual_times(dts, tte)  # (L,)
         # D15: `events` is an all-zero placeholder in every loader; the authoritative
         # flag arrives via tau_event (tte for an event, tte + 100 for a censored one).
-        has_event = (bool(torch.any(events > 0.5).item())
-                     or (tau_event is not None and float(tau_event) <= float(tte) + 1e-9))
+        has_event = (bool(event) if event is not None
+                     else bool(torch.any(events > 0.5).item()))
         k_target = torch.clamp((r / self.delta_s).long(), 0, self.K - 1)  # (L,)
 
         grid_k = torch.arange(self.K, device=device).unsqueeze(0)  # (1, K)

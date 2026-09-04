@@ -87,7 +87,7 @@ class DeepTCSRClampedModel(nn.Module):
 
     def compute_loss_trajectory(self, x, dts, events, tte, tau_event, mask=None,
                                 alpha_anchor: float = None, return_parts: bool = False,
-                                ipcw_weight: float = 1.0):
+                                ipcw_weight: float = 1.0, event: bool = None):
         """
         Computes 1-step backward consistency loss via clamped division.
         """
@@ -109,7 +109,8 @@ class DeepTCSRClampedModel(nn.Module):
             # otherwise EXP-05 measures a bug rather than the clamped operator.
             # D15: see src/models/survtd.py -- `events` is an all-zero placeholder; the
             # authoritative flag reaches us through tau_event (tte for an event).
-            has_event = bool(torch.any(events > 0.5).item()) or float(tau_event) <= float(tte) + 1e-9
+            has_event = (bool(event) if event is not None
+                         else bool(torch.any(events > 0.5).item()))
             r_np = residual_times(dts, tte).detach().cpu().numpy()
             gaps_np = interval_gaps(dts).detach().cpu().numpy()
 
