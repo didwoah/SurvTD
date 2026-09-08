@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>레슨 02: 수축 정리의 비밀과 타깃 네트워크 동결 (Theorem 1)</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div class="meta-bar">
+    <span>SM-TCSR 정규 커리큘럼 &bull; 레슨 02</span>
+    <span>기여 1: 아핀 크라메르 수축 이론 (Theorem 1)</span>
+  </div>
+
+  <h1>레슨 02: 수축 정리의 비밀과 타깃 네트워크 동결 (Theorem 1)</h1>
+  <p class="subtitle" style="font-size: 1.1rem; color: #555; margin-top: -10px;">
+    <em>"동결 타깃망(&theta;<sup>-</sup>)을 통한 내생적 할인율 아핀 상수화와 크라메르 수축의 수학적 증명"</em>
+  </p>
+
+  <h2>1. DeepTCSR이 &lambda; = 0에서 무너졌던 진짜 이유</h2>
+  <p>
+    선행 연구인 DeepTCSR (Bleistein et al., 2024) 논문의 Table 1을 보면, 다단계 파라미터 \(\lambda = 0\)(순수 1스텝 TD)일 때 성능이 <strong>0.474</strong>로 완전히 붕괴합니다.
+  </p>
+  <p>
+    이것은 나눗셈 폭발 때문이 아닙니다. 진짜 이유는 <strong>생존 할인율 \(\gamma_j = S_\theta(\Delta t_j)\) 하에서 벨만 연산자가 수축(Contraction)한다는 수학적 보장이 전혀 없었기 때문</strong>입니다.
+  </p>
+
+  <div class="callout warning">
+    <strong>내생적 할인율의 요동 (The Endogenous Discount Trap):</strong><br>
+    일반 강화학습(DQN 등)에서는 할인율이 \(\gamma = 0.99\)처럼 외생적 상수입니다.<br>
+    하지만 생존분석에서는 할인율 자체가 <strong>우리가 실시간으로 학습하고 있는 신경망의 출력값(생존 확률)</strong>입니다.<br>
+    가중치 \(\theta\)가 업데이트될 때마다 할인율 \(\gamma_j\)도 함께 요동치므로, 벨만 연산자는 비선형적으로 뒤틀려 발산(Divergence)에 빠지게 됩니다.
+  </div>
+
+  <h2>2. 타깃 네트워크 동결(&theta;<sup>-</sup>)을 통한 아핀 상수화</h2>
+  <p>
+    SM-TCSR의 해법은 매우 우아하고 엄밀합니다. 할인율을 계산하는 주체를 실시간 온라인 신경망 \(\theta\)에서 <strong>천천히 업데이트되는 동결 타깃 네트워크 \(\theta^-\)</strong>로 완전히 분리(Decoupling)한 것입니다:
+    \[
+      \gamma_j = S_{\theta^-}(\Delta t_j) = \text{const} \in [0, 1)
+    \]
+  </p>
+  <p>
+    타깃망을 동결하면, 현재 내부 루프에서 \(\gamma_j\)는 파라미터 \(\theta\)의 변화에 영향을 받지 않는 <strong>고정된 스칼라 상수</strong>가 됩니다. 이로 인해 비선형적이었던 벨만 매핑이 아름다운 <strong>아핀 연산자(Affine Operator)</strong>로 전환됩니다.
+  </p>
+
+  <h2>3. Theorem 1: 크라메르 메트릭 상의 아핀 엄밀 수축</h2>
+  <p>
+    우리는 이 구조 위에서 생존분석 역사상 최초로 다음 수축 정리를 증명했습니다:
+  </p>
+
+  <div class="callout theorem">
+    <strong>Theorem 1 (Affine Strict Cramér Contraction):</strong><br>
+    동결된 타깃 파라미터 \(\theta^-\)와 방문 간격 \(\Delta t_j > 0\)가 주어졌을 때, 1스텝 생존 벨만 연산자 \(\mathcal{T}_{\Delta t_j}\)는 두 확률분포 \(p, q\)에 대해 \(L_2\) 크라메르 거리 \(\|\cdot\|_{\mathcal{C}}\) 하에서 다음을 만족한다:
+    \[
+      \|\mathcal{T}_{\Delta t_j} p - \mathcal{T}_{\Delta t_j} q\|_{\mathcal{C}} \le \gamma_j \cdot \|p - q\|_{\mathcal{C}}
+    \]
+    이때 \(\Delta t_j > 0\)이고 위험률이 양수이므로 \(\gamma_j = S_{\theta^-}(\Delta t_j) < 1\)이며, 따라서 \(\mathcal{T}_{\Delta t_j}\)는 <strong>계수 \(\gamma_j\)를 갖는 엄밀한 수축 사상(Strict Contraction)</strong>이다.<br>
+    바나흐 고정점 정리(Banach Fixed-Point Theorem)에 의해, 고유한 불변 생존분포 \(p^*\)가 존재하며 기하급수적 속도로 수렴한다.
+  </div>
+
+  <h2>4. 인터랙티브 이해도 점검 퀴즈</h2>
+  <div class="quiz-box">
+    <div class="quiz-question">
+      Q2. SM-TCSR에서 할인율 &gamma;<sub>j</sub> = S(&Delta;t<sub>j</sub>)를 사용함에도 벨만 연산자가 엄밀하게 수축하는 핵심 이유는?
+    </div>
+    <ul class="quiz-options">
+      <li class="quiz-option" onclick="checkAnswer(this, true)">
+        타깃망으로 할인율을 고정하여 내부 루프를 아핀 변환으로 안정화함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        활성화 함수를 선형으로 제한해 파라미터 발산 현상을 원천 차단함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        생존 확률을 영점오로 강제 고정해 모델 추정 오차를 완전 제거함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        크라메르 거리 대신 쿨백 라이블러 발산을 채택하여 모델 최적화함
+      </li>
+    </ul>
+    <div id="quiz-feedback" class="quiz-feedback"></div>
+  </div>
+
+  <h2>요약 및 다음 레슨</h2>
+  <p>
+    타깃 네트워크 분리를 통해 할인율을 아핀 상수로 고정함으로써, 우리는 DeepTCSR이 실패했던 \(\lambda = 0\) 영역을 수학적으로 정복하고 <strong>Theorem 1 수축 보장</strong>을 완성했습니다.<br>
+    다음 레슨에서는 C51이 겪었던 '수축 척도와 학습 손실함수의 불일치'를 우리가 <strong>Cramér Distance Loss</strong>를 통해 어떻게 100% 일치시켰는지 살펴봅니다.
+  </p>
+
+  <footer>
+    <p>SM-TCSR 교육 커리큘럼 &bull; <a href="01_continuous_smdp_and_renewal_projection.html">&larr; 이전 레슨 01</a> &bull; <a href="03_loss_geometry_and_metric_identity.html">다음 레슨 03으로 이동 &rarr;</a></p>
+  </footer>
+
+  <script>
+    function checkAnswer(el, isCorrect) {
+      const feedback = document.getElementById('quiz-feedback');
+      const allOptions = document.querySelectorAll('.quiz-option');
+      allOptions.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+
+      if (isCorrect) {
+        el.classList.add('correct');
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = '#e8f5e9';
+        feedback.style.color = '#1b5e20';
+        feedback.textContent = '정답입니다! 동결 타깃 네트워크(θ⁻)로 할인율을 고정하여 내부 루프를 아핀 변환으로 유지함으로써 모듈러스 γ_j < 1의 엄밀한 크라메르 수축을 달성합니다.';
+      } else {
+        el.classList.add('incorrect');
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = '#ffebee';
+        feedback.style.color = '#b71c1c';
+        feedback.textContent = '오답입니다. 벨만 연산자가 수축하는 본질적인 이유는 동결 타깃망을 통해 할인율이 아핀 상수로 고정되기 때문입니다.';
+      }
+    }
+  </script>
+</body>
+</html>

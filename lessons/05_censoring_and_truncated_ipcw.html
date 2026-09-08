@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>레슨 05: 우측 중도절단의 극복과 Truncated IPCW 꼬리 완성</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div class="meta-bar">
+    <span>SM-TCSR 정규 커리큘럼 &bull; 레슨 05</span>
+    <span>기여 3: Truncated IPCW 중도절단 보정</span>
+  </div>
+
+  <h1>레슨 05: 우측 중도절단의 극복과 Truncated IPCW 꼬리 완성</h1>
+  <p class="subtitle" style="font-size: 1.1rem; color: #555; margin-top: -10px;">
+    <em>"강화학습에는 없는 생존분석 고유의 난제: 퇴원 및 추적 소실 환자를 편향 없이 다루는 방법"</em>
+  </p>
+
+  <h2>1. 강화학습과 생존분석의 결정적 차이: 중도절단(Right-Censoring)</h2>
+  <p>
+    바둑이나 비디오 게임 같은 일반 강화학습에서는 에피소드가 끝나면 무조건 승패(최종 보상)가 결정됩니다.
+  </p>
+  <p>
+    하지만 생존분석에서는 환자가 완치되어 퇴원하거나 다른 병원으로 전원을 가면 <strong>그 뒤에 언제 사망하는지 영영 알 수 없는 '우측 중도절단(Right-Censoring)'</strong>이 발생합니다. 연구 종료 시점 \(C_i\)에서 우리는 오직 하나의 사실만을 압니다:
+  </p>
+  <div class="callout theorem">
+    <strong>관측된 유일한 사실:</strong><br>
+    <em>"환자는 적어도 절단 시점 \(C_i\)까지는 무사히 생존해 있었다 (\(T_i > C_i\))."</em>
+  </div>
+
+  <h2>2. 기존 선행 연구들이 저지른 2가지 치명적 실수</h2>
+  <p>
+    기존의 생존 TD 연구들은 중도절단을 처리할 때 심각한 이론적 결함을 남겼습니다:
+  </p>
+  <ol>
+    <li><strong>치명적 생존 편향</strong>: 절단된 시점에서 추적이 끝났다고 해서 목표 확률을 0으로 만들어버리면, 모델은 살아있는 환자를 즉시 사망한 것으로 학습하게 됩니다.</li>
+    <li><strong>자기 복제 진공 (Self-Copying)</strong>: DeepTCSR 등은 마지막 시점에서 타깃망의 자체 예측값 <code>target_pmfs[-1]</code>을 그대로 복사했습니다. 이는 모델이 스스로 생성한 허상을 그대로 베끼는 것으로, 새로운 관측 데이터가 주는 정보량이 0인 무의미한 부트스트랩이었습니다.</li>
+  </ol>
+
+  <h2>3. SM-TCSR의 해법: 하드 생존 제약과 Truncated IPCW</h2>
+  <p>
+    SM-TCSR은 실제 관측된 "중도절단 시점까지 생존했다"는 제약을 <strong>하드 바운더리 제약(Hard Boundary Constraint)</strong>으로 강제합니다:
+  </p>
+  <div class="callout lemma">
+    <strong>하드 절단 타깃 (Truncated Censoring Target):</strong><br>
+    1. <strong>과거 질량 제거</strong>: 잔여 시간 \(s \le C_i\)에 해당하는 확률 질량을 전부 0으로 제거합니다 (환자가 이미 살아서 지나온 시간이기 때문).<br>
+    2. <strong>미래 꼬리 재정규화</strong>: 남은 미래 영역 \(s > C_i\)의 꼬리 분포를 동결 타깃망 \(\theta^-\)의 조건부 형상으로 채운 뒤 총합이 1이 되도록 재정규화합니다.<br>
+    3. <strong>Truncated IPCW 가중치</strong>: 환자가 관측될 확률의 역수(\(1 / \hat{G}(C_i)\))를 표본 가중치로 부여하여 관측 선택 편향을 수학적으로 완전히 상쇄합니다.
+  </div>
+
+  <h2>4. 인터랙티브 이해도 점검 퀴즈</h2>
+  <div class="quiz-box">
+    <div class="quiz-question">
+      Q5. SM-TCSR이 우측 중도절단(Right-Censoring) 환자의 종단 타깃 분포를 구성할 때 적용하는 수학적 원리는?
+    </div>
+    <ul class="quiz-options">
+      <li class="quiz-option" onclick="checkAnswer(this, true)">
+        절단 시점 이전 질량을 제거하고 남은 꼬리 분포를 재정규화함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        중도절단된 환자의 모든 과거 관측 시계열 기록을 완전 폐기함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        사망 사건이 이미 발생한 것으로 보아 즉시 디락 타깃 부여함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        관측되지 않은 미래 생존 확률을 무조건 영으로 강제 수렴시킴
+      </li>
+    </ul>
+    <div id="quiz-feedback" class="quiz-feedback"></div>
+  </div>
+
+  <h2>요약 및 다음 레슨</h2>
+  <p>
+    SM-TCSR은 하드 생존 제약과 Truncated IPCW 꼬리 완성을 통해 중도절단 환자의 데이터에서도 <strong>편향 없는 엄밀한 일관성</strong>을 확보했습니다.<br>
+    드디어 마지막 레슨 06에서는 <strong>Linear Cox vs TSCR vs SM-TCSR 3파전 대결 결과</strong>와 함께, 실제 병원 현장에서 의료진을 괴롭히는 <strong>임상 알람 피로(Alarm Fatigue)를 25% 이상 억제한 실증적 성과</strong>를 살펴봅니다.
+  </p>
+
+  <footer>
+    <p>SM-TCSR 교육 커리큘럼 &bull; <a href="04_duration_geometric_lambda_returns.html">&larr; 이전 레슨 04</a> &bull; <a href="06_the_showdown_and_alarm_fatigue.html">마지막 레슨 06으로 이동 &rarr;</a></p>
+  </footer>
+
+  <script>
+    function checkAnswer(el, isCorrect) {
+      const feedback = document.getElementById('quiz-feedback');
+      const allOptions = document.querySelectorAll('.quiz-option');
+      allOptions.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+
+      if (isCorrect) {
+        el.classList.add('correct');
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = '#e8f5e9';
+        feedback.style.color = '#1b5e20';
+        feedback.textContent = '정답입니다! 환자가 절단 시점까지 생존했다는 하드 제약에 따라 과거 영역을 0으로 제거하고 남은 미래 꼬리를 타깃망 형상으로 재정규화하여 편향을 없앱니다.';
+      } else {
+        el.classList.add('incorrect');
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = '#ffebee';
+        feedback.style.color = '#b71c1c';
+        feedback.textContent = '오답입니다. 중도절단 처리의 핵심은 살아있던 과거 구간 질량을 제거하고 미래 꼬리를 동결 타깃망의 조건부 확률로 재정규화하는 것입니다.';
+      }
+    }
+  </script>
+</body>
+</html>

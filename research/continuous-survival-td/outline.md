@@ -10,7 +10,7 @@
 
 | Section | Title | Page Target | Carried Claims | Primary Exhibits |
 | :--- | :--- | :---: | :---: | :---: |
-| **§1** | **Introduction** | **1.25 pp** | $C_0$ | **`fig:1`** (Teaser: Divergence vs. Renewal, Alarm Stability) |
+| **§1** | **Introduction** | **1.25 pp** | $C_0$ | **`fig:1`** (Teaser: Continuous Formulation, Alarm Stability) |
 | **§2** | **Related Work & Lineage** | **0.75 pp** | $C_0$ | Comparative Lineage Table |
 | **§3** | **The SurvTD Framework** | **2.50 pp** | $C_1, C_2$ | **`thm:1`** (Contraction), **`fig:2`** (Horizon Invariance / Variance) |
 | **§4** | **Experimental Evaluation** | **3.00 pp** | $C_3, C_4$ | **`tab:1`** (Benchmark Discrimination), **`tab:2`** (Alarm Fatigue) |
@@ -26,15 +26,15 @@
 - **¶1 (Setting & High Stakes)**: Continuous dynamic survival analysis in intensive care telemetry (MIMIC-IV) and industrial predictive maintenance. The necessity of real-time lifetime distribution updates under irregular sampling.
 - **¶2 (The Core Dilemma)**: 
   - *Branch A (Terminal Likelihood)*: Dynamic-DeepHit optimizes final outcomes; predictions oscillate wildly across consecutive hours, causing threshold thrashing and bedside alarm fatigue.
-  - *Branch B (Discrete Consistency)*: TCSR/DeepTCSR enforces consistency but assumes unit steps ($\Delta t = 1$). Under continuous time, renormalizing via division by survival probability $p / S(\Delta t)$ explodes to $\infty$ as hazard escalates ($S \to 0$), collapsing predictions into an uninformative uniform distribution.
-- **¶3 (The SurvTD Insight & Figure 1 Reference)**: Presenting `fig:1`. Reframing survival transition from multiplicative division into an additive renewal shift ($\Phi_{+\Delta t}$) and categorical projection ($\Pi$) with duration-discounted mixture weighting ($\gamma_j$). Core claim $C_0$ stated in 21 words.
+  - *Branch B (The Discrete Frontier)*: Pioneer temporal consistency works (TCSR, DeepTCSR) demonstrated the value of TD learning on uniform discrete steps ($\Delta t = 1$). However, formulating consistency directly for continuous irregular telemetry remained an open problem: naive continuous extensions via Bayes conditioning introduce severe numerical instability ($S \to 0$), while theoretical convergence conditions under non-linear representations remained unformalized.
+- **¶3 (The SurvTD Insight & Figure 1 Reference)**: Presenting `fig:1`. Reframing survival transition through continuous renewal shifts ($\Phi_{+\Delta t}$) and categorical projections ($\Pi$), establishing the first formal affine contraction guarantee under target network decoupling. Core claim $C_0$ stated in 21 words.
 - **¶4 (Contributions Summary)**: The 4 falsifiable contribution bullets from `claim-tree.json`.
 
 ---
 
 ### §2. Related Work & Lineage (0.75 Pages)
 - **¶1 (Dynamic Survival Analysis)**: Landmark models (Landmarking, Dynamic-DeepHit, CoxSig). The limitation: lack of temporal consistency operators.
-- **¶2 (Temporal Consistency in Survival)**: TCSR (Maystre & Marlin 2022), DeepTCSR (2024). Lineage analysis: why unit-step division was inherited and why it fails under continuous irregular time.
+- **¶2 (Temporal Consistency in Survival)**: TCSR (Maystre & Marlin 2022), DeepTCSR (2024). Lineage analysis: honoring their pioneering role in discrete TD consistency, explaining why continuous irregular time was left open, and demonstrating how continuous renewal shifts overcome the limitations of naive Bayes conditioning.
 - **¶3 (Distributional RL & Continuous-Time MDPs)**: C51 (Bellemare et al. 2017) and Bradtke & Duff (1994, SMDP). Clear demarcation: survival renewal is additive translation in remaining time without additive reward, discounted by endogenous survival probability under right-censoring.
 
 ---
@@ -73,7 +73,7 @@
 - **Table 3 (`tab:3`)**: Complete Factorial Ablation Matrix.
   - **NC-A1 (Discount Ablation)**: Setting $\gamma_j = S(\delta_s)$ destroys duration scaling $\to$ performance drops by 0.028 in AUC.
   - **NC-A2 (Shift Ablation)**: Setting $\Phi_{+\delta_s}$ destroys continuous renewal alignment $\to$ performance drops by 0.031 in AUC.
-  - **NC-A3 (Clamped Division Comparison)**: Clamped division $p / \max(S, 10^{-3})$ produces gradient explosion and instability in high-risk strata.
+  - **NC-A3 (Clamped Division Comparison)**: Clamped naive Bayes division $p / \max(S, 10^{-3})$ produces gradient instability in high-risk strata.
   - **NC-B (Within-Patient Permutation)**: Scrambling $\Delta t_j$ within patient trajectories eliminates performance gains, proving sensitivity to continuous temporal alignment.
   - **NC-C (Horizon Matching Sweep)**: Duration-geometric $\lambda^{\Delta t / \delta_s}$ maintains stable performance across 2x subsampling, while count-geometric $\lambda^k$ degrades.
 
@@ -95,13 +95,13 @@ Reviewers read in this exact sequence: **Title $\to$ Abstract $\to$ Figure 1 $\t
   │
   ▼
 [Abstract]
-Identifies the division divergence problem ($p/S \to \infty$) -> states renewal shift + categorical projection -> reports $\ge 0.025$ AUC gain & $\ge 25\%$ alert jitter reduction -> notes scope boundary.
+Identifies discrete unit-step barrier & lack of convergence theory -> states renewal shift + categorical projection -> reports $\ge 0.025$ AUC gain & $\ge 25\%$ alert jitter reduction -> notes scope boundary.
   │
   ▼
 [Figure 1]
 Renders C0 visually:
-- Left: Mathematical mechanism (Divergence of $p/S$ vs. Contractive renewal mixture).
-- Right: Downstream clinical impact (Threshold thrashing & alarm fatigue in DeepTCSR vs. Stable monotonic hazard in SurvTD).
+- Left: Continuous formulation mechanism (Discrete grid limitation vs. Continuous contractive renewal mixture).
+- Right: Downstream clinical impact (Threshold thrashing & alarm jitter in Dynamic-DeepHit vs. Stable monotonic hazard in SurvTD).
   │
   ▼
 [Table 1]

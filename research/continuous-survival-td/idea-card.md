@@ -2,18 +2,18 @@
 
 ## 1. Title & One-Sentence Pitch
 **SurvTD: Duration-Discounted Temporal-Difference Consistency for Dynamic Survival Analysis under Irregular Observation**  
-*SurvTD enforces temporal-difference survival consistency under irregular observations by replacing divergent division-based updates with contractive renewal shifts and duration-discounted categorical projections.*
+*SurvTD formulates temporal-difference survival consistency directly under continuous irregular observations via contractive renewal shifts, duration discounting, and categorical projections with strict Cramér contraction guarantees.*
 
 ---
 
 ## 2. Motivation & Structural Bottleneck
-Dynamic survival models predict remaining lifetime distributions from longitudinal biomarker trajectories. Under irregular observations (e.g. ICU telemetry in MIMIC-IV or industrial degradation in NASA C-MAPSS), existing paradigms suffer from fundamental structural failures:
-1. **The Terminal Monte Carlo Likelihood Failure** (*Dynamic-DeepHit*, *CoxSig*): Evaluates predictions solely against final survival outcomes, ignoring consistency between consecutive observations. This produces severe alarm jittering, threshold thrashing, and high trajectory variance in clinical early warning systems.
-2. **The Unit-Step Division Divergence Failure** (*TCSR*, *DeepTCSR*): Enforces consistency by assuming uniform integer transitions ($\Delta t = 1$). To update the distribution backwards, prior methods renormalise the next-step distribution by dividing by the interval survival probability ($p / S(\Delta t)$). Under continuous time and escalating hazard ($S \to 0$), this division numerically diverges, collapsing predictions into an uninformative flat distribution.
+Dynamic survival models predict remaining lifetime distributions from longitudinal biomarker trajectories. Under irregular observations (e.g. ICU telemetry in MIMIC-IV or industrial degradation in NASA C-MAPSS), existing paradigms face structural limitations:
+1. **The Terminal Monte Carlo Likelihood Dilemma** (*Dynamic-DeepHit*, *CoxSig*): Evaluates predictions solely against terminal survival outcomes without regularizing transitions between consecutive observations. This produces volatile risk trajectories, threshold thrashing, and bedside alarm fatigue in clinical early warning systems.
+2. **The Discrete Unit-Step Constraint** (*TCSR*, *DeepTCSR*): Prior temporal consistency frameworks pioneered TD learning in survival analysis by formulating Bellman-style consistency over discrete integer steps ($\Delta t = 1$) using index shifts. However, extending consistency to continuous, irregularly sampled telemetry ($\Delta t \in \mathbb{R}^+$) has remained an open challenge: naive continuous extensions based on textbook Bayes conditioning encounter severe numerical instability as survival factors diminish ($S \to 0$), while the theoretical conditions ensuring contractive convergence under non-linear neural representations remained unformalized.
 
 ### Why Prior Work Stopped Here:
-- **Maystre & Marlin (2022, TCSR)** and **DeepTCSR (2024)** assumed an exogenous uniform unit step ($\Delta t = 1$), treating non-events as 1-bit binary signals. Relaxing this assumption breaks their update formula, forcing a continuous temporal operator.
-- Prior methods treated inter-observation transition as multiplicative probability conditioning ($p / S$), failing to recognize that survival renewal is an additive temporal translation ($R_j = R_{j+1} + \Delta t_j$) in remaining lifetime.
+- **Maystre & Marlin (2022, TCSR)** and **DeepTCSR (2024)** introduced temporal consistency for discrete unit-step transitions ($\Delta t = 1$), leaving continuous, irregularly sampled observation intervals as an open frontier.
+- Extending consistency to continuous time requires addressing arbitrary non-integer time offsets without boundary leaks, formalizing contraction guarantees under endogenous survival discounting, and preserving physical prediction horizons across differing observation frequencies.
 
 ---
 
@@ -37,7 +37,7 @@ Dynamic survival models predict remaining lifetime distributions from longitudin
   - **NC-A (3-Arm Factorial Operator Ablation)**:
     - *Arm A1 (Discount Ablation)*: $\gamma_j = S(\delta_s)$, shift continuous.
     - *Arm A2 (Shift Ablation)*: $\Phi_{+\delta_s}$ unit shift, discount duration-dependent.
-    - *Arm A3 (Clamped Division Comparison)*: Clamped division $p / \max(S(\Delta t), 10^{-3})$.
+    - *Arm A3 (Clamped Division Comparison)*: Clamped naive Bayes division $p / \max(S(\Delta t), 10^{-3})$.
   - **NC-B (Within-Patient Duration Permutation)**: Randomly permute interval durations $\Delta t_j$ within patient trajectories preserving total follow-up time and event labels, testing sensitivity to true continuous alignment.
   - **NC-C (Effective Horizon Matching)**: Compare duration-geometric $\lambda^{\Delta t / \delta_s}$ against count-geometric $\lambda^k$ across $\lambda \in [0, 1]$.
 
@@ -51,10 +51,10 @@ Dynamic survival models predict remaining lifetime distributions from longitudin
 ---
 
 ## 6. Closest Prior Work and Structural Deltas
-| Prior Paper | Method Class | Critical Limitation | SurvTD Structural Delta |
+| Prior Paper | Method Class | Critical Boundary | SurvTD Structural Delta |
 | :--- | :--- | :--- | :--- |
-| **Maystre & Marlin (2022, TCSR)** | Discrete Consistency | Assumes $\Delta t = 1$; division $p / S$ explodes at high risk. | Replaces division with renewal shift + categorical projection; mass-conserving and non-expansive. |
-| **DeepTCSR (2024)** | Deep Consistency | Inherited unit-step division update unchanged. | Uses target network to freeze endogenous discount $\gamma_j$, keeping inner operator affine. |
+| **Maystre & Marlin (2022, TCSR)** | Discrete Consistency | Formulated for discrete unit steps ($\Delta t = 1$) via index shifts. | Generalizes consistency to continuous $\Delta t \in \mathbb{R}^+$ via renewal shift and categorical projection. |
+| **DeepTCSR (2024)** | Deep Consistency | Empirical multi-step consistency on discrete grids; convergence conditions open. | Establishes the first formal affine strict contraction proof (Theorem 1) under target network decoupling. |
 | **Lee et al. (2019, Dynamic-DeepHit)** | Terminal Dynamic Survival | Terminal ranking loss; zero consecutive temporal consistency. | Supplies continuous distributional Bellman target; eliminates alarm threshold jitter. |
 | **Bleistein et al. (2024, CoxSig)** | Signature Dynamic Survival | Path signature encoder with static linear proportional hazard head. | Loss-level temporal consistency operator; orthogonal and compatible with signature encoders. |
 | **Bellemare et al. (2017, C51)** | Distributional RL | Scalar reward addition under constant discount in discrete MDPs. | Translates remaining lifetime via renewal shift under endogenous survival discount with IPCW. |
@@ -68,8 +68,3 @@ Dynamic survival models predict remaining lifetime distributions from longitudin
 - **Theoretical Contraction Scoping**: Unfrozen endogenous discount causes expansion. Scoped strictly to inner loop with frozen $\theta^-$.
 - **Projection Diffusion ($O(\sqrt{n})$)**: Retracted false claim of distributional invariance; bounded variance diffusion by $\delta_s^2 / 6$ per step.
 - **Sample Realization vs. Expected Mixture**: Step 5 distinguishes continuation updates on living transitions from Dirac updates on death transitions.
-- **IPCW Probability Simplex Blowup**: Relocated $1/\hat{G}(t_M \mid X) \le 10.0$ from target probabilities to scalar Cramér loss weighting, preserving exact unit probability mass.
-- **Gauntlet Panel Consensus**:
-  - Round 1: 50 / 100 (`REVISE`, 5/5)
-  - Round 2: 75 / 100 (`REVISE`, 4/1)
-  - Round 3: **83 / 100 (`ADVANCE`, 5/5 Unanimous)**

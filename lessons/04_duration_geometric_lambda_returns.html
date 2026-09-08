@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>레슨 04: 지속시간 기하 다단계 TD(&lambda;)와 시간 지평선 불변성</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div class="meta-bar">
+    <span>SM-TCSR 정규 커리큘럼 &bull; 레슨 04</span>
+    <span>기여 2: 지속시간 기하 &lambda;-Return 및 시계 불변성</span>
+  </div>
+
+  <h1>레슨 04: 지속시간 기하 다단계 TD(&lambda;)와 시간 지평선 불변성</h1>
+  <p class="subtitle" style="font-size: 1.1rem; color: #555; margin-top: -10px;">
+    <em>"불규칙한 샘플링 속도에서도 동일한 부트스트랩 반감기를 보장하는 연속형 지수 감쇄"</em>
+  </p>
+
+  <h2>1. 이산형 &lambda;<sup>k</sup>의 치명적 한계: 시간 왜곡</h2>
+  <p>
+    전통적인 강화학습의 \(\text{TD}(\lambda)\)는 스텝 수 \(k\)에 따라 \(\lambda^k\)로 지수 감쇄합니다.
+  </p>
+  <p>
+    하지만 관측 주기가 불규칙한 의료 데이터에서는 치명적인 모순이 발생합니다:
+  </p>
+  <ul>
+    <li>환자 A: 1시간 간격으로 5회 방문 (경과 시간: 5시간) &rarr; 감쇄율 \(\lambda^5\)</li>
+    <li>환자 B: 24시간 간격으로 5회 방문 (경과 시간: 120시간) &rarr; 감쇄율 \(\lambda^5\)</li>
+  </ul>
+  <p>
+    이산형 \(\lambda^k\)는 경과 시간이 5시간이든 120시간이든 똑같이 \(\lambda^5\)로 감쇄시킵니다! 이로 인해 <strong>데이터의 관측 빈도에 따라 부트스트랩되는 미래 시간의 물리적 지평선(Temporal Horizon)이 심각하게 왜곡</strong>됩니다.
+  </p>
+
+  <h2>2. 지속시간 기하 감쇄 (Duration-Geometric Decay)</h2>
+  <p>
+    SM-TCSR은 이 문제를 해결하기 위해 <strong>지속시간 기하 감쇄식</strong>을 세계 최초로 정식화했습니다:
+    \[
+      \lambda_j = \lambda^{\frac{\Delta t_j}{\delta_s}}
+    \]
+  </p>
+  <div class="callout theorem">
+    <strong>시간 지평선 불변성 (Bootstrapping Horizon Invariance):</strong><br>
+    기본 시간 단위 \(\delta_s = 1\text{시간}\)일 때, 24시간 뒤에 방문한 환자(\(\Delta t_j = 24\))는 정확히 \(\lambda^{24}\)만큼 감쇄됩니다.<br>
+    이로 인해 부트스트랩 신뢰도가 절반으로 줄어드는 **유효 시간 반감기(Temporal Half-life)**는 관측 주기에 무관하게 물리적 시간 상수로 고정됩니다:
+    \[
+      t_{1/2} = \frac{\delta_s \ln(0.5)}{\ln \lambda} = \text{const}
+    \]
+  </div>
+
+  <h2>3. 다단계 후진 재귀식 (Backward Recursion)</h2>
+  <p>
+    전체 환자 궤적 \(\{t_0, t_1, \dots, t_L\}\)에 대해, 타깃 수명 분포 \(G_j\)는 다음과 같이 후진 재귀로 깔끔하게 계산됩니다:
+    \[
+      G_j = (1 - \lambda_j) \mathcal{T}_{\Delta t_j} p_{\theta^-, j} + \lambda_j \Pi \Phi_{+\Delta t_j} G_{j+1}
+    \]
+  </p>
+  <ul>
+    <li>\(\lambda = 0\)일 때: 순수 1스텝 벨만 타깃 \(G_j = \mathcal{T}_{\Delta t_j} p_{\theta^-, j}\) (Theorem 1 수축 보장).</li>
+    <li>\(\lambda = 1\)일 때: 종단 시점까지 전이되어 실제 관측된 사건 시점 디락 타깃으로 환원(Exact Monte-Carlo).</li>
+  </ul>
+
+  <h2>4. 인터랙티브 이해도 점검 퀴즈</h2>
+  <div class="quiz-box">
+    <div class="quiz-question">
+      Q4. 불규칙 시계열에서 이산형 감쇄 &lambda;<sup>k</sup> 대신 지속시간 기하 감쇄 &lambda;<sub>j</sub> = &lambda;<sup>&Delta;t<sub>j</sub> / &delta;<sub>s</sub></sup>를 사용하는 이유는?
+    </div>
+    <ul class="quiz-options">
+      <li class="quiz-option" onclick="checkAnswer(this, true)">
+        방문 주기와 무관하게 부트스트랩 시계를 불변으로 유지함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        신경망 초기화 편향을 제거해 학습 수렴 속도를 가속화함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        환자의 활력징후 관측 결측치를 정밀한 보간법으로 대체함
+      </li>
+      <li class="quiz-option" onclick="checkAnswer(this, false)">
+        역전파 과정에서 손실함수 그래디언트 폭발을 원천 방지함
+      </li>
+    </ul>
+    <div id="quiz-feedback" class="quiz-feedback"></div>
+  </div>
+
+  <h2>요약 및 다음 레슨</h2>
+  <p>
+    지속시간 기하 감쇄는 관측 주기가 요동치는 불규칙 환경에서도 <strong>물리적 시간 축에서의 지평선 불변성</strong>을 수학적으로 보장합니다.<br>
+    다음 레슨에서는 일반 강화학습에는 없는 생존분석 고유의 거대한 장벽인 <strong>우측 중도절단(Right-Censoring)</strong>을 Truncated IPCW로 해결하는 원리를 배웁니다.
+  </p>
+
+  <footer>
+    <p>SM-TCSR 교육 커리큘럼 &bull; <a href="03_loss_geometry_and_metric_identity.html">&larr; 이전 레슨 03</a> &bull; <a href="05_censoring_and_truncated_ipcw.html">다음 레슨 05로 이동 &rarr;</a></p>
+  </footer>
+
+  <script>
+    function checkAnswer(el, isCorrect) {
+      const feedback = document.getElementById('quiz-feedback');
+      const allOptions = document.querySelectorAll('.quiz-option');
+      allOptions.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+
+      if (isCorrect) {
+        el.classList.add('correct');
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = '#e8f5e9';
+        feedback.style.color = '#1b5e20';
+        feedback.textContent = '정답입니다! 지속시간 비례 지수 감쇄를 통해 환자의 방문 주기와 무관하게 일정한 물리적 부트스트랩 시간 반감기를 유지합니다.';
+      } else {
+        el.classList.add('incorrect');
+        feedback.style.display = 'block';
+        feedback.style.backgroundColor = '#ffebee';
+        feedback.style.color = '#b71c1c';
+        feedback.textContent = '오답입니다. 지속시간 기하 감쇄의 목적은 불규칙 방문 주기 환자들 사이에서 물리적 부트스트랩 시계(Horizon)의 불변성을 유지하는 것입니다.';
+      }
+    }
+  </script>
+</body>
+</html>

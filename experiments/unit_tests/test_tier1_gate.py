@@ -225,6 +225,52 @@ class TestLandmarkCox(unittest.TestCase):
             self.assertGreater(m["c_td"], 0.6, f"{key} scored {m['c_td']:.4f}")
             self.assertNotAlmostEqual(m["c_td"], 0.5, places=6)
 
+class TestD19ResumeRederivesAlarms(unittest.TestCase):
+    """A cached cell must be re-checked against today's rules, not yesterday's.
+
+    `run_tier1.py --resume` used to carry the stored `below_chance_alarms` list
+    forward verbatim. The IBS band was added to the runner after the pbc/cmapss
+    process had already launched, so 61 cells were scored with no IBS check and every
+    later resume preserved that hole -- `cmapss|survtd|42` sat at IBS 0.38/0.32/0.26,
+    three landmarks out of band, with nothing in the alarm list.
+    """
+
+    @staticmethod
+    def _runner():
+        import importlib.util
+        path = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "run_tier1.py")
+        spec = importlib.util.spec_from_file_location("run_tier1_under_test", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_ibs_out_of_band_is_flagged(self):
+        cell = {"L=125,H=50": {"c_td": 0.72, "ibs": 0.3818}}
+        alarms = self._runner().cell_alarms("cmapss|survtd|42", cell)
+        self.assertEqual(len(alarms), 1)
+        self.assertIn("ibs=0.3818", alarms[0])
+
+    def test_below_chance_is_flagged(self):
+        cell = {"L=180,H=365": {"c_td": 0.3180, "ibs": 0.19}}
+        alarms = self._runner().cell_alarms("pbc|coxsig|789", cell)
+        self.assertEqual(len(alarms), 1)
+        self.assertIn("c_td=0.3180", alarms[0])
+
+    def test_both_rules_fire_on_one_landmark(self):
+        cell = {"L=150,H=50": {"c_td": 0.4896, "ibs": 0.3196}}
+        alarms = self._runner().cell_alarms("cmapss|survtd|42", cell)
+        self.assertEqual(len(alarms), 2)
+
+    def test_healthy_cell_is_silent(self):
+        cell = {"L=0,H=365": {"c_td": 0.8428, "ibs": 0.19}}
+        self.assertEqual(self._runner().cell_alarms("pbc|survtd|42", cell), [])
+
+    def test_nan_does_not_trip_either_rule(self):
+        """A failed arm reports NaN; that is an error, not a defect alarm."""
+        cell = {"L=0,H=365": {"c_td": float("nan"), "ibs": float("nan")}}
+        self.assertEqual(self._runner().cell_alarms("pbc|coxsig|101112", cell), [])
+
 
 if __name__ == "__main__":
     unittest.main()

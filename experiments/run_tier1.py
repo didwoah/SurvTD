@@ -79,6 +79,36 @@ IN_PROCESS = {
     "survtd_anchor_only": dict(alpha_anchor=1.0),
 }
 
+def resolve_arm(arm: str):
+    """Arm name -> in-process config, or None if it is a worker arm.
+
+    Beyond the named entries in `IN_PROCESS`, any `survtd_a<alpha>` resolves to a
+    SurvTD run at that mixing weight, so the alpha ablation does not need a new table
+    entry per grid point. `survtd_a1.0` and `survtd_anchor_only` are the same arm and
+    are deliberately allowed to coexist: the ablation reads as a sweep, Q1 reads as a
+    control, and the two are scored from the same code path.
+    """
+    if arm in IN_PROCESS:
+        return IN_PROCESS[arm]
+    if arm.startswith("survtd_a"):
+        try:
+            alpha = float(arm[len("survtd_a"):])
+        except ValueError:
+            raise SystemExit(f"cannot parse alpha out of arm {arm!r}")
+        if not 0.0 <= alpha <= 1.0:
+            raise SystemExit(f"alpha out of [0, 1] in arm {arm!r}")
+        return dict(alpha_anchor=alpha)
+    return None
+
+
+def is_known_arm(arm: str) -> bool:
+    return arm in WORKERS or arm in IN_PROCESS or arm.startswith("survtd_a")
+
+
+# The preregistered alpha grid. 1.0 zeroes the TD term (anchor only); 0.0 removes the
+# Cramer anchor and leaves the TD term alone; 0.5 is the configured default.
+ALPHA_GRID = ["survtd_a0.0", "survtd_a0.25", "survtd_a0.5", "survtd_a0.75", "survtd_a1.0"]
+
 DEFAULT_ARMS = ["km", "landmark_cox", "survtd", "survtd_anchor_only",
                 "ddh", "tcsr", "tcsr_landmark", "coxsig", "ncde", "deeptcsr_tcn"]
 
@@ -164,8 +194,8 @@ def run_cell(cohort_name, arm, seed, epochs, timeout, tmpdir):
         from src.models.baselines.authentic.landmark_cox import landmark_cox_curves
         curves = landmark_cox_curves(cd.train, cd.test, spec.landmark_spec,
                                      wb.eval_times)
-    elif arm in IN_PROCESS:
-        curves = survtd_curves(cd, spec, seed, IN_PROCESS[arm], wb.eval_times, epochs)
+    elif resolve_arm(arm) is not None:
+        curves = survtd_curves(cd, spec, seed, resolve_arm(arm), wb.eval_times, epochs)
     else:
         path = os.path.join(tmpdir, f"{cohort_name}_{seed}.pt")
         if not os.path.exists(path):
@@ -190,9 +220,44 @@ def run_cell(cohort_name, arm, seed, epochs, timeout, tmpdir):
     return {f"L={k[0]:g},H={k[1]:g}": v for k, v in sorted(res.items())}
 
 
+def cell_alarms(key: str, cell: dict) -> list:
+    """Every defect rule that applies to one scored cell, in one place.
+
+    Extracted so that `--resume` can re-derive the alarm list over *cached* cells
+    instead of trusting the one stored in the file. The stored list is only as
+    complete as the rules that existed when that cell ran: the IBS band was added
+    after the pbc/cmapss process had already launched, so 61 cells carried no IBS
+    check and resume would have preserved that hole indefinitely.
+    """
+    out = []
+    for lm, m in cell.items():
+        c = m.get("c_td")
+        if c is not None and np.isfinite(c) and c < 0.5:
+            out.append(f"{key} {lm}: c_td={c:.4f}")
+        # The other half of the same rule. `km_marginal_reference`'s docstring has
+        # declared the band since it was written -- "IBS in roughly [0.15, 0.25]. Any
+        # IBS above ~0.25 anywhere in a table is then immediately visible as a bug
+        # rather than a finding" -- but nothing enforced it, and NCDE reached
+        # Framingham with IBS 0.80 against a healthy C^td of 0.7341. A model can rank
+        # correctly and still put S = 0 where 87% of the cohort is alive;
+        # discrimination cannot see that and calibration can.
+        b = m.get("ibs")
+        if b is not None and np.isfinite(b) and b > 0.25:
+            out.append(f"{key} {lm}: ibs={b:.4f} (> 0.25)")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cohorts", nargs="+", default=["pbc", "framingham", "cmapss"])
+    # NASA/C-MAPSS is deliberately absent from the default. Every NASA number in this
+    # project comes from `experiments/benchmark_nasa_tier1_authentic.py`: FD001 on the
+    # canonical protocol (`nasa_protocol_loader`, train = 1 / test = 0) scored with
+    # CoxSig's own `score()`. The `cmapss` cohort here is a different problem entirely
+    # -- FD002, Poisson-subsampled, `admin_censor_at = 100`, scored by `curve_scoring`
+    # -- so running it produces a second, incompatible NASA row that cannot be put in
+    # the same table. It stays reachable by name (`--cohorts cmapss`) for the
+    # irregular-sampling study it was actually built for, and is never a default.
+    ap.add_argument("--cohorts", nargs="+", default=["pbc", "framingham"])
     ap.add_argument("--arms", nargs="+", default=DEFAULT_ARMS)
     ap.add_argument("--seeds", nargs="+", type=int, default=[42, 123, 456, 789, 101112])
     ap.add_argument("--epochs", type=int, default=25)
@@ -213,8 +278,17 @@ def main():
         # Only successful cells are kept. A cell that errored is retried, since the
         # usual cause is the process being killed part-way rather than the arm failing.
         results = {k: v for k, v in prior.get("results", {}).items() if "metrics" in v}
-        alarms = list(prior.get("below_chance_alarms", []))
+        # Re-derive rather than carry over: a cached cell was checked only against the
+        # rules that existed when it ran, and the stored list would freeze that gap in.
+        alarms = [a for k, v in results.items() for a in cell_alarms(k, v["metrics"])]
+        stored = list(prior.get("below_chance_alarms", []))
         print(f"resuming: {len(results)} cell(s) already complete in {out_path}")
+        recovered = [a for a in alarms if a not in stored]
+        if recovered:
+            print(f"  {len(recovered)} alarm(s) recovered from cached cells by rules "
+                  f"added after they ran:")
+            for a in recovered:
+                print(f"  !! {a}")
     tmpdir = tempfile.mkdtemp(prefix="tier1_")
 
     def flush():
@@ -224,7 +298,7 @@ def main():
 
     for cohort in args.cohorts:
         for arm in args.arms:
-            if arm not in IN_PROCESS and arm not in WORKERS:
+            if not is_known_arm(arm):
                 raise SystemExit(f"unknown arm {arm!r}")
             for seed in args.seeds:
                 key = f"{cohort}|{arm}|{seed}"
@@ -235,25 +309,10 @@ def main():
                 try:
                     cell = run_cell(cohort, arm, seed, args.epochs, args.timeout, tmpdir)
                     entry = {"metrics": cell, "wall_clock_s": round(time.time() - t0, 1)}
-                    for lm, m in cell.items():
-                        c = m.get("c_td")
-                        if c is not None and np.isfinite(c) and c < 0.5:
-                            alarm = f"{key} {lm}: c_td={c:.4f}"
-                            alarms.append(alarm)
-                            print(f"  !! BELOW CHANCE (defect alarm, not a result): {alarm}")
-                        # The other half of the same rule. `km_marginal_reference`'s
-                        # docstring has declared the band since it was written -- "IBS in
-                        # roughly [0.15, 0.25]. Any IBS above ~0.25 anywhere in a table is
-                        # then immediately visible as a bug rather than a finding" -- but
-                        # nothing enforced it, and NCDE reached Framingham with IBS 0.80
-                        # against a healthy C^td of 0.7341. A model can rank correctly and
-                        # still put S = 0 where 87% of the cohort is alive; discrimination
-                        # cannot see that and calibration can.
-                        b = m.get("ibs")
-                        if b is not None and np.isfinite(b) and b > 0.25:
-                            alarm = f"{key} {lm}: ibs={b:.4f} (> 0.25)"
-                            alarms.append(alarm)
-                            print(f"  !! IBS OUT OF BAND (defect alarm, not a result): {alarm}")
+                    for alarm in cell_alarms(key, cell):
+                        alarms.append(alarm)
+                        kind = ("IBS OUT OF BAND" if "ibs=" in alarm else "BELOW CHANCE")
+                        print(f"  !! {kind} (defect alarm, not a result): {alarm}")
                     tds = [m["c_td"] for m in cell.values() if np.isfinite(m.get("c_td", np.nan))]
                     print(f"{key:44s} c_td={['%.4f' % v for v in tds]} "
                           f"({entry['wall_clock_s']}s)", flush=True)

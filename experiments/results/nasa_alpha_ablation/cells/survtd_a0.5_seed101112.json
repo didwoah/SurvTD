@@ -1,0 +1,30 @@
+{
+  "summary": {
+    "survtd_a0.5": {
+      "dynamic_cindex_mean": 0.919628616997038,
+      "dynamic_cindex_std": 0.0,
+      "dynamic_bs_mean": 0.0921918860561243,
+      "dynamic_bs_std": 0.0,
+      "t0_cindex_mean": 0.4439461883408072,
+      "t0_cindex_std": 0.0,
+      "t0_bs_mean": 0.03515311219681418,
+      "t0_bs_std": 0.0,
+      "raw_dynamic_cindex": [
+        0.919628616997038
+      ],
+      "raw_dynamic_bs": [
+        0.0921918860561243
+      ],
+      "raw_t0_cindex": [
+        0.4439461883408072
+      ],
+      "raw_t0_bs": [
+        0.03515311219681418
+      ]
+    }
+  },
+  "seeds": [
+    101112
+  ],
+  "epochs": 15
+}

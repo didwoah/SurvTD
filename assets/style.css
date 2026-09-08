@@ -1,0 +1,171 @@
+/* assets/style.css - Tufte 스타일 SurvTD 인터랙티브 레슨 공통 스타일시트 (한국어 최적화) */
+:root {
+  --bg: #fffff8;
+  --text: #1a1a1a;
+  --accent: #b92b27;
+  --link: #1a0dab;
+  --border: #e2e2d8;
+  --code-bg: #f6f6ee;
+  --callout-bg: #f9f9f4;
+  --quiz-bg: #fafafa;
+  --quiz-hover: #f0f4f8;
+  --correct: #2e7d32;
+  --incorrect: #c62828;
+}
+
+body {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Serif KR", serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 17px;
+  max-width: 820px;
+  margin: 40px auto;
+  padding: 0 24px;
+  word-break: keep-all;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #111111;
+  margin-top: 1.8em;
+  margin-bottom: 0.5em;
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: 2.1rem; border-bottom: 2px solid var(--border); padding-bottom: 14px; }
+h2 { font-size: 1.45rem; margin-top: 1.6em; }
+h3 { font-size: 1.15rem; }
+
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+p, li {
+  margin-bottom: 1.1em;
+}
+
+code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background-color: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e8e8df;
+}
+
+pre {
+  background-color: var(--code-bg);
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.callout {
+  background-color: var(--callout-bg);
+  border-left: 4px solid var(--accent);
+  padding: 16px 20px;
+  margin: 24px 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.callout.theorem {
+  border-left-color: #1565c0;
+  background-color: #f3f7fb;
+}
+
+.callout.lemma {
+  border-left-color: #00897b;
+  background-color: #f0f9f8;
+}
+
+.meta-bar {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.85rem;
+  color: #666;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Interactive Quiz Widget */
+.quiz-box {
+  background: var(--quiz-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  margin: 36px 0;
+}
+
+.quiz-question {
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+  color: #222;
+}
+
+.quiz-options {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.quiz-option {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 0.95rem;
+}
+
+.quiz-option:hover {
+  background: var(--quiz-hover);
+  border-color: #888;
+}
+
+.quiz-option.correct {
+  background: #e8f5e9;
+  border-color: var(--correct);
+  color: #1b5e20;
+  font-weight: 600;
+}
+
+.quiz-option.incorrect {
+  background: #ffebee;
+  border-color: var(--incorrect);
+  color: #b71c1c;
+}
+
+.quiz-feedback {
+  margin-top: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+footer {
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  color: #666;
+}

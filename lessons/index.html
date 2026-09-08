@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SM-TCSR 정규 교육 마스터 커리큘럼 대시보드</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <style>
+    .curriculum-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 20px;
+      margin: 28px 0;
+    }
+    .lesson-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .lesson-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      border-color: #1565c0;
+    }
+    .lesson-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #1565c0;
+      background: #e3f2fd;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .lesson-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      line-height: 1.4;
+    }
+    .lesson-desc {
+      font-size: 0.92rem;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .lesson-link-btn {
+      display: inline-block;
+      text-align: center;
+      background: #1565c0;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+    .lesson-link-btn:hover {
+      background: #0d47a1;
+    }
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .stat-pill {
+      background: #f4f6f8;
+      border: 1px solid #e1e4e8;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="meta-bar">
+    <span>SM-TCSR &bull; Semi-Markov Temporally-Consistent Survival Regression</span>
+    <span>연구 논문 공식 교육 포털</span>
+  </div>
+
+  <h1>SM-TCSR 정규 교육 마스터 커리큘럼</h1>
+  <p class="subtitle" style="font-size: 1.15rem; color: #555; margin-top: -10px;">
+    <em>"불규칙 연속시간 동적 생존분석을 위한 30년 전통 SMDP 강화학습과 크라메르 수축 이론의 집대성"</em>
+  </p>
+
+  <div class="stats-bar">
+    <span class="stat-pill">📚 6개 전용 레슨 완비</span>
+    <span class="stat-pill">📐 Theorem 1 크라메르 아핀 수축 증명</span>
+    <span class="stat-pill">🥊 3파전 선형 벤치마크 검증 1위 (0.6537)</span>
+    <span class="stat-pill">🩺 임상 알람 지터 25% 억제</span>
+  </div>
+
+  <div class="callout theorem">
+    <strong>학술적 핵심 정체성 (Core Identity):</strong><br>
+    <strong>SM-TCSR</strong>은 Maystre (2022, <strong>TCSR</strong>)와 Bleistein (2024, <strong>DeepTCSR</strong>)의 이산 시간 격자 한계를 극복하고, 30년 역사의 <strong>Semi-Markov Decision Process (SMDP)</strong> 연속시간 TD 이론(Bradtke & Duff 1994)을 최초로 생존분석에 적용하여 엄밀한 수학적 수축 보장과 비편향 중도절단 일관성을 확립한 직계 정통 프레임워크입니다.
+  </div>
+
+  <h2>전체 레슨 로드맵 (Full Curriculum)</h2>
+  <div class="curriculum-grid">
+    <!-- Lesson 1 -->
+    <div class="lesson-card">
+      <div>
+        <span class="lesson-badge">기여 1-1 &bull; SMDP &amp; 사영</span>
+        <h3 class="lesson-title">레슨 01: 연속시간 SMDP 생존분석과 재생 사영 연산자</h3>
+        <p class="lesson-desc">
+          불규칙 관측 주기(&Delta;t &in; &Ropf;<sup>+</sup>)의 딜레마를 해결하기 위한 잔여 수명의 연속 재생 평행이동(&Phi;<sub>+&Delta;t</sub>)과 C51 삼각 사영(&Pi;), 그리고 흡수 오버플로 빈(&perp;)의 수학적 구조를 배웁니다.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+        <a class="lesson-link-btn" href="01_continuous_smdp_and_renewal_projection.html">📖 이론 레슨 열기 &rarr;</a>
+        <a class="lesson-link-btn" style="background: #2e7d32;" href="../notebooks/01_continuous_smdp_projection.ipynb">💻 실습 노트북 (.ipynb)</a>
+      </div>
+    </div>
+
+    <!-- Lesson 2 -->
+    <div class="lesson-card">
+      <div>
+        <span class="lesson-badge">기여 1-2 &bull; 수축 이론</span>
+        <h3 class="lesson-title">레슨 02: 수축 정리의 비밀과 타깃 네트워크 동결 (Theorem 1)</h3>
+        <p class="lesson-desc">
+          DeepTCSR이 &lambda;=0에서 무너졌던 진짜 원인(내생적 할인율 요동)을 밝히고, 동결 타깃망(&theta;<sup>-</sup>)을 통한 아핀 상수화와 L<sub>2</sub> 크라메르 메트릭 상의 엄밀한 아핀 수축(Theorem 1)을 증명합니다.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+        <a class="lesson-link-btn" href="02_contraction_theory_theorem1.html">📖 이론 레슨 열기 &rarr;</a>
+        <a class="lesson-link-btn" style="background: #2e7d32;" href="../notebooks/02_theorem1_contraction.ipynb">💻 실습 노트북 (.ipynb)</a>
+      </div>
+    </div>
+
+    <!-- Lesson 3 -->
+    <div class="lesson-card">
+      <div>
+        <span class="lesson-badge">기여 4 &bull; 손실함수 기하</span>
+        <h3 class="lesson-title">레슨 03: 손실함수의 기하학과 수축 척도-학습 손실의 완전 일치</h3>
+        <p class="lesson-desc">
+          C51의 태생적 결함(Wasserstein 증명 &ne; CE 학습)을 분석하고, 서열 무지성(Ordinal Blindness)을 극복하며 이론적 수축 메트릭과 100% 일치하는 Squared Cramér Loss의 필연성을 증명합니다.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+        <a class="lesson-link-btn" href="03_loss_geometry_and_metric_identity.html">📖 이론 레슨 열기 &rarr;</a>
+        <a class="lesson-link-btn" style="background: #2e7d32;" href="../notebooks/03_cramer_loss_vs_cross_entropy.ipynb">💻 실습 노트북 (.ipynb)</a>
+      </div>
+    </div>
+
+    <!-- Lesson 4 -->
+    <div class="lesson-card">
+      <div>
+        <span class="lesson-badge">기여 2 &bull; 다단계 TD(&lambda;)</span>
+        <h3 class="lesson-title">레슨 04: 지속시간 기하 다단계 TD(&lambda;)와 시간 지평선 불변성</h3>
+        <p class="lesson-desc">
+          이산 &lambda;<sup>k</sup>의 시간 왜곡을 극복하는 지속시간 기하 감쇄 &lambda;<sub>j</sub> = &lambda;<sup>&Delta;t<sub>j</sub> / &delta;<sub>s</sub></sup>를 유도하고, 방문 빈도에 영향받지 않는 물리적 부트스트랩 반감기 불변성을 확립합니다.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+        <a class="lesson-link-btn" href="04_duration_geometric_lambda_returns.html">📖 이론 레슨 열기 &rarr;</a>
+        <a class="lesson-link-btn" style="background: #2e7d32;" href="../notebooks/04_duration_geometric_lambda.ipynb">💻 실습 노트북 (.ipynb)</a>
+      </div>
+    </div>
+
+    <!-- Lesson 5 -->
+    <div class="lesson-card">
+      <div>
+        <span class="lesson-badge">기여 3 &bull; 중도절단 극복</span>
+        <h3 class="lesson-title">레슨 05: 우측 중도절단의 극복과 Truncated IPCW 꼬리 완성</h3>
+        <p class="lesson-desc">
+          강화학습에는 없는 생존분석 고유의 난제인 우측 중도절단(Right-Censoring)을 하드 생존 경계 제약(t > C<sub>i</sub>)과 동결 타깃망 기반 꼬리 재정규화, Truncated IPCW 가중치로 무편향 보정합니다.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+        <a class="lesson-link-btn" href="05_censoring_and_truncated_ipcw.html">📖 이론 레슨 열기 &rarr;</a>
+        <a class="lesson-link-btn" style="background: #2e7d32;" href="../notebooks/05_truncated_ipcw_censoring.ipynb">💻 실습 노트북 (.ipynb)</a>
+      </div>
+    </div>
+
+    <!-- Lesson 6 -->
+    <div class="lesson-card">
+      <div>
+        <span class="lesson-badge">기여 5 &bull; 3파전 벤치마크</span>
+        <h3 class="lesson-title">레슨 06: 3파전 정면 대결과 임상 알람 피로의 극복</h3>
+        <p class="lesson-desc">
+          Linear Cox vs Linear TCSR vs Linear SM-TCSR 3파전 실증 결과(0.6537로 1위)를 분석하고, 동적 시간차 일관성이 중환자실 의료진의 알람 지터와 가짜 경보를 25% 억제하는 실질적 가치를 확인합니다.
+        </p>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+        <a class="lesson-link-btn" href="06_the_showdown_and_alarm_fatigue.html">📖 이론 레슨 열기 &rarr;</a>
+        <a class="lesson-link-btn" style="background: #2e7d32;" href="../notebooks/06_showdown_and_alarm_fatigue.ipynb">💻 실습 노트북 (.ipynb)</a>
+      </div>
+    </div>
+  </div>
+
+  <h2>실증 연구 3파전 대결 요약 (The 3-Way Showdown)</h2>
+  <table class="booktabs" style="width: 100%; margin: 1.5rem 0;">
+    <thead>
+      <tr>
+        <th>방법론</th>
+        <th style="text-align: center;">Synthetic ICU (연속 불규칙)</th>
+        <th style="text-align: center;">NASA FD001 (장기 열화)</th>
+        <th>특징 및 한계</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Classic CoxPH</strong></td>
+        <td style="text-align: center;">0.6460</td>
+        <td style="text-align: center;">0.6340</td>
+        <td>부분 우도 기반 지도학습, 시간차 일관성 부재</td>
+      </tr>
+      <tr>
+        <td><strong>2. Linear TCSR (Maystre 2022)</strong></td>
+        <td style="text-align: center;">0.6525</td>
+        <td style="text-align: center;">0.6255</td>
+        <td>이산 단위 1스텝 roll(1) 격자 의존</td>
+      </tr>
+      <tr>
+        <td><strong>3. Linear SM-TCSR (Ours)</strong></td>
+        <td style="text-align: center;"><strong>0.6537 🏆</strong></td>
+        <td style="text-align: center;">0.6170</td>
+        <td><strong>연속시간 재생 사영(&Phi;<sub>+&Delta;t</sub>) + 크라메르 손실로 1위</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <footer>
+    <p>SM-TCSR 정규 교육 포털 &bull; 논문 원고 집필 트랙 &bull; <a href="01_continuous_smdp_and_renewal_projection.html">레슨 01로 바로가기</a></p>
+  </footer>
+</body>
+</html>

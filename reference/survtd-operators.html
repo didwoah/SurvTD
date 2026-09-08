@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SurvTD 퀵 레퍼런스: 핵심 수학 연산자 및 수축 공식</title>
+  <link rel="stylesheet" href="../assets/style.css">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div class="meta-bar">
+    <span>레퍼런스 문서: REF-0001</span>
+    <span>SurvTD 핵심 수학 연산자 치트시트</span>
+  </div>
+
+  <h1>SurvTD 핵심 연산자 및 수축 정리 치트시트</h1>
+  <p>SurvTD의 주요 수학 연산자, 삼각 사영 식, 아핀 수축 조건 및 다단계 갱신식을 압축 정리한 빠른 참조 문서입니다.</p>
+
+  <h2>1. 잔여 수명 공간의 시간 변환 (Remaining Lifetime Translation)</h2>
+  <div class="callout">
+    <strong>물리적 불변식:</strong> 환자가 생존한 연속 방문 시점 \(t_j\) 및 \(t_{j+1} = t_j + \Delta t_j\) 사이에서 잔여 수명 \(R\)의 관계:
+    \[ R_j = R_{j+1} + \Delta t_j \]
+  </div>
+
+  <h2>2. 연속 재생 이동 (\(\Phi_{+\Delta t_j}\)) 및 범주형 삼각 사영 (\(\Pi\))</h2>
+  <p>격자 폭이 \(\delta_s\)인 균일 이산 격자 \(s_0, s_1, \dots, s_K\) 상의 정의:</p>
+  <ul>
+    <li><strong>재생 이동:</strong> \((\Phi_{+\Delta t} p)(s) = p(s - \Delta t) \quad (s \ge \Delta t)\)</li>
+    <li><strong>선형 삼각 사영 커널:</strong>
+      \[ (\Pi \Phi_{+\Delta t} p)_k = \sum_{m=0}^K p_m \cdot \max\left(0, 1 - \frac{|(s_m + \Delta t) - s_k|}{\delta_s}\right) \]
+    </li>
+    <li><strong>상한 경계 흡수 및 단위 질량 보존:</strong> 최대 격자점 \(s_K\)를 초과한 질량은 마지막 경계 빈 \(k = K\)에 흡수 누적:
+      \[ \sum_{k=0}^K (\Pi \Phi_{+\Delta t} p)_k = \sum_{m=0}^K p_m \equiv 1.0 \]
+    </li>
+  </ul>
+
+  <h2>3. 재생 혼합 벨만 타깃 (\(\mathcal{T} p_j\))</h2>
+  <div class="callout theorem">
+    \[ \mathcal{T} p_j = \underbrace{(1 - \gamma_j) \cdot \mu_{[0, \Delta t_j)}}_{\text{사망 지속 지선 (구간 내 사망 사건)}} + \underbrace{\gamma_j \cdot \Pi \Phi_{+\Delta t_j} p_{\theta^-}}_{\text{생존 지속 지선 (잔여수명 평행이동)}} \]
+    여기서 지속시간 할인율 \(\gamma_j\)는 동결된 타깃 네트워크 \(\theta^-\) 하에서 평가됩니다:
+    \[ \gamma_j = S_{\theta^-}(\Delta t_j) = \prod_{k: s_k < \Delta t_j} (1 - h_k) \cdot \left(1 - h_m \frac{\Delta t_j - s_m}{\delta_s}\right) \]
+  </div>
+
+  <h2>4. 정리 1: 제곱 크라메르 거리 하에서의 아핀 엄밀 수축 사상</h2>
+  <div class="callout lemma">
+    동결된 타깃 신경망 파라미터 \(\theta^-\) 하에서, \(\mathcal{T}\)는 아핀 선형 맵을 이룹니다. 누적분포함수(CDF \(F\)) 상의 제곱 크라메르 거리에서:
+    \[ \|\mathcal{T} p - \mathcal{T} q\|_{\text{Cramér}} = \gamma_j \|\Pi \Phi (p - q)\|_{\text{Cramér}} \le \gamma_j \|p - q\|_{\text{Cramér}} \]
+    모든 \(\Delta t_j > 0\) 및 양의 위험률 하에서 \(\gamma_j < 1.0\)이 성립하므로, 바나흐 고정점 정리에 의해 유일한 안정 고정점으로 수렴합니다.
+  </div>
+
+  <h2>5. 다단계 지속시간 기하학적 \(\lambda\)-Return 재귀식</h2>
+  <p>불규칙한 관측 간격에 따른 기하학적 감쇄 계수 및 역방향 부트스트랩 식:</p>
+  \[ \lambda_j = \lambda^{\Delta t_j / \delta_s} \]
+  \[ G_j = (1 - \lambda_j) \mathcal{T} p_j + \lambda_j \gamma_j \Pi \Phi_{+\Delta t_j} G_{j+1} \]
+
+  <footer>
+    <p><a href="../lessons/0001-continuous-renewal-shift-and-contraction.html">&larr; 레슨 0001로 돌아가기</a> | <a href="../MISSION.md">MISSION.md</a></p>
+  </footer>
+</body>
+</html>

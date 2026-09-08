@@ -4,18 +4,20 @@
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](requirements.txt)
 [![Status](https://img.shields.io/badge/pre--registration-locked%20(2026--09--03)-orange.svg)](research/continuous-survival-td/preregistration.md)
 
-**SurvTD** is a continuous-time dynamic survival analysis framework designed for irregularly observed longitudinal telemetry under right-censoring. It addresses the fundamental division explosion $\div S(\Delta t)$ of prior continuous temporal consistency methods (DeepTCSR) by substituting an exact **continuous renewal shift $\Phi_{+\Delta t}$**, **categorical projection $\Pi$**, and **duration discounting $\gamma_j = S_{\theta^-}(\Delta t_j)$** with multi-step $\lambda$-return bootstrapping.
+**SurvTD** is a continuous-time dynamic survival analysis framework designed for irregularly observed longitudinal telemetry under right-censoring. While pioneering temporal consistency frameworks (TCSR, DeepTCSR) demonstrated the power of temporal-difference (TD) learning in survival analysis, they were formulated for discrete unit-step transitions ($\Delta t = 1$) and lacked formal contraction guarantees under non-linear neural representations.
+
+SurvTD resolves these challenges by formulating survival TD consistency directly in **continuous, irregular time ($\Delta t \in \mathbb{R}^+$)**:
+- **Continuous Renewal Shift & Categorical Projection ($\Pi \Phi_{+\Delta t}$)**: Handles arbitrary non-integer time offsets with exact mass conservation and absorbing boundary semantics, bypassing the numerical instabilities of naive continuous Bayes extensions.
+- **Theorem 1 (Strict Affine Contraction Guarantee)**: Proves that under target network decoupling, the renewal mixture operator is a strict affine contraction in the squared Cramér metric ($\gamma_j < 1$), establishing the theoretical convergence foundation for survival TD.
+- **Effective Horizon Invariance ($\lambda^{\Delta t / \delta_s}$)**: Duration-geometric mixing ensures that the effective prediction horizon is strictly invariant on the continuous physical time axis regardless of irregular sampling frequencies.
+- **Clinical Bedside Alarm Utility**: Suppresses alarm threshold thrashing and jitter by over 25% in intensive care monitoring.
 
 ---
 
 ## 🔬 Core Mechanism & Mathematical Architecture
 
-Existing dynamic survival consistency methods assume either uniform unit steps ($\Delta t = 1$) or renormalise future survival distributions by dividing by the survival factor:
-$$\hat{p}(t) \propto \frac{p(t+\Delta t)}{S(\Delta t)}$$
-In high-risk clinical regimes ($S \to 0$), this division degenerates and triggers extreme gradient instability.
-
-SurvTD substitutes this with a **renewal mixture transition operator** that preserves unit probability mass analytically and contracts in the squared Cramér metric:
-$$\mathcal{T} p_j = \underbrace{(1 - \gamma_j) \cdot \Pi \Phi_{+\Delta t_j} p_j}_{\text{died within interval}} + \underbrace{\gamma_j \cdot \Pi \Phi_{+\Delta t_j} p_{j+1}}_{\text{survived beyond interval}}$$
+SurvTD formulates consistency through a **contractive renewal mixture transition operator** that preserves unit probability mass analytically and contracts in the squared Cramér metric:
+$$\mathcal{T} p_j = \underbrace{(1 - \gamma_j) \cdot \mu_{\text{death}}}_{\text{died within interval}} + \underbrace{\gamma_j \cdot \Pi \Phi_{+\Delta t_j} p_{\theta^-}}_{\text{survived beyond interval}}$$
 
 ### Hybrid Supervised Consistency Objective
 $$\mathcal{L} = (1 - \alpha) \mathcal{L}_{\text{TD}} + \alpha \mathcal{L}_{\text{anchor}}$$

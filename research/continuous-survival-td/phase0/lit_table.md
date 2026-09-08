@@ -2,8 +2,8 @@
 
 | paper_id | date | venue | title | bottleneck this paper targets | unresolved residue | relevance |
 |---|---|---|---|---|---|---|
-| `Maystre2022` | 2022-12 | NeurIPS 2022 | Temporally-Consistent Survival Analysis (TCSR) | Enforces 1-step risk consistency via TD | Assumes discrete $\Delta=1$ exogenous steps; $\div S(\Delta t)$ division diverges under high risk | core |
-| `DeepTCSR2024` | 2024-10 | arXiv preprint | Deep End-to-End Survival Analysis with Temporal Consistency | Extends TCSR to deep neural networks using target networks | Inherits discrete $\Delta=1$ exogenous assumption; fails under irregular informative observation | core |
+| `Maystre2022` | 2022-12 | NeurIPS 2022 | Temporally-Consistent Survival Analysis (TCSR) | Enforces 1-step risk consistency via TD | Formulated for discrete unit steps ($\Delta t=1$); left continuous irregular observation intervals open | core |
+| `DeepTCSR2024` | 2024-10 | arXiv preprint | Deep End-to-End Survival Analysis with Temporal Consistency | Extends TCSR to deep neural networks | Inherits discrete unit steps ($\Delta t=1$); empirical formulation without formal contraction guarantees | core |
 | `Bleistein2024` | 2024-07 | ICML 2024 | Dynamical Survival Analysis with Controlled Latent States (CoxSig) | Continuous irregular paths via rough path signatures | Linear proportional hazards assumption; collapses in non-linear physiological degradation | core |
 | `Alaa2017` | 2017-08 | ICML 2017 | Learning from Clinical Judgments: Semi-Markov-Modulated Marked Hawkes Processes | Models clinical decisions as informative observation process | Hawkes process point process formulation; does not formulate TD Bellman bootstrapping | core |
 | `Lin2001` | 2001-06 | JASA / Biometrika | Semiparametric Regression Analysis of Longitudinal Data with Informative Observation Times | Identifies sampling bias when observation frequency depends on latent disease severity | Statistical inverse-intensity weighting; lacks predictive dynamic survival / deep learning | core |

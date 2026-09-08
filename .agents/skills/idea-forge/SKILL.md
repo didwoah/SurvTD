@@ -166,13 +166,12 @@ python3 "$SKILL_DIR/scripts/validate_idea.py" "$RUN/phase2/candidate.json"
 Fix what it names. **Never edit a kill-switch field to make a check pass** — that is the exact
 failure the gate exists to catch.
 
-### Phase 2b — Empirical Pivot Entry (Invoked via `falsification-pivot`)
+### Phase 2b — Empirical Pivot Entry (When a Hypothesis is Falsified)
 
-When an empirical hypothesis is falsified during experiments, `falsification-pivot` re-enters
-`idea-forge` directly at Phase 2:
+When an empirical hypothesis is falsified during experiments, re-enter `idea-forge` directly at Phase 2:
 - **Skip Phase 0 and Phase 1**: The problem context and literature lineage are inherited from the
-  archived run without repeating searches.
-- **Mandatory Input**: `$RUN/attempt_N/negative_constraints.json`.
+  existing run without repeating searches.
+- **Mandatory Input**: The negative constraint statement and causal failure root cause from `evidence-auditor`.
 - **Constraint Compliance**: The new candidate must explicitly declare how its new operator
   bypasses the fatal failure mode identified in `negative_constraints.json`.
 - **Gate**: Run `validate_idea.py "$RUN/phase2/candidate.json"`. The validated candidate then

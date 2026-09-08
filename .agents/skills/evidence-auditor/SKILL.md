@@ -161,8 +161,8 @@ count, or control. An audit that only takes things away is easy to ignore.
 ## Routing & Falsification Trigger
 
 - **`supported` / `conditional`** → proceed to paper writing (`paper-architect`).
-- **`contradicted` or Pre-Registered Kill Criterion Fired** → **MANDATORY TRIGGER: `falsification-pivot`**.
-  Do NOT attempt to hand-wave, drop metrics, or p-hack a dead hypothesis. The auditor must output `evidence-audit.json` with `status: "contradicted"` and trigger `falsification-pivot` to archive the run and seed the empirical pivot.
+- **`contradicted` or Pre-Registered Kill Criterion Fired** → **Re-enter `idea-forge` directly with negative constraints**.
+  Do NOT attempt to hand-wave, drop metrics, or p-hack a dead hypothesis. The auditor must output `evidence-audit.json` with `status: "contradicted"`, document the causal root cause, and pass the negative constraints back to `idea-forge` for re-ideation.
 
 ## Rules
 
