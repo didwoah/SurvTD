@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>Method A — SurvTD (research/ 버전)</title>
+<script>window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{--fg:#181818;--mut:#6a6a6a;--line:#e4e4e7;--acc:#7c3aed;--ok:#0f7b3f;
+      --bad:#b42318;--warn:#b45309;--soft:#f8f7fb}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Segoe UI","Malgun Gothic",sans-serif;
+     color:var(--fg);line-height:1.8;font-size:16px;background:#fff}
+.wrap{max-width:940px;margin:0 auto;padding:0 30px 110px}
+header{background:linear-gradient(135deg,#2b1055,#7c3aed);color:#fff;padding:44px 30px 34px}
+header .in{max-width:940px;margin:0 auto}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+       border-radius:20px;padding:3px 13px;font-size:12.5px;font-weight:700;margin-bottom:10px}
+h1{font-size:28px;margin:0 0 8px;letter-spacing:-.3px}
+header p{margin:0;opacity:.92;font-size:15px}
+h2{font-size:22px;margin:48px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+h3{font-size:17.5px;margin:28px 0 8px}
+h4{font-size:15px;margin:20px 0 6px}
+p,li{font-size:15.5px}
+code{background:var(--soft);padding:2px 6px;border-radius:4px;font-size:13.5px;
+     font-family:"Cascadia Mono",Consolas,monospace}
+pre{background:#1a1033;color:#e9e4f5;padding:16px 18px;border-radius:8px;overflow-x:auto;
+    font-size:13px;line-height:1.65}
+pre .c{color:#9b8fb8}pre .k{color:#c4b5fd}pre .s{color:#86efac}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.box{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--soft);
+     padding:14px 18px;margin:18px 0;border-radius:0 7px 7px 0}
+.box.k{border-left-color:var(--ok)}.box.w{border-left-color:var(--warn)}
+.box.r{border-left-color:var(--bad)}
+.box h4{margin-top:0}
+.note{font-size:13.5px;color:var(--mut)}
+nav{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 22px;margin-top:20px}
+nav ol{margin:6px 0;padding-left:22px;columns:2;font-size:14.5px}
+nav a{color:var(--acc);text-decoration:none}nav a:hover{text-decoration:underline}
+figure{margin:18px 0}
+figcaption{font-size:13px;color:var(--mut);text-align:center;margin-top:6px}
+svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.xref{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 18px;margin:16px 0}
+.xref a{color:#c2410c;font-weight:600}
+@media(max-width:820px){nav ol{columns:1}}
+</style></head><body>
+
+<header><div class="in">
+<span class="badge">Method A</span>
+<h1>SurvTD — 재생 이동 연산자와 범주형 투영 기반 연속시간 생존 TD</h1>
+<p>출처: <code>github.com/didwoah/SurvTD</code> · <code>research/continuous-survival-td/draft/02_formulation_and_method.md</code>
+ 및 <code>research/toy-gradient/method_specification_survtd_v2.md</code></p>
+</div></header>
+
+<div class="wrap">
+
+<div class="xref">이 문서는 <b>research/ 폴더의 논문 초안 버전</b>이다.
+<code>idea.md</code> + <code>intgral.md</code> 기반의 다른 계열과 표현·손실·검열 처리가 다르다.
+→ <a href="Method_B_SMTCSR_idea.html">Method B (SM-TCSR, idea.md 계열) 보기</a></div>
+
+<nav><b>목차</b><ol>
+<li><a href="#s1">문제 설정과 기호</a></li>
+<li><a href="#s2">시간적 일관성과 비정수 이동</a></li>
+<li><a href="#s3">재생 이동 연산자 $\Phi$</a></li>
+<li><a href="#s4">범주형 투영 $\Pi$</a></li>
+<li><a href="#s5">분포 표현 (head)</a></li>
+<li><a href="#s6">손실함수</a></li>
+<li><a href="#s7">검열 처리</a></li>
+<li><a href="#s8">알고리즘</a></li>
+<li><a href="#s9">요약</a></li>
+</ol></nav>
+
+<!-- ================================ 1 -->
+<h2 id="s1">1. 문제 설정과 기호</h2>
+
+<p>여과 확률공간 $(\Omega,\mathcal F,(\mathcal F_t)_{t\ge0},\mathbb P)$ 위에서 각 개체에 대해
+다음을 정의한다. <b>단일 사건(single event)</b> 설정이다.</p>
+
+<table>
+<thead><tr><th>기호</th><th>의미</th></tr></thead>
+<tbody>
+<tr><td>$T\in\mathbb R^+$</td><td>진짜 사건(사망·고장) 발생 시점</td></tr>
+<tr><td>$C\in\mathbb R^+$</td><td>우측 중도절단 시점</td></tr>
+<tr><td>$\tilde T=\min(T,C)$</td><td>실제 관측된 종료 시점</td></tr>
+<tr><td>$E=\mathbb I[T\le C]$</td><td>사건 지시자 ($1$=사건 관측, $0$=중도절단)</td></tr>
+<tr><td>$\mathcal H_t$</td><td>시점 $t$까지 불규칙 간격으로 수집된 $d$차원 관측 궤적</td></tr>
+<tr><td>$R_t=(T-t)\mid(T>t)$</td><td><b>잔여 수명(residual lifetime)</b> — 이 방법의 예측 대상</td></tr>
+<tr><td>$F(s\mid\mathcal H_t)$</td><td>$P(R_t\le s\mid\mathcal H_t)$, 잔여수명 CDF</td></tr>
+<tr><td>$S(s\mid\mathcal H_t)$</td><td>$1-F(s\mid\mathcal H_t)$</td></tr>
+<tr><td>$\Delta t_j=t_{j+1}-t_j$</td><td>방문 사이 실제 경과시간</td></tr>
+<tr><td>$\bar\theta$</td><td>타깃 네트워크 파라미터</td></tr>
+</tbody></table>
+
+<p>비정보적·독립 중도절단 $T\perp C\mid\mathcal H_t$를 가정한다.
+목표는 임의 시점 $t$에서 $\mathcal H_t$로부터 <b>완전한 조건부 잔여수명 분포</b>를 추정하는 것이다.</p>
+
+<!-- ================================ 2 -->
+<h2 id="s2">2. 시간적 일관성과 비정수 이동 문제</h2>
+
+<h3>2.1 시간적 일관성</h3>
+<p>시점 $t$와 $t+\Delta t$ 사이에 사건이 없었다면($T>t+\Delta t$), 잔여수명은
+<b>경과한 만큼 정확히 줄어든다</b>: $R_t=\Delta t+R_{t+\Delta t}$.
+분포로 쓰면 두 시점의 예측이 단순한 시간 이동으로 연결된다.</p>
+
+$$F(s\mid\mathcal H_{t+\Delta t})\;\longleftrightarrow\;F(s+\Delta t\mid\mathcal H_t)$$
+
+<p>이 관계를 학습 신호로 삼는 것이 TD의 출발점이다. 다음 관측에서의 예측을
+$\Delta t$만큼 옮기면 현재 관측의 target이 된다.</p>
+
+<h3>2.2 불규칙 관측이 만드는 문제</h3>
+<p>방문축 방법(TCSR·DeepTCSR)에서는 이동량이 <b>항상 정수 1 step</b>이다.
+따라서 확률벡터를 배열에서 한 칸 미는 것(<code>jnp.roll</code>)으로 이동이 정확히 표현된다.</p>
+
+<div class="box r"><h4>실제 시간에서는 이 방식이 깨진다</h4>
+<p>ICU·센서 데이터의 $\Delta t$는 <b>실수</b>다. 격자 간격의 배수가 아닌 이동을
+가장 가까운 인덱스로 반올림하면 매 전이마다 최대 $\Delta z/2$의 오차가 생기고,
+TD가 전이를 따라 재귀하므로 이 오차가 <b>누적 시간 편향</b>으로 쌓인다.</p>
+<p>단순히 반올림 정밀도를 높이려고 격자를 촘촘히 하면 $K$가 커져 계산량과
+bin당 표본 수 문제가 따라온다.</p></div>
+
+<figure>
+<svg viewBox="0 0 880 150" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+ <text x="20" y="18" font-size="13" font-weight="700">정수 이동 (방문축) — 정확</text>
+ <line x1="60" y1="52" x2="420" y2="52" stroke="#333" stroke-width="1.3"/>
+ <g fill="#0f7b3f"><circle cx="60" cy="52" r="5"/><circle cx="150" cy="52" r="5"/>
+ <circle cx="240" cy="52" r="5"/><circle cx="330" cy="52" r="5"/><circle cx="420" cy="52" r="5"/></g>
+ <path d="M240,38 L152,38" stroke="#0f7b3f" stroke-width="1.6" marker-end="url(#m1)"/>
+ <text x="252" y="34" font-size="11.5" fill="#0f7b3f">1 step 이동 = 배열 한 칸</text>
+ <text x="20" y="96" font-size="13" font-weight="700">실수 이동 (실제시간) — 격자에 안 떨어짐</text>
+ <line x1="60" y1="126" x2="420" y2="126" stroke="#333" stroke-width="1.3"/>
+ <g fill="#999"><circle cx="60" cy="126" r="5"/><circle cx="150" cy="126" r="5"/>
+ <circle cx="240" cy="126" r="5"/><circle cx="330" cy="126" r="5"/><circle cx="420" cy="126" r="5"/></g>
+ <circle cx="196" cy="126" r="5.5" fill="#b42318"/>
+ <path d="M240,112 L200,112" stroke="#b42318" stroke-width="1.6" marker-end="url(#m2)"/>
+ <text x="252" y="108" font-size="11.5" fill="#b42318">$\Delta t$ 이동 후 위치가 격자 사이에 떨어진다</text>
+ <text x="450" y="130" font-size="11.5" fill="#b42318">반올림하면 편향이 누적된다</text>
+ <defs>
+  <marker id="m1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+   <path d="M0,0 L7,3 L0,6 z" fill="#0f7b3f"/></marker>
+  <marker id="m2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+   <path d="M0,0 L7,3 L0,6 z" fill="#b42318"/></marker></defs>
+</svg>
+<figcaption>정수 인덱스 이동은 방문축에서만 정확하다. 실수 $\Delta t$에서는 별도의 처리가 필요하다.</figcaption>
+</figure>
+
+<div class="box k"><h4>SurvTD가 푸는 문제</h4>
+<p>이 방법론의 두 구성요소는 정확히 이 문제에 대응한다.</p>
+<ul>
+<li><b>재생 이동 연산자 $\Phi_{\Delta t}$</b> (§3) — 시간 경과를 <b>확률질량의 수송</b>으로
+정의해 임의의 실수 $\Delta t$에 대해 총 질량을 보존한다.</li>
+<li><b>범주형 투영 $\Pi$</b> (§4) — 격자에 떨어지지 않는 이동 결과를 반올림 대신
+<b>인접 두 격자점에 선형 분배</b>한다.</li>
+</ul>
+<p class="note">부수적으로 이 구성은 덧셈만으로 이루어지므로, 조건부 밀도를 재정규화하는
+형태($p(s+\Delta t)/S(\Delta t)$)에서 나타나는 작은 분모 문제를 애초에 만들지 않는다.
+<b>단 이는 표현 방식의 성질이며, 선행연구가 그런 나눗셈을 사용한다는 뜻은 아니다</b> —
+TCSR와 DeepTCSR는 hazard 공간에서 생존확률을 <b>곱하는</b> 가중 BCE를 쓴다.</p></div>
+
+<!-- ================================ 3 -->
+<h2 id="s3">3. 재생 이동 연산자 $\Phi_{\Delta t}$</h2>
+
+<h3>3.1 확률 질량 수송으로의 재정의</h3>
+<p>생존을 유지하는 동안 잔여수명 확률변수는 결정론적 드리프트 $\dfrac{dR_t}{dt}=-1$을 겪는다.
+따라서 $\Delta t$가 경과하면 잔여수명 축 위의 질량은 <b>좌측으로 $\Delta t$만큼 평행이동</b>한다.
+구간 $[0,\Delta t)$에 있던 질량은 그 사이 이미 사건이 경과했다는 뜻이므로
+$s=0$의 <b>흡수 경계(absorbing boundary)</b>로 완전히 이관된다.</p>
+
+<figure>
+<svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+ <g transform="translate(20,20)">
+  <text x="0" y="0" font-size="13.5" font-weight="700">이동 전 $p(s)$</text>
+  <line x1="20" y1="150" x2="370" y2="150" stroke="#333"/><line x1="20" y1="150" x2="20" y2="30" stroke="#333"/>
+  <path d="M20,150 C70,148 95,58 140,46 C190,34 250,110 320,138 L370,146"
+        fill="#ede9fe" stroke="#7c3aed" stroke-width="2.4"/>
+  <rect x="20" y="30" width="70" height="120" fill="#fca5a5" opacity="0.4"/>
+  <line x1="90" y1="150" x2="90" y2="166" stroke="#b42318" stroke-dasharray="3 3"/>
+  <text x="72" y="182" font-size="12" fill="#b42318" font-weight="700">$\Delta t$</text>
+  <text x="98" y="108" font-size="11.5" fill="#b42318">이미 경과한 질량</text>
+  <text x="374" y="154" font-size="12">$s$</text>
+ </g>
+ <path d="M410,105 L468,105" stroke="#333" stroke-width="2" marker-end="url(#ar)"/>
+ <text x="412" y="95" font-size="12.5" font-weight="700">$\Phi_{\Delta t}$</text>
+ <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="3.5" orient="auto">
+   <path d="M0,0 L8,3.5 L0,7 z" fill="#333"/></marker></defs>
+ <g transform="translate(500,20)">
+  <text x="0" y="0" font-size="13.5" font-weight="700">이동 후 $(\Phi_{\Delta t}p)(s)$</text>
+  <line x1="20" y1="150" x2="370" y2="150" stroke="#333"/><line x1="20" y1="150" x2="20" y2="30" stroke="#333"/>
+  <path d="M20,58 C60,42 120,110 190,138 L300,146 L370,148"
+        fill="#dcfce7" stroke="#0f7b3f" stroke-width="2.4"/>
+  <line x1="20" y1="150" x2="20" y2="40" stroke="#b42318" stroke-width="6"/>
+  <text x="28" y="38" font-size="11.5" fill="#b42318" font-weight="700">$\delta_0$ 흡수 질량</text>
+  <text x="374" y="154" font-size="12">$s$</text>
+ </g>
+</svg>
+<figcaption>재생 이동 연산자 — 임의의 실수 이동에 대해 총 질량을 보존한다.</figcaption>
+</figure>
+
+<h3>3.2 정의</h3>
+$$\boxed{\;(\Phi_{\Delta t}\,p)(s)=p(s+\Delta t)+\delta_0(s)\int_0^{\Delta t}p(u)\,du,\qquad \forall s\ge0\;}$$
+<p>$\delta_0$는 $s=0$의 디락 델타다.</p>
+
+<div class="box k"><h4>보조정리 1 — 단위 확률질량 보존</h4>
+$$\int_0^\infty(\Phi_{\Delta t}p)(s)\,ds
+=\int_{\Delta t}^\infty p(u)du+\int_0^{\Delta t}p(u)du=1$$
+<p><b>임의의 실수</b> $\Delta t\ge0$에 대해 성립한다는 점이 핵심이다 — 격자 간격의 정수 배수로
+제한되지 않는다. 또한 덧셈만으로 이루어진 선형 연산이라 재정규화 항이 등장하지 않는다.</p></div>
+
+<h3>3.3 CDF에서의 작용</h3>
+$$F_{\Phi_{\Delta t}}(x)=\int_0^x(\Phi_{\Delta t}p)(u)\,du=\int_0^{x+\Delta t}p(u)\,du=F(x+\Delta t)$$
+<p class="note">밀도에서는 디락 델타를 다뤄야 하지만 CDF에서는 단순한 인자 이동이 된다.
+흡수 경계 처리가 자동으로 들어간다.</p>
+
+<!-- ================================ 4 -->
+<h2 id="s4">4. 범주형 투영 $\Pi$</h2>
+
+<p>구현을 위해 잔여수명 최대 지평 $S_{\max}$를 $K$개의 <b>지지 원자</b>
+$\mathcal Z=\{z_1,\dots,z_K\}$ ($0=z_1<\dots<z_K=S_{\max}$)로 이산화한다.
+격자 간격은 $\Delta z=\frac{S_{\max}}{K-1}$이다.</p>
+
+<p>$\Delta t$ 경과 후 각 원자는 연속 좌표 $\hat z_k=\max(0,\,z_k-\Delta t)$로 이동하는데,
+이 값은 <b>일반적으로 격자에 떨어지지 않는다.</b> 분포형 RL의 표준 투영 기법을 확장해
+이동된 질량을 인접 두 격자점에 거리 역수 비례로 선형 분배한다.</p>
+
+$$(\Pi\,\Phi_{\Delta t}\,\mathbf p)_i=\sum_{k=1}^{K}p_k\cdot
+\left[1-\frac{|\hat z_k-z_i|}{\Delta z}\right]^{+}\cdot
+\mathbb I\bigl(\hat z_k\in[z_{i-1},z_{i+1}]\bigr)$$
+
+<figure>
+<svg viewBox="0 0 880 190" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+ <line x1="60" y1="126" x2="820" y2="126" stroke="#333" stroke-width="1.4"/>
+ <g font-size="11.5" fill="#555" text-anchor="middle">
+ <line x1="140" y1="122" x2="140" y2="132" stroke="#333"/><text x="140" y="148">$z_{i-1}$</text>
+ <line x1="340" y1="122" x2="340" y2="132" stroke="#333"/><text x="340" y="148">$z_i$</text>
+ <line x1="540" y1="122" x2="540" y2="132" stroke="#333"/><text x="540" y="148">$z_{i+1}$</text>
+ <line x1="740" y1="122" x2="740" y2="132" stroke="#333"/><text x="740" y="148">$z_{i+2}$</text></g>
+ <line x1="450" y1="126" x2="450" y2="44" stroke="#7c3aed" stroke-width="2.6"/>
+ <circle cx="450" cy="44" r="5" fill="#7c3aed"/>
+ <text x="398" y="34" font-size="12" fill="#7c3aed" font-weight="700">이동된 원자 $\hat z_k$</text>
+ <path d="M446,58 L352,110" stroke="#0f7b3f" stroke-width="2" marker-end="url(#g1)"/>
+ <path d="M456,58 L532,110" stroke="#0f7b3f" stroke-width="2" marker-end="url(#g1)"/>
+ <defs><marker id="g1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+  <path d="M0,0 L7,3 L0,6 z" fill="#0f7b3f"/></marker></defs>
+ <text x="206" y="94" font-size="12" fill="#0f7b3f" font-weight="600">$1-\frac{|\hat z_k-z_i|}{\Delta z}$</text>
+ <text x="556" y="94" font-size="12" fill="#0f7b3f" font-weight="600">나머지</text>
+ <text x="60" y="178" font-size="12.5" fill="#555">$\hat z_k=0$으로 떨어진 질량은 첫 원자 $z_1=0$에 온전히 적립된다.</text>
+</svg>
+<figcaption>삼각 투영 — 임의의 연속 이동에 대해 총 질량 $\sum_k p_k\equiv1$을 보존한다.</figcaption>
+</figure>
+
+<div class="box k"><h4>$\Pi$가 §2의 문제를 해결하는 지점</h4>
+<p>반올림($\hat z_k$를 가장 가까운 격자점으로) 대신 <b>인접 두 점에 선형 분배</b>하므로
+개별 이동의 편향이 상쇄되고 총 질량 $\sum_k p_k\equiv1$이 유지된다.
+$\Delta t$가 격자 간격의 배수가 아니어도 정확하다.</p></div>
+
+<p>합성 연산자를 $\mathcal T_{\Delta t}=\Pi\,\Phi_{\Delta t}$로 쓴다.
+$\Pi$는 Cramér 거리에 대해 비확장 사상이며, 이 설계는 $\mathcal T$가 Cramér 거리에서
+수축이 되도록 의도되었다. <span class="note">(수렴 분석은 이 문서의 범위 밖이다.)</span></p>
+
+<!-- ================================ 5 -->
+<h2 id="s5">5. 분포 표현 (head)</h2>
+
+<h3>5.1 초안 — 범주형 softmax</h3>
+<p>백본 $f_\theta$가 $\mathcal H_t$를 받아 $K$차원 로짓을 출력하고, softmax로 지지점 위의
+확률질량 벡터를 만든다.</p>
+$$\mathbf p_\theta(t)=[p_{\theta,1}(t),\dots,p_{\theta,K}(t)]^\top\in\Delta^{K-1}$$
+
+<h3>5.2 v2 개정 — 가산 누적위험 파라미터화</h3>
+<div class="box"><p><code>research/toy-gradient/method_specification_survtd_v2.md</code>에서는 곱셈 연쇄
+$S_m=\prod_{k\le m}(1-h_k)$ 대신 <b>각 로짓이 독립적인 국소 누적위험 증분</b>을 지정하도록 바꾼다.</p>
+$$\Delta\Lambda_\theta(s_k\mid h_j)=\operatorname{softplus}(z_{j,k})\ge0,\qquad
+\Lambda_\theta(s_k)=\sum_{l\le k}\operatorname{softplus}(z_{j,l})$$
+$$S_\theta(s_k\mid h_j)=\exp(-\Lambda_\theta(s_k))=\prod_{l\le k}\bigl(1-\sigma(z_{j,l})\bigr)$$
+<p><b>분리된 그래디언트 불변량:</b></p>
+$$\frac{\partial\log S_\theta(s_m)}{\partial z_{j,k}}=
+\begin{cases}-\sigma(z_{j,k}),&k\le m\\ 0,&k>m\end{cases}$$
+<p>즉 $\partial\log S(s_m)/\partial z_k$가 $l\ne k$인 $z_l$에 의존하지 않아 Hessian이 대각이 된다.
+bin 사이의 곱셈 연쇄가 일으키던 <b>교차 seed 분산 폭발</b>을 제거하려는 설계다.</p></div>
+
+<!-- ================================ 6 -->
+<h2 id="s6">6. 손실함수</h2>
+
+<p>온라인 네트워크 $\theta$와 지연 갱신되는 타깃 네트워크 $\bar\theta$를 운용한다.
+타깃은 EMA 계수 $\tau\ll1$로 매 스텝 갱신한다: $\bar\theta\leftarrow(1-\tau)\bar\theta+\tau\theta$.</p>
+
+<p>전체 손실은 <b>Cramér 재생 TD 손실</b>과 <b>경계 지도 손실</b>의 결합이다.</p>
+
+$$\boxed{\;\mathcal L(\theta)=\frac1{|\mathcal B|}\sum_{i\in\mathcal B}
+\left[\sum_{j=1}^{L_i-1}
+d_{\text{Cramér}}^2\Bigl(\mathbf p_\theta(t_{i,j}),\;
+\operatorname{sg}\bigl[\Pi\,\Phi_{\Delta t_{i,j}}\,\mathbf p_{\bar\theta}(t_{i,j+1})\bigr]\Bigr)
++\lambda_{\text{term}}\,\mathcal L_{\text{term}}\bigl(\mathbf p_\theta(t_{i,L_i}),\tilde T_i,E_i\bigr)\right]\;}$$
+
+$$d_{\text{Cramér}}(F,G)=\left(\int_0^\infty|F(x)-G(x)|^2dx\right)^{1/2}$$
+
+<div class="box"><h4>두 항의 역할</h4>
+<table>
+<thead><tr><th>항</th><th>대상</th><th>역할</th></tr></thead>
+<tbody>
+<tr><td>Cramér TD 손실</td><td>중간 전이 $j=1,\dots,L_i-1$</td>
+<td>시간적 일관성 강제. 다음 방문의 예측을 $\Pi\Phi$로 옮겨 현재의 target으로 삼는다</td></tr>
+<tr><td>$\mathcal L_{\text{term}}$</td><td>마지막 관측 $j=L_i$</td>
+<td>경계 지도. 분포를 실제 관측 결과에 고정(anchor)한다</td></tr>
+</tbody></table>
+<p class="note">TD 항만으로는 분포가 자기참조로 표류할 수 있으므로 <b>경계 항이 필수</b>다.
+$\lambda_{\text{term}}$이 두 항의 균형을 정한다.</p></div>
+
+<p class="note">적분 범위는 지지 구간 $[0,S_{\max}]$이며, 이산 격자 위에서는 유한합으로 정확히
+계산된다. 즉 몬테카를로 적분이 필요 없다.</p>
+
+<!-- ================================ 7 -->
+<h2 id="s7">7. 검열 처리</h2>
+
+<h3>7.1 초안</h3>
+<p>$\mathcal L_{\text{term}}$은 사건이 발생한 경우($E_i=1$) 잔여수명 $0$ 지점 $z_1=0$에
+전체 질량을 할당하는 교차엔트로피이고, 중도절단된 경우($E_i=0$) 누적 생존질량이 유지되도록
+유도한다.</p>
+
+<h3>7.2 v2 개정 — SCCT (Survival-Conditional Continuation Target)</h3>
+<div class="box r"><h4>Round 1의 실패 모드</h4>
+<p>$S\le10^{-6}$일 때 흡수 좌표 $\perp$에 질량을 쏟아붓는 처리를 했더니,
+네트워크가 <b>검열 환자를 불멸($T=\infty$)로 학습</b>했다.</p></div>
+
+<div class="box k"><h4>v2의 결론: $\perp$에 인위적 질량을 절대 주지 않는다</h4>
+<ol>
+<li><b>중간 전이 ($j<L-1$)</b> — 방문 $j+1$에서 살아 있음이 관측되었으므로 그 구간은
+정의상 생존 전이다. Bellman 갱신 $R_j=\Delta t_j+R_{j+1}$이 비검열 동역학 위에서 작동한다.</li>
+<li><b>종료 검열 관측 ($j=L-1,\ E=0$)</b> — 얻는 정보는 오직 $R_{L-1}>r^c_{L-1}$뿐이다.
+임의의 종료 디락을 합성하거나 $\perp$에 질량을 버리는 대신 <b>정확한 생존 우도</b>로 지도한다.</li>
+</ol>
+$$\mathcal L^{\text{cens}}_{\text{term}}(\theta)=-\log S_\theta\bigl(r^c_{L-1}\mid h_{L-1}\bigr)
+=\Lambda_\theta\bigl(r^c_{L-1}\mid h_{L-1}\bigr)$$
+<p class="note">가산 누적위험 파라미터화(§5.2) 덕분에 이 항이 로짓의 단순한 합이 되어
+수치적으로 안정적이다. IPCW 가중치를 쓰지 않으므로 IPCW 분산 폭발과 클램핑 편향이 없다.</p></div>
+
+<!-- ================================ 8 -->
+<h2 id="s8">8. 알고리즘</h2>
+
+<pre><span class="c"># SurvTD — 격자 위 질량 이동 + 삼각 투영</span>
+init online θ;  target θ̄ ← θ
+support Z = [0, Δz, 2Δz, ..., S_max]          <span class="c"># K 개 원자</span>
+
+<span class="k">for</span> batch <span class="k">in</span> loader:
+    total = 0
+    <span class="k">for</span> j <span class="k">in</span> range(L-1):                      <span class="c"># 중간 전이</span>
+        p_now  = softmax(f_θ(h_j))                      <span class="c"># B x K</span>
+        <span class="k">with</span> no_grad():
+            p_next = softmax(f_θ̄(h_{j+1}))
+            z_hat  = maximum(0, Z - Δt_j)               <span class="c"># 실수 이동 (반올림 금지)</span>
+            p_tgt  = triangular_project(p_next, z_hat, Z)   <span class="c"># Π Φ</span>
+        total += cramer_sq(cdf(p_now), cdf(p_tgt))      <span class="c"># ∫|F-G|² dx</span>
+
+    <span class="c"># 경계 항</span>
+    <span class="k">if</span> E == 1:                                       <span class="c"># 사건 관측</span>
+        total += λ_term * cross_entropy(p_θ(h_L), atom=<span class="s">z_1=0</span>)
+    <span class="k">else</span>:                                            <span class="c"># 검열 (v2: SCCT)</span>
+        total += λ_term * Λ_θ(r_c | h_L)                <span class="c"># = -log S_θ(r_c)</span>
+
+    update_online(total)
+    θ̄ ← (1-τ)·θ̄ + τ·θ                                  <span class="c"># EMA</span></pre>
+
+<!-- ================================ 9 -->
+<h2 id="s9">9. 요약</h2>
+<table>
+<thead><tr><th>구성요소</th><th>선택</th></tr></thead>
+<tbody>
+<tr><td>사건 구조</td><td><b>단일 사건</b> ($T$, $C$, $E$)</td></tr>
+<tr><td>예측 대상</td><td>잔여수명 $R_t$의 분포</td></tr>
+<tr><td>분포 표현</td><td>고정 격자 $\mathcal Z$ 위의 <b>범주형 확률질량</b> (v2: 가산 누적위험)</td></tr>
+<tr><td>일관성 부과</td><td>재생 이동 $\Phi_{\Delta t}$ + 삼각 투영 $\Pi$</td></tr>
+<tr><td>이동 방향</td><td>다음 상태 분포를 <b>왼쪽으로</b> 밀어 현재의 target 생성</td></tr>
+<tr><td>손실</td><td>Cramér TD $+\ \lambda_{\text{term}}\cdot$ 경계 지도 <b>(2항)</b></td></tr>
+<tr><td>적분</td><td>지지 구간 $[0,S_{\max}]$ 위의 <b>정확한 유한합</b></td></tr>
+<tr><td>검열</td><td>초안: 종료 CE / v2: <b>SCCT</b> $-\log S_\theta(r^c)$</td></tr>
+<tr><td>안정화</td><td>타깃 네트워크 EMA + stop-gradient</td></tr>
+</tbody></table>
+
+<div class="xref">→ <a href="Method_B_SMTCSR_idea.html">Method B (SM-TCSR, idea.md + intgral.md 계열) 보기</a></div>
+
+</div></body></html>
