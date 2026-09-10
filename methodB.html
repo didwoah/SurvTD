@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>Method B — SM-TCSR (idea.md + intgral.md 계열)</title>
+<script>window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+:root{--fg:#181818;--mut:#6a6a6a;--line:#e4e4e7;--acc:#0e7490;--ok:#0f7b3f;
+      --bad:#b42318;--warn:#b45309;--soft:#f5fafb}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"Segoe UI","Malgun Gothic",sans-serif;
+     color:var(--fg);line-height:1.8;font-size:16px;background:#fff}
+.wrap{max-width:940px;margin:0 auto;padding:0 30px 110px}
+header{background:linear-gradient(135deg,#0b3b45,#0e7490);color:#fff;padding:44px 30px 34px}
+header .in{max-width:940px;margin:0 auto}
+.badge{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+       border-radius:20px;padding:3px 13px;font-size:12.5px;font-weight:700;margin-bottom:10px}
+h1{font-size:28px;margin:0 0 8px;letter-spacing:-.3px}
+header p{margin:0;opacity:.92;font-size:15px}
+h2{font-size:22px;margin:48px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+h3{font-size:17.5px;margin:28px 0 8px}
+h4{font-size:15px;margin:20px 0 6px}
+p,li{font-size:15.5px}
+code{background:var(--soft);padding:2px 6px;border-radius:4px;font-size:13.5px;
+     font-family:"Cascadia Mono",Consolas,monospace}
+pre{background:#0a2b33;color:#dff1f5;padding:16px 18px;border-radius:8px;overflow-x:auto;
+    font-size:13px;line-height:1.65}
+pre .c{color:#7fa4ad}pre .k{color:#7dd3fc}pre .s{color:#86efac}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600}
+.box{border:1px solid var(--line);border-left:4px solid var(--acc);background:var(--soft);
+     padding:14px 18px;margin:18px 0;border-radius:0 7px 7px 0}
+.box.k{border-left-color:var(--ok)}.box.w{border-left-color:var(--warn)}
+.box.r{border-left-color:var(--bad)}
+.box.impl{border-left-color:#9333ea;background:#faf5ff}
+.box h4{margin-top:0}
+.note{font-size:13.5px;color:var(--mut)}
+nav{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px 22px;margin-top:20px}
+nav ol{margin:6px 0;padding-left:22px;columns:2;font-size:14.5px}
+nav a{color:var(--acc);text-decoration:none}nav a:hover{text-decoration:underline}
+figure{margin:18px 0}
+figcaption{font-size:13px;color:var(--mut);text-align:center;margin-top:6px}
+svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.xref{background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px 18px;margin:16px 0}
+.xref a{color:#7c3aed;font-weight:600}
+.tag{display:inline-block;background:#f3e8ff;color:#7c3aed;border-radius:4px;
+     padding:1px 8px;font-size:11.5px;font-weight:700;margin-right:6px;vertical-align:middle}
+@media(max-width:820px){nav ol{columns:1}}
+</style></head><body>
+
+<header><div class="in">
+<span class="badge">Method B</span>
+<h1>SM-TCSR — 실제 경과시간 CIF 이동 기반 semi-Markov distributional TD</h1>
+<p>출처: <code>idea.md</code> + <code>intgral.md</code> · 그리고 본 프로젝트에서 실제 구현·실행한 버전</p>
+</div></header>
+
+<div class="wrap">
+
+<div class="xref">이 문서는 <b><code>idea.md</code> + <code>intgral.md</code> 사양과 우리 구현</b>을 기준으로 한다.
+<code>research/</code> 폴더의 논문 초안(SurvTD)은 표현·손실·검열 처리가 다르다.
+→ <a href="Method_A_SurvTD_research.html">Method A (SurvTD, research/ 버전) 보기</a>
+<br><span class="note" style="color:#7c3aed"><span class="tag">구현</span> 보라색 박스는 사양이 아니라
+<b>본 프로젝트에서 실제로 돌린 구체 설정</b>이다.</span></div>
+
+<nav><b>목차</b><ol>
+<li><a href="#s1">한 문장 요약과 직관</a></li>
+<li><a href="#s2">문제 설정과 기호</a></li>
+<li><a href="#s3">Semi-Markov 세팅</a></li>
+<li><a href="#s4">분포 표현 (head)</a></li>
+<li><a href="#s5">TD target</a></li>
+<li><a href="#s6">손실함수</a></li>
+<li><a href="#s7">Horizon 두 설정</a></li>
+<li><a href="#s8">검열 처리</a></li>
+<li><a href="#s9">알고리즘</a></li>
+<li><a href="#s10">요약 / Method A 대조</a></li>
+</ol></nav>
+
+<!-- ================================ 1 -->
+<h2 id="s1">1. 한 문장 요약과 직관</h2>
+
+<div class="box k"><h4>핵심 아이디어</h4>
+<p><b>현재까지의 기록으로 사건까지 남은 시간의 분포를 예측하고, 다음 관측에서의 예측분포를
+실제 경과시간만큼 이동시켜 현재 모델의 학습 target으로 사용한다.</b></p></div>
+
+<p>오전 9시에 상태를 관측하고 오후 1시에 다음 상태를 관측했으며 그때까지 환자가 살아 있다면,
+오후 1시 상태에서의 "앞으로 8시간 이내 사망" 예측은 오전 9시 상태에서의
+"앞으로 12시간 이내 사망"을 학습하는 target이 된다. 이미 지나간 4시간을 더하기 때문이다.</p>
+
+<figure>
+<svg viewBox="0 0 900 170" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+ <line x1="60" y1="70" x2="540" y2="70" stroke="#333" stroke-width="1.6"/>
+ <circle cx="60" cy="70" r="7" fill="#0e7490"/><circle cx="340" cy="70" r="7" fill="#0e7490"/>
+ <text x="30" y="96" font-size="13">오전 9시</text><text x="312" y="96" font-size="13">오후 1시</text>
+ <text x="26" y="52" font-size="13" fill="#0e7490" font-weight="700">$s_n$</text>
+ <text x="332" y="52" font-size="13" fill="#0e7490" font-weight="700">$s_{n+1}$</text>
+ <path d="M60,116 L340,116" stroke="#0f7b3f" stroke-width="1.4" marker-end="url(#a)"/>
+ <text x="132" y="136" font-size="13" fill="#0f7b3f" font-weight="700">$D_n$ = 4시간</text>
+ <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+   <path d="M0,0 L7,3 L0,6 z" fill="#0f7b3f"/></marker></defs>
+ <rect x="590" y="20" width="290" height="106" rx="8" fill="#ecfeff" stroke="#0e7490"/>
+ <text x="606" y="44" font-size="12.5" font-weight="700" fill="#0e7490">시간적 일관성</text>
+ <text x="606" y="70" font-size="12.5">$F(8\text{h}\mid s_{n+1})$ 가</text>
+ <text x="606" y="94" font-size="12.5">$F(12\text{h}\mid s_n)$ 의 target 이 된다</text>
+ <text x="606" y="116" font-size="11.5" fill="#6a6a6a">이미 지나간 4시간을 더한다</text>
+</svg>
+</figure>
+
+<p class="note">이것은 <b>한 샘플의 target</b>이다. 오전 9시의 실제 사망확률이 4시간 동안 0이라는
+주장이 아니다. 비슷한 초기 상태에서 일찍 사망한 환자들의 전이도 함께 학습해야
+조건부 위험이 추정된다.</p>
+
+<!-- ================================ 2 -->
+<h2 id="s2">2. 문제 설정과 기호</h2>
+
+<p>관측 기록은 $(t_0,x_0),(t_1,x_1),\dots$이고, 상태는 인코더로 요약한다.</p>
+$$s_n=\operatorname{Encoder}(\mathcal H_{t_n})$$
+
+<p>현재 관측시각 기준으로 첫 종료 사건까지 남은 시간을 $Z$, 사건 종류를 $J$라 한다.
+모델이 출력하는 것은 <b>사건별 누적발생확률(CIF)</b>이다.</p>
+
+$$F_c(\tau\mid s)=P\bigl(Z\le\tau,\;J=c\;\big|\;s,\ \text{현재까지 종료 사건 없음}\bigr),
+\qquad S(\tau\mid s)=1-\sum_c F_c(\tau\mid s)$$
+
+<table>
+<thead><tr><th>기호</th><th>의미</th></tr></thead>
+<tbody>
+<tr><td>$s_n$</td><td>현재까지의 기록을 요약한 상태 표현</td></tr>
+<tr><td>$D_n$</td><td><b>전이시간</b> — 다음 관측 또는 종료 사건까지의 실제 시간</td></tr>
+<tr><td>$\tau$</td><td><b>예측시간</b> — 지금부터 몇 시간 뒤를 예측하는지</td></tr>
+<tr><td>$H$</td><td><b>Horizon</b> — 손실을 평가하는 미래 범위 (사건 시간의 최댓값이 아님)</td></tr>
+<tr><td>$c$</td><td>사건 종류. 첫 임상 목표는 <b>사망 / 생존퇴실</b> 두 종류</td></tr>
+<tr><td>$\bar\theta$</td><td>target 모델 파라미터</td></tr>
+</tbody></table>
+
+<div class="box"><h4>예측 대상을 먼저 고정한다</h4>
+<p>첫 임상 구현의 대상은 <b>현재 ICU 입원 중 사망</b>이다. 종료 사건은 사망과 생존퇴실 두 종류다.
+ICU 퇴실 이후의 사망은 별도 문제이며 이 설계와 혼합하지 않는다.
+데이터 수집 종료처럼 결과가 확인되지 않은 경우는 <b>행정적 검열</b>로 둔다.</p></div>
+
+<div class="box w"><h4>$\tau$와 $D_n$을 혼동하지 말 것</h4>
+<p>$D_n$은 <b>데이터에 기록된</b> 두 관측 사이의 실제 간격이다. $\tau$는 <b>모델에게 묻는</b>
+예측 시점이다. 둘 다 실수이며 독립적으로 움직인다.</p></div>
+
+<!-- ================================ 3 -->
+<h2 id="s3">3. Semi-Markov 세팅</h2>
+
+<p>다음 EHR 관측, 사망, 생존퇴실 중 <b>먼저 발생하는 시점</b>까지를 하나의 전이로 정의한다.
+사망·퇴실은 별도의 absorbing state로 표시하고, 행정적 검열은 임상 전이가 아니라
+관측이 중단된 것으로 처리한다.</p>
+
+<h3>3.1 Markov renewal 가정</h3>
+$$\boxed{\;P\bigl(s_{n+1}\in B,\ D_n\le u\;\big|\;\mathcal H_{t_n}\bigr)=Q(B,u\mid s_n)\;}$$
+
+<div class="box"><h4>말로 풀면</h4>
+<p><b>현재 상태 표현을 알면 다음 상태와 거기까지 걸리는 시간의 <i>결합분포</i>를 예측하는 데
+충분하다.</b></p>
+<ul>
+<li>다음 상태와 경과시간은 <b>독립일 필요가 없다</b>.</li>
+<li>경과시간을 <b>지수분포로 제한하지 않는다</b> — Markov가 아니라 semi-Markov인 이유.</li>
+</ul>
+<p>관측시점의 상태·시간 쌍이 Markov renewal 구조를 이룬다.</p></div>
+
+<figure>
+<svg viewBox="0 0 900 215" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+ <text x="20" y="18" font-size="13.5" font-weight="700">방문 index 축 (TCSR / DeepTCSR)</text>
+ <line x1="40" y1="58" x2="500" y2="58" stroke="#333" stroke-width="1.5"/>
+ <g fill="#999"><circle cx="40" cy="58" r="6"/><circle cx="155" cy="58" r="6"/>
+ <circle cx="270" cy="58" r="6"/><circle cx="385" cy="58" r="6"/></g>
+ <circle cx="500" cy="58" r="7" fill="#b42318"/>
+ <g font-size="11.5" fill="#6a6a6a" text-anchor="middle">
+ <text x="97" y="46">1 step</text><text x="212" y="46">1 step</text>
+ <text x="327" y="46">1 step</text><text x="442" y="46">1 step</text></g>
+ <text x="528" y="62" font-size="12.5" fill="#b42318">실제 간격이 사라진다</text>
+
+ <text x="20" y="122" font-size="13.5" font-weight="700">실제시간 축 (SM-TCSR)</text>
+ <line x1="40" y1="164" x2="800" y2="164" stroke="#333" stroke-width="1.5"/>
+ <g fill="#0e7490"><circle cx="40" cy="164" r="6"/><circle cx="95" cy="164" r="6"/>
+ <circle cx="330" cy="164" r="6"/><circle cx="400" cy="164" r="6"/></g>
+ <circle cx="800" cy="164" r="7" fill="#b42318"/>
+ <g font-size="11.5" fill="#0e7490" text-anchor="middle" font-weight="600">
+ <text x="67" y="152">0.5h</text><text x="212" y="152">4h</text>
+ <text x="365" y="152">1.2h</text><text x="600" y="152">9h</text></g>
+ <g font-size="11.5" fill="#333" text-anchor="middle">
+ <text x="40" y="188">$s_0$</text><text x="95" y="188">$s_1$</text>
+ <text x="330" y="188">$s_2$</text><text x="400" y="188">$s_3$</text>
+ <text x="800" y="188">사건</text></g>
+</svg>
+<figcaption>ICU에서 어느 환자는 30분 뒤, 다른 환자는 5시간 뒤에 다음 기록이 생긴다.</figcaption>
+</figure>
+
+<h3>3.2 명시적으로 하지 않는 주장</h3>
+<div class="box w">
+<ul>
+<li>이 모델은 <b>관측 상태 사이</b>의 시간을 쓴다. 환자의 몸이 다음 관측까지 변하지 않는다고
+가정하지 않으며, 잠재 임상 상태 진입 시각을 추정한다고 주장하지 않는다.</li>
+<li><b>불규칙 관측 자체가 semi-Markov의 증거는 아니다.</b> 위 구조는 명시적인 모델링 가정이다.</li>
+<li>RNN·Transformer를 써도 상태의 충분성이 자동 보장되지 않는다.</li>
+</ul></div>
+
+<h3>3.3 Model-free</h3>
+<p>결합분포 $Q$를 직접 추정하는 전이모델은 만들지 않는다. 관측한 삼중항
+$(s_n,D_n,s_{n+1})$로부터 사건시간 분포를 바로 학습한다.</p>
+
+<!-- ================================ 4 -->
+<h2 id="s4">4. 분포 표현 (head)</h2>
+
+<h3>4.1 사양 — 사건별 Weibull mixture</h3>
+<p>임의의 실수 $\tau$에서 CIF를 닫힌 형태로 평가할 수 있어야 한다.</p>
+
+$$F_c(\tau\mid s)=\pi_c(s)\sum_{m=1}^{M}w_{cm}(s)
+\left[1-\exp\left\{-\Bigl(\frac{\tau}{a_{cm}(s)}\Bigr)^{b_{cm}(s)}\right\}\right]$$
+
+<p>$\pi_c$와 $w_{cm}$은 softmax, scale $a_{cm}$·shape $b_{cm}$은 양수로 제한한다.
+이 형태는 CIF의 <b>단조성</b>과 $\sum_c F_c\le1$을 자동으로 보장한다. 단일 사건이면 $\pi=1$.</p>
+
+<div class="box k"><h4>왜 연속 head인가</h4>
+<p>이동이 $\tau-D_n$을 <b>그냥 대입</b>하는 것으로 끝나므로 격자 보간 오차가 없다.
+격자 표현을 쓰면 별도의 투영이 필요하다.</p>
+<p class="note">Mixture head는 실용적 시작점이며 핵심 신규 기여가 아니다.
+장기 tail과 사건 종류 확률은 검열이 많으면 약하게 식별될 수 있다.</p></div>
+
+<div class="box impl"><h4><span class="tag">구현</span> 우리가 실제로 쓴 head</h4>
+<p>본 프로젝트에서는 <b>TCSR·DeepTCSR와 head 계열을 정확히 맞추기 위해</b> Weibull mixture 대신
+원본과 동일한 이산 logistic hazard를 <b>실제시간 bin</b> 위에 올렸다.</p>
+$$h_\theta(k\mid x)=\operatorname{sigmoid}(\alpha_k+\beta^\top x),\qquad
+F_\theta(\tau_k\mid x)=1-\prod_{j\le k}\bigl(1-h_\theta(j\mid x)\bigr)$$
+<ul>
+<li>격자: <code>grid = linspace(0, H, K+1)</code>, $K=32$ (설정 A 재현 시에는 $K=$ 방문 horizon)</li>
+<li>비정수 이동은 <b>CDF 선형보간</b>으로 처리 (§5.4)</li>
+<li>단일 사건만 사용 (사망). 경쟁위험은 미구현</li>
+</ul>
+<p class="note">이 선택의 이유: 세 방법(TCSR / DeepTCSR / SM-TCSR)이 <b>동일한 선형 head</b>를
+공유해야 "학습법 효과"와 "시간 처리 효과"를 분리할 수 있기 때문이다.
+$\tau_k$가 방문 index가 아니라 실제시간 bin이라는 점만 다르다.</p></div>
+
+<!-- ================================ 5 -->
+<h2 id="s5">5. TD target</h2>
+
+<p>각 전이는 무엇이 관측되었느냐에 따라 세 가지로 나뉜다.</p>
+
+<figure>
+<svg viewBox="0 0 900 290" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+ <g font-size="13" font-weight="700">
+  <text x="40" y="16">① 다음 관측에서 생존 확인</text>
+  <text x="348" y="16">② 종료 사건 관측</text>
+  <text x="668" y="16">③ 전이 도중 검열</text></g>
+ <g transform="translate(30,36)">
+  <line x1="0" y1="168" x2="240" y2="168" stroke="#333"/><line x1="0" y1="168" x2="0" y2="24" stroke="#333"/>
+  <text x="-8" y="30" font-size="11" text-anchor="end">1</text><text x="-8" y="172" font-size="11" text-anchor="end">0</text>
+  <text x="246" y="172" font-size="11">$\tau$</text>
+  <line x1="0" y1="168" x2="85" y2="168" stroke="#0e7490" stroke-width="3"/>
+  <path d="M85,168 C120,165 145,108 172,78 C198,52 220,42 240,38" fill="none" stroke="#0e7490" stroke-width="3"/>
+  <line x1="85" y1="168" x2="85" y2="184" stroke="#666" stroke-dasharray="3 3"/>
+  <text x="74" y="200" font-size="11.5" fill="#666">$D_n$</text>
+  <text x="0" y="226" font-size="11.5" fill="#444">target 모델의 CIF 를</text>
+  <text x="0" y="244" font-size="11.5" fill="#444">$D_n$ 만큼 <tspan font-weight="700">이동</tspan>해 bootstrap</text>
+ </g>
+ <g transform="translate(348,36)">
+  <line x1="0" y1="168" x2="240" y2="168" stroke="#333"/><line x1="0" y1="168" x2="0" y2="24" stroke="#333"/>
+  <text x="-8" y="30" font-size="11" text-anchor="end">1</text><text x="-8" y="172" font-size="11" text-anchor="end">0</text>
+  <text x="246" y="172" font-size="11">$\tau$</text>
+  <line x1="0" y1="168" x2="105" y2="168" stroke="#b42318" stroke-width="3"/>
+  <line x1="105" y1="168" x2="105" y2="28" stroke="#b42318" stroke-width="3"/>
+  <line x1="105" y1="28" x2="240" y2="28" stroke="#b42318" stroke-width="3"/>
+  <line x1="105" y1="168" x2="105" y2="184" stroke="#666" stroke-dasharray="3 3"/>
+  <text x="94" y="200" font-size="11.5" fill="#666">$D_n$</text>
+  <text x="0" y="226" font-size="11.5" fill="#444">관측된 종류 $c^*$ 의</text>
+  <text x="0" y="244" font-size="11.5" fill="#444">계단함수 <tspan font-weight="700">hard target</tspan></text>
+ </g>
+ <g transform="translate(668,36)">
+  <line x1="0" y1="168" x2="200" y2="168" stroke="#333"/><line x1="0" y1="168" x2="0" y2="24" stroke="#333"/>
+  <text x="-8" y="30" font-size="11" text-anchor="end">1</text><text x="-8" y="172" font-size="11" text-anchor="end">0</text>
+  <text x="206" y="172" font-size="11">$\tau$</text>
+  <line x1="0" y1="168" x2="95" y2="168" stroke="#0f7b3f" stroke-width="3"/>
+  <rect x="95" y="24" width="105" height="144" fill="#bbb" opacity="0.34"/>
+  <text x="104" y="94" font-size="11.5" fill="#555">미관측</text>
+  <text x="104" y="111" font-size="11.5" fill="#555">(mask)</text>
+  <line x1="95" y1="168" x2="95" y2="184" stroke="#666" stroke-dasharray="3 3"/>
+  <text x="86" y="200" font-size="11.5" fill="#666">$C_n$</text>
+  <text x="0" y="226" font-size="11.5" fill="#444">$C_n$ 까지 무사건 <tspan font-weight="700">확인됨</tspan>.</text>
+  <text x="0" y="244" font-size="11.5" fill="#444">이후는 벌점 없음.</text>
+ </g>
+</svg>
+</figure>
+
+<h3>5.1 다음 관측에서 생존이 확인된 경우</h3>
+$$\widetilde F_{n,c}(\tau)=
+\begin{cases}
+0, & 0\le\tau<D_n,\\[3pt]
+F_{\bar\theta,c}(\tau-D_n\mid s_{n+1}), & \tau\ge D_n.
+\end{cases}$$
+<p>연속 head에서 $F_c(0)=0$이므로 $\tau=D_n$ 경계에서 연속으로 이어진다.</p>
+
+<h3>5.2 종료 사건이 관측된 경우</h3>
+$$\widetilde F_{n,c}(\tau)=\mathbf 1\{c=c^*\}\,\mathbf 1\{\tau\ge D_n\}$$
+<p>여기서는 bootstrap을 하지 않는다. 관측된 사실이 그대로 target이다.</p>
+
+<h3>5.3 target이 왜 올바른가</h3>
+<p>모든 가능한 관측·종료 전이를 포함하고 현재 상태가 충분하다는 가정 아래, 참 모델은
+다음 조건부 기대값 관계를 만족한다.</p>
+$$F_c^{*}(\tau\mid s)=\mathbb E\bigl[\widetilde F_{n,c}^{*}(\tau)\;\big|\;s_n=s\bigr]$$
+<p class="note">하나의 다음 상태가 모든 미래를 대표한다는 뜻이 아니다. 여러 환자와 전이에서 얻은
+target의 <b>조건부 평균</b>을 학습한다. 검열로 선택된 전이 분포가 이 기대값을 보존하는지는
+별도의 검토 대상이다.</p>
+
+<h3>5.4 이동의 구현</h3>
+<div class="box r"><h4>$D_n$을 반올림하면 안 된다</h4>
+<p>방문축 방법은 이동량이 정수 1 step이라 배열을 한 칸 미는 것으로 충분했다.
+실제 $D_n$은 실수이므로 반올림하면 누적 시간 편향이 생긴다.</p></div>
+<ul>
+<li><b>연속 head</b>: $\tau-D_n$을 직접 대입 — 보간 오차 없음</li>
+<li><b>격자 head</b>: CDF를 격자 위에서 <b>선형보간</b>해 평가. CDF는 $\tau$의 단조함수이므로
+보간해도 유효한 분포로 남는다 (이산 hazard는 bin마다 조건부 사건이 달라 보간이 정의되지 않는다)</li>
+</ul>
+
+<div class="box impl"><h4><span class="tag">구현</span> 우리 코드의 이동</h4>
+<pre style="margin:8px 0"><span class="k">def</span> _shift_cdf(F, grid, D):
+    q = grid[None,:] - D[:,None]
+    <span class="k">return</span> vmap(<span class="k">lambda</span> f,qq: interp(qq, grid, f, left=0.0, right=f[-1]))(F, q)</pre>
+<p><code>left=0.0</code>이 $\tau<D_n$ 구간을 0으로 만들고, <code>right=f[-1]</code>이 $H$ 밖을
+$F(H)$로 clamp해 <b>꼬리질량 $1-F(H)$를 보존</b>한다. $D_n\ge0$이므로
+$\tau-D_n\le H$가 항상 성립해 외삽이 필요 없다.</p></div>
+
+<!-- ================================ 6 -->
+<h2 id="s6">6. 손실함수</h2>
+
+<p>관측 완료 전이에 대해 <b>하나의 분포형 TD 손실</b>을 기본 목적함수로 둔다.</p>
+
+$$\boxed{\;\mathcal L_{\mathrm{TD}}=\mathbb E_n\left[\sum_c\frac1H\int_0^H
+\Bigl(F_{\theta,c}(\tau\mid s_n)-\operatorname{sg}\bigl[\widetilde F_{n,c}(\tau)\bigr]\Bigr)^2 d\tau\right]\;}$$
+
+<p>$\operatorname{sg}[\cdot]$는 target 쪽 gradient를 차단한다.
+단일 사건의 전체 시간축에서는 <b>제곱 Cramér 거리</b>의 형태이며, 여기서는 유한 horizon과
+competing-risk CIF에 적용한 제곱오차다.</p>
+
+<div class="box k"><h4>별도 survival likelihood를 상시 결합하지 않는다</h4>
+<p>첫 구현의 중심은 <b>이 하나의 TD loss</b>다. 검열 likelihood 같은 보조항은 선택 사항이며,
+사용한 버전은 단일 TD loss 버전과 <b>구분해서 보고</b>한다.
+<span class="note">(Method A는 TD 항 + 경계 지도 항의 2항 구조라는 점이 다르다.)</span></p></div>
+
+<h3>6.1 왜 CDF 제곱오차인가</h3>
+<table>
+<thead><tr><th>이유</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td><b>불편 표본 그래디언트</b></td>
+<td>Wasserstein은 minibatch 표본 그래디언트가 편향된다. Cramér 계열은 불편하다.</td></tr>
+<tr><td><b>시간 거리를 반영</b></td>
+<td>scale sensitive of order 1이라 시간축에서 어긋난 거리에 비례해 벌점을 준다.</td></tr>
+<tr><td><b>직접 계산 가능</b></td>
+<td>모델이 CIF를 직접 출력하므로 KDE나 normalizing flow가 필요 없다.</td></tr>
+<tr><td><b>사건 전이에서 CRPS</b></td>
+<td>종료 사건 target이 계단함수이므로 그 구간의 손실은 정확히 CRPS가 된다.</td></tr>
+</tbody></table>
+
+<h3>6.2 수치적분</h3>
+<p>적분은 <b>평가점을 샘플링</b>해 근사한다.</p>
+$$\widehat{\mathcal L}_{\mathrm{TD}}=\frac1{BM}\sum_{n=1}^{B}\sum_{m=1}^{M}\sum_c
+\Bigl(F_{\theta,c}(\tau_m\mid s_n)-\operatorname{sg}\bigl[\widetilde F_{n,c}(\tau_m)\bigr]\Bigr)^2,
+\qquad\tau_m\sim\mathrm{Uniform}(0,H)$$
+<p class="note">$B$=배치 크기, $M$=적분 평가점 수. <b>이 평가점은 모델의 출력 bin이 아니다.</b>
+격자와 무관하게 뽑는다.</p>
+
+<div class="box impl"><h4><span class="tag">구현</span> 우리 코드의 손실</h4>
+<pre style="margin:8px 0"><span class="k">def</span> loss_fn(params, s_cur, y, mask):
+    F = _cdf_from_logits(forward(params, s_cur))
+    <span class="k">return</span> sum(((F - y) ** 2) * mask) / (s_cur.shape[0] * (K + 1))</pre>
+<p>MC 샘플링 대신 <b>고정 격자 위 균등 합</b>을 썼다 ($K+1$개 점). 이는 $\tau_m$을 격자에
+고정한 특수한 경우이고, <code>mask</code>가 검열 구간을 제외한다. 단일 사건이라 $\sum_c$는 없다.</p></div>
+
+<!-- ================================ 7 -->
+<h2 id="s7">7. Horizon — 두 가지 설정</h2>
+
+<p>Cramér 거리를 원래 정의대로 쓰면 $\int_0^\infty$가 맞다. 그런데 <b>사망하지 않을 수도 있다</b>는
+점 때문에 무한대 적분이 발산할 수 있다.</p>
+
+<h3>7.1 왜 발산하는가</h3>
+<p>"현재 ICU 입원 중 사망"에서는 생존퇴실한 환자가 그 사건을 끝내 겪지 않는다.</p>
+
+$$T_D=\begin{cases}\text{사망까지의 시간},&\text{ICU 내 사망},\\ \infty,&\text{생존퇴실},\end{cases}
+\qquad
+\lim_{\tau\to\infty}F_D(\tau)=P(\text{ICU 내 사망})=\pi_D$$
+
+<p>즉 CIF의 극한은 1일 필요가 없다. 생존퇴실 확률이 80%면 사망 CIF는 최종적으로 0.2에 도달한다.
+<b>이것은 검열된 환자를 "사망하지 않는 환자"로 분류한다는 뜻이 아니다</b> — 검열에서는
+이후 사건 여부를 모른다.</p>
+
+<p>예측과 target의 극한이 조금만 달라도:</p>
+$$F_{\theta,D}(\infty)=0.2,\quad\widetilde F_D(\infty)=0.3
+\;\Longrightarrow\;
+\bigl(F_{\theta,D}(\tau)-\widetilde F_D(\tau)\bigr)^2\longrightarrow0.01$$
+$$\boxed{\;\int_0^\infty\bigl(F_{\theta,D}(\tau)-\widetilde F_D(\tau)\bigr)^2d\tau=\infty\;}$$
+
+<div class="box r"><h4>사망 확률 자체가 조금만 달라도 loss가 무한대가 된다</h4>
+<p>실제 사망 전이의 target은 극한이 1이고 퇴실 전이의 사망 target은 극한이 0이므로,
+사건별 CIF를 무한대까지 <b>단순 적분</b>하는 설계에서는 이 문제가 특히 직접적으로 나타난다.</p>
+<p class="note">수치 확인: $F=0.2(1-e^{-0.5\tau})$, $G=0.3(1-e^{-0.5\tau})$에 대해
+적분 상한 200 → $d^2=1.97$, 상한 2000 → $d^2=19.97$. <b>상한에 정확히 비례</b>해 커진다.</p></div>
+
+<div class="box"><h4>$H$까지만 적분한다고 "$H$ 안에 반드시 사망한다"는 뜻이 아니다</h4>
+<p>$F_\theta(H)=1$이라는 조건을 두지 않는다. $F_\theta(72)=0.3$이어도 전혀 문제없고,
+남은 70%는 <b>72시간 이후 사망하거나 끝내 그 사건을 겪지 않을 가능성</b>이다.
+<b>$H$는 사망시간의 최댓값이 아니라 손실의 평가 범위다.</b></p></div>
+
+<h3>7.2 설정 (A) — 유한 horizon</h3>
+$$\mathcal L_H=\mathbb E_n\left[\sum_c\frac1H\int_0^H
+\bigl(F_{\theta,c}(\tau\mid s_n)-\operatorname{sg}[\widetilde F_{n,c}(\tau)]\bigr)^2d\tau\right]$$
+<table>
+<thead><tr><th>항목</th><th>내용</th></tr></thead>
+<tbody>
+<tr><td>적합한 목적</td><td>6·24·72시간 등 <b>정해진 범위</b>의 예측</td></tr>
+<tr><td>구현</td><td>$\tau_m\sim\mathrm{Uniform}(0,H)$로 $M$개 뽑아 제곱오차 평균</td></tr>
+<tr><td>$1/H$</td><td>horizon 길이 정규화. $H$를 바꿔도 손실 스케일이 유지된다</td></tr>
+<tr><td>한계</td><td>$H$ 이후 tail의 정확성은 이 손실만으로 보장되지 않는다</td></tr>
+</tbody></table>
+
+<h3>7.3 설정 (B) — 적분 가능한 가중치를 쓰는 무한 구간</h3>
+<p>고정 cutoff 없이 모든 미래를 학습하려면, 상한을 $\infty$로 바꾸는 대신
+<b>적분 가능한 가중치</b>를 넣는다.</p>
+
+$$\boxed{\;\mathcal L_w=\mathbb E_n\left[\sum_c\int_0^\infty w(\tau)
+\bigl(F_{\theta,c}(\tau\mid s_n)-\operatorname{sg}[\widetilde F_{n,c}(\tau)]\bigr)^2d\tau\right]\;}$$
+$$w(\tau)>0,\qquad\int_0^\infty w(\tau)d\tau=1,\qquad\text{예: }w(\tau)=\rho e^{-\rho\tau}$$
+
+<table>
+<thead><tr><th>항목</th><th>내용</th></tr></thead>
+<tbody>
+<tr><td>적합한 목적</td><td>고정 cutoff 없이 <b>모든 유한한 미래 시간</b>을 비교</td></tr>
+<tr><td>구현</td><td>$\tau_m\sim w$로 뽑아 제곱오차 평균 — <b>코드 차이는 샘플러 하나뿐</b></td></tr>
+<tr><td>효과</td><td>CIF 극한이 달라도 <b>발산하지 않는다.</b> 가까운 미래에 더 큰 비중</td></tr>
+<tr><td>한계</td><td>원래의 <b>무가중 Cramér 거리와는 다른 목적함수</b>다. 아주 먼 미래의 오차에는
+상대적으로 약한 신호를 준다</td></tr>
+</tbody></table>
+
+<div class="box w"><h4>$\rho$는 RL의 reward discount가 아니다</h4>
+<p>이 가중치는 <b>어느 예측시간을 중요하게 평가하느냐</b>를 정할 뿐이다.
+TD target은 여전히 $D_n+Z'$이며, 보상을 할인하는 것과는 다르다.</p></div>
+
+<div class="box k"><h4>두 설정의 관계</h4>
+<p>(A)는 $w(\tau)=\frac1H\mathbf 1\{\tau\le H\}$인 (B)의 특수한 경우다.
+<b>유한 horizon은 균등 가중, 무한 구간은 감쇠 가중</b>일 뿐 구조가 같고,
+구현에서는 샘플러만 교체하면 나머지 파이프라인은 그대로다.</p>
+<p class="note"><b>피해야 할 것:</b> 단순히 적분 상한만 $\infty$로 바꾸는 것.</p></div>
+
+<div class="box impl"><h4><span class="tag">구현</span> 우리가 쓴 설정</h4>
+<p><b>설정 (A) 유한 horizon만</b> 구현했다. $H$ = train subset의 사건/검열 시각 0.9 분위수,
+격자 $K=32$. 설정 (B)는 미구현이다.</p></div>
+
+<!-- ================================ 8 -->
+<h2 id="s8">8. 검열 처리</h2>
+
+<div class="box"><h4>원칙 — 관측된 전이는 쓰고, 없는 것은 만들지 않는다</h4>
+<table>
+<thead><tr><th>데이터 상황</th><th>처리</th></tr></thead>
+<tbody>
+<tr><td>다음 EHR 상태를 관측했고 이후 추적 종료</td><td>해당 <b>완료 전이를 TD에 사용</b></td></tr>
+<tr><td>사망 시각을 관측</td><td>사망 hard target 사용</td></tr>
+<tr><td>생존퇴실 시각을 관측</td><td>퇴실 hard target 사용</td></tr>
+<tr><td>마지막 EHR 이후 생존만 추가 확인되고 검열</td><td>이전 전이는 사용, 추가 구간은
+<b>부분 관측으로 별도 보존</b></td></tr>
+<tr><td>다음 상태도 종료 사건도 모름</td><td>그 미완료 전이의 전체 TD target을 <b>만들지 않음</b></td></tr>
+</tbody></table></div>
+
+<p>기록이 $x_0\to x_1\to x_2$에서 끝나고 $x_2$가 살아 있는 마지막 상태라면,
+$(x_0,x_1)$과 $(x_1,x_2)$를 사용한다. $x_2$를 사망으로 바꾸거나 관측되지 않은 $x_3$를 만들지 않는다.
+<b>마지막 도착 상태 $x_2$의 예측은 이전 상태의 bootstrap target으로 쓴다.</b></p>
+
+<div class="box k"><h4>검열 이후를 아는 것과, 마지막 상태에서 예측하는 것은 다르다</h4>
+<p>후자는 사용할 수 있다. 따라서 검열된 환자를 전부 제거하거나 검열 환자의 마지막 관측으로
+들어오는 전이를 제외하지 않는다. 다만 그 예측은 공유 파라미터와 다른 환자의 전이에서 정보를
+얻는 것이므로, 데이터가 없는 영역의 정확성을 보장할 수는 없다.</p></div>
+
+<div class="box w"><h4>검열을 "처리"하는 것과 "편향을 해결"하는 것은 다르다</h4>
+<p>행정적 종료 전에 완료된 전이만 모으면 <b>긴 전이가 덜 관측</b>될 수 있다.
+검열이 외부에서 발생하더라도 완료된 가변길이 전이의 표본분포가 원래 결합분포와 같다고
+단정할 수 없다. 이는 별도 검토 대상이며, 원래 TCSR의 생존 가중치는 IPCW가 아니므로
+그대로 복사하는 것만으로 해결되지 않는다.</p></div>
+
+<div class="box impl"><h4><span class="tag">구현</span> 우리 코드의 검열</h4>
+<p>세 분기를 명시적으로 나눴다: <code>KIND_DEATH</code> / <code>KIND_SURVIVE</code> /
+<code>KIND_CENSOR</code>. 검열 전이는 $\tau<C_n$에서 target 0, $\tau\ge C_n$은
+<code>mask=0</code>으로 손실에서 제외한다. 부분관측 구간을 위한 보조 likelihood는 쓰지 않았다.</p></div>
+
+<!-- ================================ 9 -->
+<h2 id="s9">9. 알고리즘</h2>
+
+<h3>9.1 절차</h3>
+<ol>
+<li><b>분할</b> — 환자 단위 train/validation/test. 같은 환자의 episode가 split을 넘지 않게 한다.</li>
+<li><b>전이 구성</b> — 관측 완료 전이와 미완료 검열 구간을 별도로 만든다. 검열 환자도 완료 전이는 남긴다.</li>
+<li><b>초기화</b> — online 모델을 초기화하고 target 모델에 복사한다.</li>
+<li><b>샘플링</b> — 환자와 그 환자의 관측시점을 뽑는다. 빈번히 측정된 환자가 과도하게 지배하지
+않도록 샘플링 목표를 고정한다.</li>
+<li><b>target 생성</b> — target 모델로 다음 상태 CIF를 계산하고, 실제 경과시간 이동 또는
+관측된 종료 사건으로 target을 만든다.</li>
+<li><b>업데이트</b> — 하나의 TD 제곱오차로 online 모델을 갱신. target에는 gradient를 보내지 않는다.</li>
+<li><b>target 갱신</b> — EMA 또는 주기적 복사. validation 예측 지표로 모델 선택.</li>
+</ol>
+
+<h3>9.2 의사코드</h3>
+<pre><span class="c"># tau 샘플러만 바꾸면 유한 horizon <-> 가중 무한 구간이 전환된다.</span>
+<span class="k">for</span> batch <span class="k">in</span> loader:
+    tau  = sample_times(mode)          <span class="c"># (A) Uniform(0,H) | (B) w(tau)=rho*exp(-rho*tau)</span>
+    pred = online.cif(batch.history_prefix, tau)         <span class="c"># B x M x C</span>
+
+    <span class="k">with</span> no_grad():                                      <span class="c"># stop-gradient</span>
+        target_cif = zeros_like(pred)
+
+        <span class="c"># ① 생존 확인 -> 실수 D 만큼 이동해 bootstrap</span>
+        alive       = batch.transition_kind == <span class="s">"observation"</span>
+        shifted_tau = clamp(tau - batch.delta_hours, min=0)
+        target_cif[alive] = target.cif(batch.next_history_prefix[alive],
+                                       shifted_tau[alive])
+
+        <span class="c"># ② 종료 사건 -> 계단함수 hard target</span>
+        ended = ~alive                 <span class="c"># loader 에는 완료된 임상 전이만 포함</span>
+        target_cif[ended] = event_indicator(tau, batch.delta_hours[ended],
+                                            batch.event_cause[ended])
+
+    loss = ((pred - target_cif) ** 2).sum(dim=<span class="s">"cause"</span>).mean()
+    update_online(loss)
+    update_target_by_ema()</pre>
+
+<p class="note">실제 구현에서는 시간 tensor broadcasting, 종료 행 인덱싱, $F_c(0)=0$,
+target 인코더의 gradient 차단을 명시적으로 확인한다. 추론 시에는 현재까지의 기록과
+online 모델만 필요하다.</p>
+
+<h3>9.3 학습 데이터 구조</h3>
+<table>
+<thead><tr><th>필드</th><th>내용</th></tr></thead>
+<tbody>
+<tr><td><code>patient_id</code> / <code>episode_id</code></td><td>환자 및 ICU episode 식별자</td></tr>
+<tr><td><code>history_prefix</code></td><td>현재 시각까지의 기록</td></tr>
+<tr><td><code>next_history_prefix</code></td><td>다음 관측까지의 기록 또는 종료 표식</td></tr>
+<tr><td><code>delta_hours</code></td><td><b>실제 전이시간 $D_n$</b> (실수)</td></tr>
+<tr><td><code>transition_kind</code></td><td><code>observation</code> / <code>death</code> / <code>discharge</code></td></tr>
+<tr><td><code>partial_censor_duration</code></td><td>마지막 관측 이후 추가로 알려진 무사건 시간</td></tr>
+</tbody></table>
+
+<h3>9.4 인코더</h3>
+<p>첫 모델은 <b>causal GRU</b>. 입력은 측정값, mask, 변수별 마지막 측정 이후 시간,
+입실 후 경과시간, 정적 특성이다. 미래 측정으로 보간하거나 전체 이력을 미리 요약하지 않는다.
+정규화 통계는 train split에서만 계산한다. target 모델은 <b>자신의 인코더</b>로 다음 이력을 처리한다.</p>
+
+<div class="box impl"><h4><span class="tag">구현</span> 우리 실험의 설정</h4>
+<table>
+<thead><tr><th>항목</th><th>값</th></tr></thead>
+<tbody>
+<tr><td>인코더</td><td><b>없음</b> — 현재 상태 벡터를 그대로 사용 (선형 head 조건 고정)</td></tr>
+<tr><td>head</td><td>$\sigma(\alpha_k+\beta^\top x)$, 실제시간 bin $K=32$</td></tr>
+<tr><td>optimizer</td><td>AdamW (lr 0.1, weight decay 0)</td></tr>
+<tr><td>target 갱신</td><td><code>optax.incremental_update</code>, $\tau_{\text{tgt}}=0.5$, 매 minibatch</td></tr>
+<tr><td>배치</td><td>전이 단위 128</td></tr>
+<tr><td>epoch 선택</td><td>validation IPCW-IBS 최소 (최대 100 epoch)</td></tr>
+<tr><td>사건</td><td>단일 사건(사망)만. 경쟁위험 미구현</td></tr>
+</tbody></table></div>
+
+<!-- ================================ 10 -->
+<h2 id="s10">10. 요약 / Method A 대조</h2>
+
+<table>
+<thead><tr><th>구성요소</th><th>Method B — SM-TCSR (이 문서)</th><th>Method A — SurvTD (research/)</th></tr></thead>
+<tbody>
+<tr><td>사건 구조</td><td><b>경쟁위험 CIF</b> (사망 / 생존퇴실)</td><td>단일 사건 ($T$, $C$, $E$)</td></tr>
+<tr><td>예측 대상</td><td>사건별 CIF $F_c(\tau\mid s)$</td><td>잔여수명 $R_t$의 분포</td></tr>
+<tr><td>분포 표현</td><td>연속 head (Weibull mixture) 또는 격자 CDF</td><td>격자 위 범주형 질량 (v2: 가산 누적위험)</td></tr>
+<tr><td>이동 방식</td><td>CIF를 $\tau-D_n$에서 <b>직접 평가</b> (또는 CDF 선형보간)</td>
+    <td>재생 이동 연산자 $\Phi_{\Delta t}$ + <b>삼각 투영 $\Pi$</b></td></tr>
+<tr><td>이동 방향</td><td>다음 상태 예측을 <b>오른쪽으로</b> 당겨 현재와 비교</td>
+    <td>다음 상태 분포를 <b>왼쪽으로</b> 밀어 현재의 target 생성</td></tr>
+<tr><td>손실 구조</td><td><b>단일 TD 제곱오차</b> (보조 likelihood는 선택)</td>
+    <td><b>TD + $\lambda_{\text{term}}\cdot$경계 지도</b> 2항</td></tr>
+<tr><td>적분</td><td><b>몬테카를로</b> $\tau_m\sim$ 샘플러</td><td>지지 구간 위 <b>정확한 유한합</b></td></tr>
+<tr><td>Horizon</td><td><b>유한 $H$ 또는 가중 무한</b> — 두 설정을 명시</td><td>$S_{\max}$ 지지 상한 하나</td></tr>
+<tr><td>검열</td><td>완료 전이만 TD 사용 + 관측 영역 mask</td><td>초안: 종료 CE / v2: SCCT $-\log S_\theta(r^c)$</td></tr>
+<tr><td>비정수 이동 처리</td><td>연속 head 에 $\tau-D_n$ 대입 (격자 head 면 CDF 선형보간)</td>
+    <td>$\Phi$ 로 질량 수송 후 $\Pi$ 로 격자에 <b>선형 분배</b></td></tr>
+<tr><td>안정화</td><td>target 네트워크 EMA + stop-gradient</td><td>동일</td></tr>
+</tbody></table>
+
+<div class="box"><h4>공통점</h4>
+<p>둘 다 (i) 실제 경과시간을 보존하고, (ii) 다음 상태의 예측분포를 이동시켜 TD target을 만들며,
+(iii) Cramér 계열 제곱오차를 쓰고, (iv) target 네트워크 + stop-gradient로 안정화하며,
+(v) 검열을 사망으로 바꾸지 않는다.</p></div>
+
+<div class="xref">→ <a href="Method_A_SurvTD_research.html">Method A (SurvTD, research/ 버전) 보기</a></div>
+
+</div></body></html>
