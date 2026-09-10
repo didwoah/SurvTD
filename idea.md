@@ -360,3 +360,55 @@ Cox partial likelihood의 결합과 normalizing flow head는 초기 핵심 범�
 7. **Moon, Groha & Gusev (2022). SurvLatent ODE.** MLHC. 불규칙 longitudinal EHR와 competing risks의 neural survival 비교 모델. [논문](https://proceedings.mlr.press/v182/moon22a.html)
 
 8. **Alaa & van der Schaar (2018). A Hidden Absorbing Semi-Markov Model for Informatively Censored Temporal Data: Learning and Inference.** JMLR. 실제 잠재 임상 상태와 체류시간을 모델링하는 대안이며, 관측시점 기반인 본 설계와 구분된다. [논문](https://jmlr.org/papers/v19/16-656.html)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+논문 흐름은 “평균 시간 환산의 한계 → 실제 전이시간을 반영한 TD → 원인 분리 실험 → 실제 EHR 검증”으로 잡으면 좋아.
+
+Introduction
+목표: 불규칙하게 관측되는 EHR로 실제시간 생존분포 예측.
+도입 그림: 방문 수와 평균 간격이 같아도 사망시간 분포는 다르다.
+제안: 방문 전이 기반 학습을 유지하면서 실제 \(D\)를 반영하는 SM-TCSR.
+검증된 contribution을 요약.
+Background & Problem Setup
+TCSR의 방문축 TD와 실제시간 예측의 차이.
+상태 \(s_n\), 전이시간 \(D_n\), 잔여 사건시간 \(R_n\), 검열 정의.
+Semi-Markov 가정과 현재 상태가 충분하다는 조건.
+예측 시 사용 가능한 정보 명시.
+Method: SM-TCSR
+실제 \(D_n\)만큼 이동하는 분포 TD target.
+사망·생존 전이·검열별 학습 처리.
+분포 표현과 목적함수.
+학습 알고리즘과 시간 복잡도.
+CDF와 categorical PMF는 연결된 표현이므로, 하나를 본문 기본 구현으로 두고 다른 표현은 변형으로 비교.
+Theoretical Analysis
+Semi-Markov 가정하에서 temporal-consistency 관계 유도.
+일정한 간격에서 방문축 TD로 환원되는 성질.
+식별 가능한 조건과 검열 처리의 조건.
+가능하면 수렴 분석. 수축사상 증명은 성립하는 조건을 확인한 뒤 포함.
+Synthetic Experiments
+메인 예제: 같은 전이 구조·같은 평균·다른 시간 분포.
+Global/State mean clock과 실제 \(D\) 사용의 차이.
+같은 모델 구조에서 TCSR·DeepTCSR·SM-TCSR 비교.
+표본 수, 시간 변동, 검열에 따른 영향 분석.
+Real-world EHR Experiments
+데이터셋, 사건 정의, 예측 시점, 평가 지표.
+동일 encoder/head 비교: TD 설계 자체의 효과 확인.
+기존 모델별 아키텍처 비교: 전체 예측 성능 평가.
+실제시간 격자로 재구성한 TCSR와 직접 생존학습 기준선 포함.
+Calibration·예측 오차·계산 비용 평가.
+Discussion & Conclusion
+언제 실제 시간 분포를 반영하는 것이 유리한가?
+상태 표현, 관측 과정, 검열 가정의 한계.
+실험과 이론이 뒷받침하는 범위에서 결론.
